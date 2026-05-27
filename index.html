@@ -1572,7 +1572,7 @@ async function sendAI(){
 
 updBadges();ren();
 // DB에서 데이터 로드
-async async function initDB(){
+async function initDB(){
   let tries=0;
   while(!window.supabase && tries<20){
     await new Promise(r=>setTimeout(r,200));
