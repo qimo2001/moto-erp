@@ -238,7 +238,7 @@ id="mob-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,
 
 // ── Supabase DB 설정 ──
 const SB_URL = 'https://zunzruhwhypfiayaiytl.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1bnpydWh3eXBmaWF5YWl5dGwiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0ODQzNTAyOCwiZXhwIjoyMDY0MDExMDI4fQ.9KwPUhs1Re1VoP-1TPcoG8MZwBAzNTq4Uhp9MefK46o';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1bnpydWh3aHlwZmlheWFpeXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4Nzc0MDUsImV4cCI6MjA5NTQ1MzQwNX0.9KwPUhs1Re1VoP-1TPcoG8MZwBAzNTq4Uhp9MefK46o';
 let _db = null;
 function db(){
   if(!_db && window.supabase) _db = window.supabase.createClient(SB_URL, SB_KEY);
