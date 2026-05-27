@@ -157,7 +157,6 @@ tr:hover td{background:var(--bg3)}
 .pbn{width:32px;height:32px;border:1px solid var(--bd2);border-radius:6px;background:transparent;cursor:pointer;font-size:13px;color:var(--tx2);display:flex;align-items:center;justify-content:center;transition:all .15s}
 .pbn:hover{background:var(--bg3)}.pbn.on{background:#CC0000;color:#fff;border-color:#CC0000;font-weight:700}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -234,42 +233,25 @@ tr:hover td{background:var(--bg3)}
 id="mob-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:250;-webkit-tap-highlight-color:transparent" onclick="closeMobMenu()"></div>
 <div class="mo" id="modal" onclick="handleMO(event)"><div class="md" id="mc"></div></div>
 <script>
-// ── SUPABASE 설정 ──
-const SUPABASE_URL = 'https://zunzruhwhypfiayaiytl.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1bnpydWh3eXBmaWF5YWl5dGwiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0ODQzNTAyOCwiZXhwIjoyMDY0MDExMDI4fQ.9KwPUhs1Re1VoP-1TPcoG8MZwBAzNTq4Uhp9MefK46o';
-const BUCKET = 'erp-photos';
-let _sb = null;
-function getSB(){
-  if(!_sb && window.supabase){
-    _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  }
-  return _sb;
-}
-// ── 이미지 압축 함수 ──
-// maxWidth: 최대 너비(px), quality: 품질 0~1
-async function compressImage(file, maxWidth=1280, quality=0.8){
+// ── 이미지 저장: Cloudinary ──
+// ── Cloudinary 설정 ──
+const CLOUDINARY_CLOUD = 'dp1o5rrcj';
+const CLOUDINARY_PRESET = 'erp_photos';
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`;
+
+// ── 이미지 압축 (Canvas) ──
+async function compressImage(file, maxWidth=1280, quality=0.82){
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        // 비율 유지하며 리사이즈
-        let w = img.width;
-        let h = img.height;
-        if(w > maxWidth){
-          h = Math.round(h * maxWidth / w);
-          w = maxWidth;
-        }
+        let w = img.width, h = img.height;
+        if(w > maxWidth){ h = Math.round(h * maxWidth / w); w = maxWidth; }
         const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        canvas.toBlob(
-          (blob) => resolve(blob || file),
-          'image/jpeg',
-          quality
-        );
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', quality);
       };
       img.src = e.target.result;
     };
@@ -277,22 +259,24 @@ async function compressImage(file, maxWidth=1280, quality=0.8){
   });
 }
 
+// ── Cloudinary 업로드 ──
 async function uploadPhoto(file, folder){
-  const sb = getSB();
-  if(!sb){ console.warn('Supabase not ready'); return null; }
   try {
-    // 압축 (1280px 이하, 품질 80%)
-    const compressed = await compressImage(file, 1280, 0.80);
     const sizeBefore = (file.size/1024).toFixed(0);
-    const sizeAfter  = (compressed.size/1024).toFixed(0);
-    console.log(`압축: ${sizeBefore}KB → ${sizeAfter}KB`);
-    const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
-    const { data, error } = await sb.storage.from(BUCKET).upload(fileName, compressed, {
-      cacheControl: '3600', upsert: false, contentType: 'image/jpeg'
-    });
-    if(error){ console.error('Upload error:', error.message); return null; }
-    const { data: urlData } = sb.storage.from(BUCKET).getPublicUrl(fileName);
-    return urlData?.publicUrl || null;
+    // 압축
+    const compressed = await compressImage(file, 1280, 0.82);
+    const sizeAfter = (compressed.size/1024).toFixed(0);
+    console.log(`🗜 압축: ${sizeBefore}KB → ${sizeAfter}KB`);
+    // Cloudinary 업로드
+    const form = new FormData();
+    form.append('file', compressed, 'photo.jpg');
+    form.append('upload_preset', CLOUDINARY_PRESET);
+    form.append('folder', `erp/${folder}`);
+    const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: form });
+    if(!res.ok){ console.error('Cloudinary error:', res.status); return null; }
+    const data = await res.json();
+    console.log(`✅ 업로드 완료: ${data.secure_url}`);
+    return data.secure_url || null;
   } catch(err) {
     console.error('Upload failed:', err);
     return null;
