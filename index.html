@@ -1546,6 +1546,130 @@ async function saveInsurancePay(id){
   CM();ren();
 }
 
+
+// ── 작업일보 페이지 ──
+function pgWorklog(){
+  const selDate=S._workDate||'2025-05-28';
+  const tasks=S.workTasks.filter(t=>t.workDate===selDate);
+  const allDates=[...new Set(S.workTasks.map(t=>t.workDate))].sort((a,b)=>b.localeCompare(a));
+  const waiting=tasks.filter(t=>t.status==='대기');
+  const inprog=tasks.filter(t=>t.status==='진행중');
+  const done=tasks.filter(t=>t.status==='완료');
+  const totalProgress=tasks.length?Math.round(tasks.reduce((a,b)=>a+b.progress,0)/tasks.length):0;
+
+  function taskCard(t){
+    const pColor=t.priority==='긴급'?'#c62828':t.priority==='보통'?'#1565c0':'#5a5a5a';
+    const cBadge=t.category==='렌트정비'?'bb':t.category==='사고수리'?'br':'ba';
+    return`<div style="border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:10px;${t.status==='진행중'?'border-left:4px solid #CC0000':t.status==='완료'?'border-left:4px solid #2e7d32':'border-left:4px solid var(--tx3)'}">
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <span style="font-weight:700;font-size:14px;flex:1">${t.title}</span>
+        <span style="font-size:11px;font-weight:700;color:${pColor};background:${pColor}22;padding:2px 8px;border-radius:10px">${t.priority}</span>
+        ${badge(cBadge,t.category)}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px;color:var(--tx2);margin-bottom:10px">
+        <div>👤 ${t.assignee}</div>
+        <div>🕐 ${t.createdAt||''} 등록</div>
+        <div class="plate-sm">${t.plateNo||''}</div>
+        <div>${t.customer||''}</div>
+        ${t.memo?`<div style="grid-column:1/-1;color:var(--tx3)">${t.memo}</div>`:''}
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="color:var(--tx2)">작업 진행률</span>
+          <span style="font-weight:700;color:${t.progress===100?'#2e7d32':'#CC0000'}">${t.progress}%</span>
+        </div>
+        <div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${t.progress}%;background:${t.progress===100?'#2e7d32':'#CC0000'};border-radius:4px;transition:width .3s"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${t.status==='대기'?`<button class="bpm" style="height:30px;padding:0 12px;font-size:12px" onclick="updTask('${t.id}','진행중',30)">▶ 작업 시작</button>`:''}
+        ${t.status==='진행중'?`
+          <button class="bs" style="height:30px;padding:0 10px;font-size:12px" onclick="updTaskProgress('${t.id}',-20)">−20%</button>
+          <button class="bs" style="height:30px;padding:0 10px;font-size:12px" onclick="updTaskProgress('${t.id}',20)">+20%</button>
+          <button class="bpm" style="height:30px;padding:0 12px;font-size:12px" onclick="updTask('${t.id}','완료',100)">✅ 완료</button>
+        `:''}
+        ${t.status==='완료'?`<span style="font-size:12px;color:#2e7d32;font-weight:700">✅ 작업 완료</span>`:''}
+        <button class="bsm" onclick="openAddWorkModal('${t.id}')">수정</button>
+      </div>
+    </div>`;
+  }
+
+  const dateTabsHtml=`<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;scrollbar-width:none">
+    ${allDates.map(d=>`<button onclick="S._workDate='${d}';ren()" style="flex-shrink:0;padding:6px 14px;border:1px solid ${d===selDate?'#CC0000':'var(--bd2)'};border-radius:20px;background:${d===selDate?'#CC0000':'transparent'};color:${d===selDate?'#fff':'var(--tx2)'};cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap">${d}</button>`).join('')}
+    <button onclick="openDatePickModal()" style="flex-shrink:0;padding:6px 14px;border:1px solid var(--bd2);border-radius:20px;background:transparent;color:var(--tx2);cursor:pointer;font-size:12px;font-weight:600">📅 날짜 선택</button>
+  </div>`;
+
+  return`
+  <div class="sh">
+    <span class="st">작업일보 <span style="font-size:13px;font-weight:400;color:var(--tx3)">${selDate}</span></span>
+    <button class="bp" onclick="openAddWorkModal()"><i class="ti ti-plus"></i> 작업 등록</button>
+  </div>
+  ${dateTabsHtml}
+  <div class="sgrid" style="margin-bottom:20px">
+    <div class="sc"><div class="sl">전체</div><div class="sv">${tasks.length}<small style="font-size:14px">건</small></div></div>
+    <div class="sc"><div class="sl">대기</div><div class="sv" style="color:var(--tx2)">${waiting.length}</div></div>
+    <div class="sc"><div class="sl">진행중</div><div class="sv" style="color:#CC0000">${inprog.length}</div></div>
+    <div class="sc"><div class="sl">완료</div><div class="sv" style="color:#2e7d32">${done.length}</div></div>
+    <div class="sc">
+      <div class="sl">작업률</div>
+      <div class="sv" style="color:${totalProgress===100?'#2e7d32':'#CC0000'}">${totalProgress}<small style="font-size:14px">%</small></div>
+      <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:8px">
+        <div style="height:100%;width:${totalProgress}%;background:${totalProgress===100?'#2e7d32':'#CC0000'};border-radius:3px"></div>
+      </div>
+    </div>
+  </div>
+  ${tasks.length===0?`<div class="card"><div style="text-align:center;padding:40px;color:var(--tx3)">
+    <div style="font-size:40px;margin-bottom:12px">📋</div>
+    <div style="font-size:15px;font-weight:700">${selDate} 등록된 작업이 없습니다</div>
+    <button class="bp" style="margin-top:16px" onclick="openAddWorkModal()">+ 작업 등록</button>
+  </div></div>`:`
+  ${waiting.length>0?`<div style="margin-bottom:8px;display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:var(--tx3)"></div><span style="font-size:14px;font-weight:700;color:var(--tx2)">대기 (${waiting.length})</span></div><div style="margin-bottom:16px">${waiting.map(taskCard).join('')}</div>`:''}
+  ${inprog.length>0?`<div style="margin-bottom:8px;display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:#CC0000"></div><span style="font-size:14px;font-weight:700;color:#CC0000">진행중 (${inprog.length})</span></div><div style="margin-bottom:16px">${inprog.map(taskCard).join('')}</div>`:''}
+  ${done.length>0?`<div style="margin-bottom:8px;display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:#2e7d32"></div><span style="font-size:14px;font-weight:700;color:#2e7d32">완료 (${done.length})</span></div><div style="opacity:.8">${done.map(taskCard).join('')}</div>`:''}
+  `}`;
+}
+
+function openDatePickModal(){
+  OM(`${mhdr('날짜 선택')}
+  <div class="fg"><label class="fl">조회할 날짜</label>
+    <input class="fi" type="date" id="dp-date" value="${S._workDate||'2025-05-28'}">
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="bp" style="flex:1" onclick="S._workDate=document.getElementById('dp-date').value;CM();ren()">조회하기</button>
+    <button onclick="CM()" class="bs" style="flex:1">취소</button>
+  </div>`);
+}
+
+function openAddWorkModal(editId){
+  const t=editId?S.workTasks.find(x=>x.id===editId):null;
+  OM(`${mhdr(t?'작업 수정':'작업 등록')}
+  <div class="fr">${fi('wt-title','작업 제목 ★','예: 엔진오일 교환',null,t?t.title:'',true)}${fsel('wt-cat','작업 분류',['일반수리','렌트정비','사고수리','기타'],t?t.category:'일반수리')}</div>
+  <div class="fr">${fi('wt-assignee','담당 기술자','이기술',null,t?t.assignee:'이기술')}${fsel('wt-priority','우선순위',['긴급','보통','낮음'],t?t.priority:'보통')}</div>
+  <div class="fr">${fi('wt-plate','차량번호','123가4567',null,t?t.plateNo:'')}${fi('wt-customer','고객명','',null,t?t.customer:'')}</div>
+  <div class="fr">${fi('wt-wdate','작업 날짜','','date',t?t.workDate:(S._workDate||'2025-05-28'))}${fi('wt-due','완료 목표일','','date',t?t.dueDate:'2025-05-28')}</div>
+  ${fsel('wt-status','현재 상태',['대기','진행중','완료'],t?t.status:'대기')}
+  ${fi('wt-memo','메모','특이사항',null,t?t.memo:'')}
+  <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveWorkTask('${editId||''}')"><i class="ti ti-check"></i> ${t?'수정완료':'등록하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
+}
+
+async function saveWorkTask(editId){
+  const title=document.getElementById('wt-title').value;
+  if(!title){alert('작업 제목을 입력하세요.');return;}
+  const now=new Date();
+  const timeStr=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const obj={title,category:document.getElementById('wt-cat').value,assignee:document.getElementById('wt-assignee').value,priority:document.getElementById('wt-priority').value,plateNo:document.getElementById('wt-plate').value,customer:document.getElementById('wt-customer').value,dueDate:document.getElementById('wt-due').value,workDate:document.getElementById('wt-wdate')?.value||S._workDate||'2025-05-28',status:document.getElementById('wt-status').value,memo:document.getElementById('wt-memo').value};
+  if(editId){
+    const t=S.workTasks.find(x=>x.id===editId);if(t)Object.assign(t,obj);
+    await dbUpdate('work_tasks',editId,toSnake(obj));
+  }else{
+    const newT={id:newId(S.workTasks,'WT'),progress:0,createdAt:timeStr,...obj};
+    S.workTasks.unshift(newT);
+    await dbInsert('work_tasks',toSnake(newT));
+  }
+  CM();ren();
+}
+
 async function updTask(id,status,progress){
   const t=S.workTasks.find(x=>x.id===id);
   if(t){t.status=status;t.progress=progress;await dbUpdate('work_tasks',id,{status,progress});}
