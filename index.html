@@ -157,7 +157,6 @@ tr:hover td{background:var(--bg3)}
 .pbn{width:32px;height:32px;border:1px solid var(--bd2);border-radius:6px;background:transparent;cursor:pointer;font-size:13px;color:var(--tx2);display:flex;align-items:center;justify-content:center;transition:all .15s}
 .pbn:hover{background:var(--bg3)}.pbn.on{background:#CC0000;color:#fff;border-color:#CC0000;font-weight:700}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -237,34 +236,55 @@ id="mob-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,
 // ── 이미지 저장: Cloudinary ──
 
 // ── Supabase DB 설정 ──
-const SB_URL = 'https://zunzruhwhypfiayaiytl.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1bnpydWh3aHlwZmlheWFpeXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4Nzc0MDUsImV4cCI6MjA5NTQ1MzQwNX0.9KwPUhs1Re1VoP-1TPcoG8MZwBAzNTq4Uhp9MefK46o';
-let _db = null;
-function db(){
-  if(!_db && window.supabase) _db = window.supabase.createClient(SB_URL, SB_KEY);
-  return _db;
-}
+// SB constants moved to _SB_URL/_SB_KEY
+// DB: pure fetch mode
 
-// ── DB 헬퍼 ──
-async function dbLoad(table){ 
-  const {data,error}=await db().from(table).select('*').order('created_at',{ascending:false});
-  if(error){console.error('load',table,error.message);return null;}
-  return data;
+// ── DB 헬퍼 (순수 fetch 방식) ──
+const _SB_URL = 'https://zunzruhwhypfiayaiytl.supabase.co';
+const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1bnpydWh3aHlwZmlheWFpeXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4Nzc0MDUsImV4cCI6MjA5NTQ1MzQwNX0.9KwPUhs1Re1VoP-1TPcoG8MZwBAzNTq4Uhp9MefK46o';
+function _sbHeaders(extra){
+  return {'apikey':_SB_KEY,'Authorization':'Bearer '+_SB_KEY,'Content-Type':'application/json',...(extra||{})  };
+}
+async function dbLoad(table){
+  try{
+    const res = await fetch(`${_SB_URL}/rest/v1/${table}?select=*&order=created_at.desc`,{
+      headers: _sbHeaders({'Prefer':'return=representation'})
+    });
+    if(!res.ok){ const e=await res.text(); console.error('load',table,e); return null; }
+    return await res.json();
+  }catch(e){ console.error('load',table,e.message); return null; }
 }
 async function dbInsert(table,row){
-  const {error}=await db().from(table).insert(row);
-  if(error){console.error('insert',table,error.message);return false;}
-  return true;
+  try{
+    const res = await fetch(`${_SB_URL}/rest/v1/${table}`,{
+      method:'POST',
+      headers: _sbHeaders({'Prefer':'return=minimal'}),
+      body: JSON.stringify(row)
+    });
+    if(!res.ok){ const e=await res.text(); console.error('insert',table,e); return false; }
+    return true;
+  }catch(e){ console.error('insert',table,e.message); return false; }
 }
 async function dbUpdate(table,id,row){
-  const {error}=await db().from(table).update(row).eq('id',id);
-  if(error){console.error('update',table,error.message);return false;}
-  return true;
+  try{
+    const res = await fetch(`${_SB_URL}/rest/v1/${table}?id=eq.${id}`,{
+      method:'PATCH',
+      headers: _sbHeaders({'Prefer':'return=minimal'}),
+      body: JSON.stringify(row)
+    });
+    if(!res.ok){ const e=await res.text(); console.error('update',table,e); return false; }
+    return true;
+  }catch(e){ console.error('update',table,e.message); return false; }
 }
 async function dbDelete(table,id){
-  const {error}=await db().from(table).delete().eq('id',id);
-  if(error){console.error('delete',table,error.message);return false;}
-  return true;
+  try{
+    const res = await fetch(`${_SB_URL}/rest/v1/${table}?id=eq.${id}`,{
+      method:'DELETE',
+      headers: _sbHeaders()
+    });
+    if(!res.ok){ const e=await res.text(); console.error('delete',table,e); return false; }
+    return true;
+  }catch(e){ console.error('delete',table,e.message); return false; }
 }
 
 // ── 스네이크케이스 변환 헬퍼 ──
@@ -1697,16 +1717,6 @@ async function sendAI(){
 updBadges();ren();
 // DB에서 데이터 로드
 async function initDB(){
-  let tries=0;
-  while(!window.supabase && tries<20){
-    await new Promise(r=>setTimeout(r,200));
-    tries++;
-  }
-  if(!window.supabase){
-    console.error('Supabase SDK 로드 실패');
-    showDBError('Supabase SDK를 불러올 수 없습니다. 인터넷 연결을 확인해 주세요.');
-    return;
-  }
   await loadAllFromDB();
 }
 function showDBError(msg){
