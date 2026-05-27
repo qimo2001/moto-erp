@@ -424,22 +424,27 @@ async function compressImage(file, maxWidth=1280, quality=0.82){
 async function uploadPhoto(file, folder){
   try {
     const sizeBefore = (file.size/1024).toFixed(0);
-    // 압축
+    console.log(`📸 업로드 시작 (${sizeBefore}KB) folder=${folder}`);
     const compressed = await compressImage(file, 1280, 0.82);
     const sizeAfter = (compressed.size/1024).toFixed(0);
     console.log(`🗜 압축: ${sizeBefore}KB → ${sizeAfter}KB`);
-    // Cloudinary 업로드
     const form = new FormData();
     form.append('file', compressed, 'photo.jpg');
     form.append('upload_preset', CLOUDINARY_PRESET);
     form.append('folder', `erp/${folder}`);
-    const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: form });
-    if(!res.ok){ console.error('Cloudinary error:', res.status); return null; }
+    console.log(`☁️ Cloudinary 전송... preset=${CLOUDINARY_PRESET}`);
+    const res = await fetch(CLOUDINARY_URL, {method:'POST', body:form});
+    if(!res.ok){
+      const errText = await res.text();
+      console.error('Cloudinary 오류:', res.status, errText);
+      return null;
+    }
     const data = await res.json();
+    if(data.error){console.error('Cloudinary 응답오류:', data.error.message);return null;}
     console.log(`✅ 업로드 완료: ${data.secure_url}`);
-    return data.secure_url || null;
+    return data.secure_url||null;
   } catch(err) {
-    console.error('Upload failed:', err);
+    console.error('업로드 실패:', err.message);
     return null;
   }
 }
@@ -1068,7 +1073,38 @@ function selPay(p,t){window._ps=window._ps||{};window._ps[p]=t;const m={현금:'
 function getPay(p){return(window._ps||{})[p]||'';}
 function pPhoto(pfx,labels,folder){
   const f=folder||pfx;
-  return`<div class="pgrid">${labels.map((l,i)=>`<div class="pslot req-slot" id="${pfx}-${i}"><i class="ti ti-camera"></i><span>${l}</span><input type="file" accept="image/*" capture="environment" onchange="prevPhoto(this,'${pfx}-${i}','${f}')"></div>`).join('')}</div>`;
+  return`<div class="pgrid">${labels.map((l,i)=>`<div class="pslot req-slot" id="${pfx}-${i}" onclick="openPhotoChoice('${pfx}-${i}','${f}')"><i class="ti ti-camera"></i><span>${l}</span></div>`).join('')}</div>`;
+}
+
+function openPhotoChoice(slotId,folder){
+  const old=document.getElementById('photo-choice-wrap');if(old)old.remove();
+  const wrap=document.createElement('div');wrap.id='photo-choice-wrap';
+  wrap.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  wrap.innerHTML=`<div style="background:var(--bg2);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:500px;padding-bottom:max(20px,env(safe-area-inset-bottom))">
+    <div style="width:40px;height:4px;background:var(--bd2);border-radius:2px;margin:0 auto 16px"></div>
+    <div style="font-size:15px;font-weight:700;text-align:center;margin-bottom:16px;color:var(--tx)">사진 업로드</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+      <label style="display:flex;align-items:center;gap:14px;padding:15px 16px;border:1px solid var(--bd);border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent">
+        <div style="width:44px;height:44px;border-radius:10px;background:var(--pl);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📷</div>
+        <div><div style="font-size:14px;font-weight:700;color:var(--tx)">카메라로 촬영</div><div style="font-size:12px;color:var(--tx2);margin-top:2px">지금 바로 사진 찍기</div></div>
+        <input type="file" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelect(this,'${slotId}','${folder}')">
+      </label>
+      <label style="display:flex;align-items:center;gap:14px;padding:15px 16px;border:1px solid var(--bd);border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent">
+        <div style="width:44px;height:44px;border-radius:10px;background:#e3f2fd;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🖼️</div>
+        <div><div style="font-size:14px;font-weight:700;color:var(--tx)">갤러리에서 선택</div><div style="font-size:12px;color:var(--tx2);margin-top:2px">저장된 사진 불러오기</div></div>
+        <input type="file" accept="image/*" style="display:none" onchange="handlePhotoSelect(this,'${slotId}','${folder}')">
+      </label>
+    </div>
+    <button onclick="document.getElementById('photo-choice-wrap').remove()" style="width:100%;padding:14px;border:1px solid var(--bd2);border-radius:12px;background:transparent;font-size:14px;font-weight:600;cursor:pointer;color:var(--tx2)">취소</button>
+  </div>`;
+  document.body.appendChild(wrap);
+  wrap.addEventListener('click',e=>{if(e.target===wrap)wrap.remove();});
+}
+
+async function handlePhotoSelect(input,slotId,folder){
+  const wrap=document.getElementById('photo-choice-wrap');if(wrap)wrap.remove();
+  if(!input.files||!input.files[0])return;
+  await prevPhoto(input,slotId,folder);
 }
 async function prevPhoto(input,id,folder){
   if(!input.files||!input.files[0])return;
@@ -1085,9 +1121,24 @@ async function prevPhoto(input,id,folder){
     if(ic)ic.style.display='none';if(sp)sp.style.display='none';
   };
   r.readAsDataURL(file);
-  // 업로드 상태 표시
+  // 업로드 진행
   const sp=slot.querySelector('span');
-  if(sp){sp.style.display='block';sp.textContent='압축중...';}
+  if(sp){sp.style.display='block';sp.textContent='업로드중...';}
+  slot.style.borderColor='#1565c0';slot.style.opacity='0.8';
+  const folderName=folder||'general';
+  const url=await uploadPhoto(file,folderName);
+  slot.style.opacity='1';
+  if(url){
+    slot.dataset.url=url;slot.style.borderColor='#2e7d32';
+    if(sp)sp.style.display='none';
+    const oc=slot.querySelector('.uc');if(oc)oc.remove();
+    const chk=document.createElement('div');chk.className='uc';
+    chk.style.cssText='position:absolute;top:4px;right:4px;background:#2e7d32;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;z-index:2';
+    chk.textContent='✓';slot.appendChild(chk);
+  }else{
+    slot.style.borderColor='#c62828';
+    if(sp){sp.style.display='block';sp.textContent='⚠ 실패';}
+  }
   slot.style.borderColor='#1565c0';
   // Supabase에 압축 후 업로드
   const folderName=folder||'general';
