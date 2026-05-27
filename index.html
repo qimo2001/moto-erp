@@ -307,7 +307,15 @@ function fromSnake(obj){
   const r={};
   for(const[k,v]of Object.entries(obj)){
     const ck=map[k]||k;
-    r[ck]=v;
+    // JSONB 필드 파싱
+    if((ck==='items'||ck==='photos'||ck==='outPhotos'||ck==='inPhotos')&&typeof v==='string'){
+      try{ r[ck]=JSON.parse(v); }catch{ r[ck]=v||[]; }
+    } else {
+      r[ck]= (v===null||v===undefined) ? (
+        (ck==='items'||ck==='photos'||ck==='outPhotos'||ck==='inPhotos') ? [] :
+        (ck==='paid'||ck==='insurancePaid'||ck==='uninsured') ? false : v
+      ) : v;
+    }
   }
   return r;
 }
@@ -317,32 +325,43 @@ function rowsFromSnake(rows){ return rows.map(fromSnake); }
 let _dbReady=false;
 async function loadAllFromDB(){
   if(!db()){console.warn('DB not ready');return;}
+  showLoading(true);
   try{
-    showLoading(true);
-    const [cust,sls,rv,rnt,ml,rep,acc,vs,ps,po,wt]=await Promise.all([
-      dbLoad('customers'),dbLoad('sales'),dbLoad('rent_vehicles'),
-      dbLoad('rentals'),dbLoad('maint_logs'),dbLoad('repairs'),
-      dbLoad('accidents'),dbLoad('vehicle_stock'),dbLoad('parts_stock'),
-      dbLoad('purchase_orders'),dbLoad('work_tasks')
+    console.log('📡 DB 로드 시작...');
+    const results = await Promise.allSettled([
+      dbLoad('customers'),
+      dbLoad('sales'),
+      dbLoad('rent_vehicles'),
+      dbLoad('rentals'),
+      dbLoad('maint_logs'),
+      dbLoad('repairs'),
+      dbLoad('accidents'),
+      dbLoad('vehicle_stock'),
+      dbLoad('parts_stock'),
+      dbLoad('purchase_orders'),
+      dbLoad('work_tasks')
     ]);
-    if(cust&&cust.length) S.customers=rowsFromSnake(cust);
-    if(sls&&sls.length) S.sales=rowsFromSnake(sls);
-    if(rv&&rv.length) S.rentVehicles=rowsFromSnake(rv);
-    if(rnt&&rnt.length) S.rentals=rowsFromSnake(rnt);
-    if(ml&&ml.length) S.maintLogs=rowsFromSnake(ml);
-    if(rep&&rep.length) S.repairs=rowsFromSnake(rep);
-    if(acc&&acc.length) S.accidents=rowsFromSnake(acc);
-    if(vs&&vs.length) S.vehicleStock=rowsFromSnake(vs);
-    if(ps&&ps.length) S.partsStock=rowsFromSnake(ps);
-    if(po&&po.length) S.purchaseOrders=rowsFromSnake(po);
-    if(wt&&wt.length) S.workTasks=rowsFromSnake(wt);
+    const [cust,sls,rv,rnt,ml,rep,acc,vs,ps,po,wt] = results.map(r=>r.status==='fulfilled'?r.value:null);
+    if(cust&&cust.length){ S.customers=rowsFromSnake(cust); console.log('고객',cust.length); }
+    if(sls&&sls.length){ S.sales=rowsFromSnake(sls); console.log('판매',sls.length); }
+    if(rv&&rv.length){ S.rentVehicles=rowsFromSnake(rv); console.log('렌트차량',rv.length); }
+    if(rnt&&rnt.length){ S.rentals=rowsFromSnake(rnt); console.log('렌트',rnt.length); }
+    if(ml&&ml.length){ S.maintLogs=rowsFromSnake(ml); console.log('정비',ml.length); }
+    if(rep&&rep.length){ S.repairs=rowsFromSnake(rep); console.log('수리',rep.length); }
+    if(acc&&acc.length){ S.accidents=rowsFromSnake(acc); console.log('사고',acc.length); }
+    if(vs&&vs.length){ S.vehicleStock=rowsFromSnake(vs); console.log('차량재고',vs.length); }
+    if(ps&&ps.length){ S.partsStock=rowsFromSnake(ps); console.log('부품',ps.length); }
+    if(po&&po.length){ S.purchaseOrders=rowsFromSnake(po); console.log('발주',po.length); }
+    if(wt&&wt.length){ S.workTasks=rowsFromSnake(wt); console.log('작업',wt.length); }
     _dbReady=true;
     console.log('✅ DB 로드 완료');
   }catch(e){
-    console.error('DB 로드 실패:',e);
+    console.error('❌ DB 로드 실패:',e);
+    showDBError('데이터를 불러오지 못했습니다: '+e.message);
   }finally{
     showLoading(false);
-    updBadges();ren();
+    updBadges();
+    ren();
   }
 }
 function showLoading(show){
@@ -1816,10 +1835,30 @@ async function sendAI(){
 }
 
 updBadges();ren();
-// DB에서 데이터 로드 (Supabase 준비되면)
-window.addEventListener('load', ()=>{
-  setTimeout(()=>{ loadAllFromDB(); }, 300);
-});
+// DB에서 데이터 로드
+async function initDB(){
+  let tries=0;
+  while(!window.supabase && tries<20){
+    await new Promise(r=>setTimeout(r,200));
+    tries++;
+  }
+  if(!window.supabase){
+    console.error('Supabase SDK 로드 실패');
+    showDBError('Supabase SDK를 불러올 수 없습니다. 인터넷 연결을 확인해 주세요.');
+    return;
+  }
+  await loadAllFromDB();
+}
+function showDBError(msg){
+  const el=document.getElementById('content');
+  if(el) el.innerHTML=`<div style="text-align:center;padding:60px 20px">
+    <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+    <div style="font-size:18px;font-weight:700;color:#c62828;margin-bottom:8px">DB 연결 오류</div>
+    <div style="font-size:14px;color:var(--tx2);margin-bottom:20px">${msg}</div>
+    <button class="bp" onclick="initDB()">다시 시도</button>
+  </div>`;
+}
+window.addEventListener('DOMContentLoaded', ()=>{ initDB(); });
 </script>
 </body>
 </html>
