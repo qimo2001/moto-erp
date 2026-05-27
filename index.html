@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MotoERP - 오토바이 매장 관리</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #E85D24;
+  --primary-dark: #C04A18;
+  --primary-light: #FFF0EB;
+  --sidebar-w: 220px;
+  --header-h: 56px;
+  --nav-h: 60px;
+  --radius: 10px;
+  --bg: #f5f5f0;
+  --bg2: #ffffff;
+  --bg3: #f0ede8;
+  --text: #1a1a1a;
+  --text2: #6b6b6b;
+  --text3: #9a9a9a;
+  --border: rgba(0,0,0,0.1);
+  --border2: rgba(0,0,0,0.15);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --bg2: #242424;
+    --bg3: #2e2e2e;
+    --text: #f0f0f0;
+    --text2: #a0a0a0;
+    --text3: #606060;
+    --border: rgba(255,255,255,0.1);
+    --border2: rgba(255,255,255,0.15);
+    --primary-light: #3a1a0a;
+  }
+}
+body {
+  font-family: -apple-system, 'Noto Sans KR', BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+}
+#app { display: flex; height: 100vh; overflow: hidden; }
+
+/* SIDEBAR */
+#sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg2);
+  border-right: 0.5px solid var(--border);
+  display: flex; flex-direction: column;
+  flex-shrink: 0;
+}
+.sidebar-logo {
+  height: var(--header-h);
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 18px;
+  border-bottom: 0.5px solid var(--border);
+}
+.logo-icon {
+  width: 30px; height: 30px;
+  background: var(--primary);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.logo-text { font-size: 15px; font-weight: 500; }
+.logo-sub { font-size: 11px; color: var(--text2); }
+.nav-section { padding: 10px 0; flex: 1; overflow-y: auto; }
+.nav-label { font-size: 10px; color: var(--text3); padding: 8px 18px 4px; letter-spacing: .8px; text-transform: uppercase; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 18px; cursor: pointer;
+  color: var(--text2); font-size: 13.5px;
+  transition: all .15s; position: relative;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--primary-light); color: var(--primary); font-weight: 500; }
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: var(--primary); border-radius: 0 2px 2px 0;
+}
+.nav-item i { font-size: 17px; width: 20px; text-align: center; }
+.nav-badge {
+  margin-left: auto; background: var(--primary); color: #fff;
+  font-size: 10px; padding: 1px 6px; border-radius: 10px; font-weight: 500;
+}
+.sidebar-footer {
+  padding: 12px 18px; border-top: 0.5px solid var(--border);
+  font-size: 12px; color: var(--text2);
+}
+
+/* MAIN */
+#main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+#topbar {
+  height: var(--header-h);
+  background: var(--bg2);
+  border-bottom: 0.5px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 20px; flex-shrink: 0;
+}
+#topbar h1 { font-size: 16px; font-weight: 500; flex: 1; }
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
+.btn-icon {
+  width: 34px; height: 34px;
+  border: 0.5px solid var(--border2); border-radius: 8px;
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text2); font-size: 16px; transition: all .15s;
+}
+.btn-icon:hover { background: var(--bg3); color: var(--text); }
+.btn-primary {
+  height: 34px; padding: 0 14px;
+  background: var(--primary); color: #fff;
+  border: none; border-radius: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px; transition: all .15s;
+}
+.btn-primary:hover { background: var(--primary-dark); }
+#content { flex: 1; overflow-y: auto; padding: 20px; }
+
+/* MOBILE */
+#mobile-nav {
+  display: none; position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: var(--nav-h);
+  background: var(--bg2);
+  border-top: 0.5px solid var(--border);
+  z-index: 200;
+}
+.mob-nav-items { display: flex; height: 100%; }
+.mob-nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 3px; cursor: pointer;
+  color: var(--text3); font-size: 10px; font-weight: 500;
+  transition: color .15s; position: relative;
+}
+.mob-nav-item i { font-size: 20px; }
+.mob-nav-item.active { color: var(--primary); }
+.mob-nav-item .mob-badge {
+  position: absolute; top: 8px; right: 50%;
+  transform: translateX(8px);
+  width: 8px; height: 8px;
+  background: var(--primary); border-radius: 50%;
+}
+#mobile-header {
+  display: none; height: var(--header-h);
+  background: var(--bg2); border-bottom: 0.5px solid var(--border);
+  align-items: center; padding: 0 16px; gap: 12px;
+  flex-shrink: 0; position: sticky; top: 0; z-index: 150;
+}
+#mobile-header h2 { flex: 1; font-size: 15px; font-weight: 500; }
+
+@media (max-width: 700px) {
+  #sidebar { display: none; }
+  #mobile-nav { display: flex; }
+  #mobile-header { display: flex; }
+  #topbar { display: none; }
+  #content { padding: 12px 12px calc(var(--nav-h) + 12px); }
+  .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .stat-value { font-size: 20px !important; }
+  .grid-2 { grid-template-columns: 1fr !important; }
+  .form-row { grid-template-columns: 1fr !important; }
+}
+
+/* CARDS */
+.card {
+  background: var(--bg2); border: 0.5px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+}
+.card-title {
+  font-size: 13px; font-weight: 500; color: var(--text2);
+  margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
+}
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card {
+  background: var(--bg2); border: 0.5px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+}
+.stat-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+.stat-value { font-size: 24px; font-weight: 500; line-height: 1; }
+.stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.stat-up { color: #2e7d32; }
+.stat-down { color: #c62828; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* TABLE */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 8px 12px; color: var(--text2); font-weight: 500; font-size: 12px; border-bottom: 0.5px solid var(--border); background: var(--bg3); }
+td { padding: 10px 12px; border-bottom: 0.5px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg3); }
+
+/* BADGES */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; }
+.badge-green { background: #e8f5e9; color: #2e7d32; }
+.badge-amber { background: #fff8e1; color: #e65100; }
+.badge-red { background: #ffebee; color: #c62828; }
+.badge-blue { background: #e3f2fd; color: #1565c0; }
+.badge-gray { background: var(--bg3); color: var(--text2); }
+@media (prefers-color-scheme: dark) {
+  .badge-green { background: #1b5e20; color: #a5d6a7; }
+  .badge-amber { background: #4e2d00; color: #ffcc80; }
+  .badge-red { background: #4e1c1c; color: #ef9a9a; }
+  .badge-blue { background: #0d3a6e; color: #90caf9; }
+}
+
+/* FORM */
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+.form-input {
+  width: 100%; padding: 8px 10px;
+  border: 0.5px solid var(--border2); border-radius: 8px;
+  background: var(--bg2); color: var(--text); font-size: 13px; transition: border-color .15s;
+}
+.form-input:focus { outline: none; border-color: var(--primary); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* TABS */
+.tabs { display: flex; gap: 4px; border-bottom: 0.5px solid var(--border); margin-bottom: 16px; }
+.tab { padding: 8px 16px; cursor: pointer; font-size: 13px; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -0.5px; transition: all .15s; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 500; }
+
+/* AI CHAT */
+.ai-avatar { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; font-weight: 500; }
+.ai-bubble { background: var(--bg3); border-radius: 0 10px 10px 10px; padding: 10px 12px; font-size: 13px; line-height: 1.6; max-width: 90%; }
+.user-bubble { background: var(--primary-light); border-radius: 10px 0 10px 10px; padding: 10px 12px; font-size: 13px; color: var(--primary-dark); max-width: 90%; }
+.typing { display: flex; gap: 4px; padding: 4px 0; }
+.typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); animation: bounce .8s infinite; }
+.typing span:nth-child(2) { animation-delay: .15s; }
+.typing span:nth-child(3) { animation-delay: .3s; }
+@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+
+/* MISC */
+.search-bar { display: flex; align-items: center; gap: 8px; background: var(--bg3); border: 0.5px solid var(--border); border-radius: 8px; padding: 0 12px; height: 34px; margin-bottom: 16px; }
+.search-bar i { color: var(--text3); font-size: 15px; }
+.search-bar input { border: none; background: transparent; flex: 1; font-size: 13px; color: var(--text); }
+.search-bar input:focus { outline: none; }
+.chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 60px; }
+.chart-bar { flex: 1; background: var(--primary); border-radius: 3px 3px 0 0; opacity: .75; transition: opacity .2s; }
+.chart-bar:hover { opacity: 1; }
+.chart-bar.dim { background: var(--border2); opacity: 1; }
+.chart-labels { display: flex; gap: 4px; margin-top: 4px; }
+.chart-label { flex: 1; font-size: 9px; color: var(--text3); text-align: center; }
+.progress { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.progress-bar { height: 100%; background: var(--primary); border-radius: 3px; transition: width .3s; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.section-title { font-size: 15px; font-weight: 500; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 500; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--bg2); border-radius: 14px; padding: 20px; width: 90%; max-width: 460px; max-height: 85vh; overflow-y: auto; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.modal-title { font-size: 15px; font-weight: 500; }
+.modal-close { cursor: pointer; color: var(--text2); font-size: 20px; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🏍</div>
+      <div>
+        <div class="logo-text">MotoERP</div>
+        <div class="logo-sub">오토바이 매장 관리</div>
+      </div>
+    </div>
+    <nav class="nav-section">
+      <div class="nav-label">메인</div>
+      <div class="nav-item active" onclick="goto('dashboard')"><i class="ti ti-layout-dashboard"></i> 대시보드</div>
+      <div class="nav-label">판매</div>
+      <div class="nav-item" onclick="goto('sales')"><i class="ti ti-receipt"></i> 판매 관리<span class="nav-badge">3</span></div>
+      <div class="nav-item" onclick="goto('customers')"><i class="ti ti-users"></i> 고객 관리</div>
+      <div class="nav-label">재고</div>
+      <div class="nav-item" onclick="goto('inventory')"><i class="ti ti-package"></i> 재고 관리<span class="nav-badge">5</span></div>
+      <div class="nav-item" onclick="goto('parts')"><i class="ti ti-tool"></i> 부품 관리</div>
+      <div class="nav-label">서비스</div>
+      <div class="nav-item" onclick="goto('repair')"><i class="ti ti-settings"></i> 수리 접수</div>
+      <div class="nav-label">경영</div>
+      <div class="nav-item" onclick="goto('finance')"><i class="ti ti-chart-bar"></i> 매출 분석</div>
+      <div class="nav-item" onclick="goto('ai')"><i class="ti ti-robot"></i> AI 어시스턴트</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="font-weight:500;margin-bottom:2px">강남 모터스</div>
+      <div>관리자 • 김철수</div>
+    </div>
+  </aside>
+
+  <div id="main">
+    <header id="topbar">
+      <h1 id="page-title">대시보드</h1>
+      <div class="topbar-actions">
+        <button class="btn-icon" onclick="openNotif()"><i class="ti ti-bell"></i></button>
+        <button class="btn-icon"><i class="ti ti-search"></i></button>
+        <button class="btn-primary" onclick="topAction()"><i class="ti ti-plus"></i> 새로 추가</button>
+      </div>
+    </header>
+    <header id="mobile-header">
+      <div class="logo-icon" style="width:28px;height:28px;font-size:14px">🏍</div>
+      <h2 id="mob-page-title">대시보드</h2>
+      <button class="btn-icon" onclick="openNotif()"><i class="ti ti-bell"></i></button>
+    </header>
+    <main id="content"></main>
+  </div>
+</div>
+
+<nav id="mobile-nav">
+  <div class="mob-nav-items">
+    <div class="mob-nav-item active" id="mob-dashboard" onclick="goto('dashboard')"><i class="ti ti-layout-dashboard"></i> 대시보드</div>
+    <div class="mob-nav-item" id="mob-sales" onclick="goto('sales')"><i class="ti ti-receipt"></i> 판매<span class="mob-badge"></span></div>
+    <div class="mob-nav-item" id="mob-inventory" onclick="goto('inventory')"><i class="ti ti-package"></i> 재고<span class="mob-badge"></span></div>
+    <div class="mob-nav-item" id="mob-repair" onclick="goto('repair')"><i class="ti ti-settings"></i> 수리</div>
+    <div class="mob-nav-item" id="mob-ai" onclick="goto('ai')"><i class="ti ti-robot"></i> AI</div>
+  </div>
+</nav>
+
+<div class="modal-overlay" id="modal"><div class="modal" id="modal-content"></div></div>
+
+<script>
+const state = {
+  page: 'dashboard',
+  sales: [
+    { id:'S001', date:'2025-05-27', customer:'김민수', model:'혼다 CB500F', price:7200000, status:'완료' },
+    { id:'S002', date:'2025-05-26', customer:'이지연', model:'야마하 MT-07', price:9800000, status:'계약중' },
+    { id:'S003', date:'2025-05-25', customer:'박상훈', model:'BMW G310R', price:6500000, status:'입금대기' },
+    { id:'S004', date:'2025-05-24', customer:'최예진', model:'가와사키 Z400', price:6800000, status:'완료' },
+    { id:'S005', date:'2025-05-23', customer:'정도현', model:'스즈키 SV650', price:8100000, status:'완료' },
+  ],
+  inventory: [
+    { id:'M001', model:'혼다 CB500F', year:2025, color:'매트블랙', stock:3, price:7200000, alert:false },
+    { id:'M002', model:'야마하 MT-07', year:2025, color:'시아닌 블루', stock:1, price:9800000, alert:true },
+    { id:'M003', model:'BMW G310R', year:2024, color:'레이싱 레드', stock:0, price:6500000, alert:true },
+    { id:'M004', model:'가와사키 Z400', year:2025, color:'메탈릭 그레이', stock:4, price:6800000, alert:false },
+    { id:'M005', model:'스즈키 SV650', year:2025, color:'글래스 오렌지', stock:2, price:8100000, alert:false },
+    { id:'M006', model:'두카티 몬스터', year:2024, color:'아이보리', stock:1, price:15900000, alert:true },
+  ],
+  customers: [
+    { id:'C001', name:'김민수', phone:'010-1234-5678', email:'kim@email.com', purchases:2, lastVisit:'2025-05-27', grade:'VIP' },
+    { id:'C002', name:'이지연', phone:'010-2345-6789', email:'lee@email.com', purchases:1, lastVisit:'2025-05-26', grade:'일반' },
+    { id:'C003', name:'박상훈', phone:'010-3456-7890', email:'park@email.com', purchases:3, lastVisit:'2025-05-25', grade:'VIP' },
+    { id:'C004', name:'최예진', phone:'010-4567-8901', email:'choi@email.com', purchases:1, lastVisit:'2025-05-24', grade:'일반' },
+  ],
+  repairs: [
+    { id:'R001', customer:'김민수', model:'혼다 CB500F', issue:'엔진 오일 교환', status:'완료', date:'2025-05-27', mechanic:'이기술' },
+    { id:'R002', customer:'이지연', model:'야마하 MT-07', issue:'타이어 교체', status:'작업중', date:'2025-05-27', mechanic:'박수리' },
+    { id:'R003', customer:'정도현', model:'스즈키 SV650', issue:'브레이크 점검', status:'대기', date:'2025-05-28', mechanic:'미배정' },
+  ],
+  aiMessages: [
+    { role:'ai', text:'안녕하세요! 저는 MotoERP AI 어시스턴트입니다. 매출 분석, 재고 확인, 고객 정보 등 무엇이든 물어보세요! 🏍️' }
+  ]
+};
+
+function goto(page) {
+  state.page = page;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const navEl = document.querySelector(`.nav-item[onclick="goto('${page}')"]`);
+  if (navEl) navEl.classList.add('active');
+  document.querySelectorAll('.mob-nav-item').forEach(el => el.classList.remove('active'));
+  const mobEl = document.getElementById('mob-'+page);
+  if (mobEl) mobEl.classList.add('active');
+  const titles = { dashboard:'대시보드', sales:'판매 관리', customers:'고객 관리', inventory:'재고 관리', parts:'부품 관리', repair:'수리 접수', finance:'매출 분석', ai:'AI 어시스턴트' };
+  document.getElementById('page-title').textContent = titles[page] || page;
+  document.getElementById('mob-page-title').textContent = titles[page] || page;
+  render();
+}
+
+function render() {
+  const c = document.getElementById('content');
+  const pages = { dashboard, sales, customers, inventory, repair, finance, ai, parts };
+  c.innerHTML = (pages[state.page] || (() => '<div style="text-align:center;padding:40px;color:#999"><i class="ti ti-construction" style="font-size:40px;display:block;margin-bottom:12px"></i>준비 중</div>'))();
+  if (state.page === 'ai') { const el = document.getElementById('ai-messages'); if(el) el.scrollTop = el.scrollHeight; }
+}
+
+function dashboard() {
+  const totalRevenue = state.sales.filter(s=>s.status==='완료').reduce((a,b)=>a+b.price,0);
+  return `
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">이번 달 매출</div><div class="stat-value">${(totalRevenue/10000).toFixed(0)}<small style="font-size:14px">만원</small></div><div class="stat-sub stat-up">↑ 12% 지난달 대비</div></div>
+    <div class="stat-card"><div class="stat-label">판매 건수</div><div class="stat-value">${state.sales.length}</div><div class="stat-sub stat-up">↑ 3건 지난달 대비</div></div>
+    <div class="stat-card"><div class="stat-label">재고 알림</div><div class="stat-value" style="color:var(--primary)">${state.inventory.filter(i=>i.alert).length}</div><div class="stat-sub stat-down">긴급 보충 필요</div></div>
+    <div class="stat-card"><div class="stat-label">수리 진행중</div><div class="stat-value">${state.repairs.filter(r=>r.status!=='완료').length}</div><div class="stat-sub">오늘 기준</div></div>
+  </div>
+  <div class="grid-2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-title">월별 매출 추이 <span style="font-size:11px;color:var(--text3)">2025년</span></div>
+      <div class="chart-bars">${[55,70,45,80,65,78,90,60,75,88,70,95].map((v,i)=>`<div class="chart-bar${i<4?' dim':''}" style="height:${v}%"></div>`).join('')}</div>
+      <div class="chart-labels">${['1','2','3','4','5','6','7','8','9','10','11','12'].map(m=>`<div class="chart-label">${m}월</div>`).join('')}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">최근 판매</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${state.sales.slice(0,4).map(s=>`
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:32px;height:32px;border-radius:8px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">🏍</div>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.model}</div><div style="font-size:11px;color:var(--text2)">${s.customer} • ${s.date}</div></div>
+          <span class="badge ${s.status==='완료'?'badge-green':s.status==='계약중'?'badge-blue':'badge-amber'}">${s.status}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">재고 현황 요약</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${state.inventory.slice(0,4).map(m=>`
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>${m.model}</span><span style="font-weight:500">${m.stock}대</span></div>
+          <div class="progress"><div class="progress-bar" style="width:${Math.min(m.stock/5*100,100)}%;${m.stock===0?'background:#c62828':''}"></div></div>
+        </div>
+        ${m.alert?`<span class="badge badge-red">부족</span>`:''}
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function sales() {
+  return `
+  <div class="search-bar"><i class="ti ti-search"></i><input placeholder="고객명, 모델 검색..."></div>
+  <div class="card">
+    <div class="section-header"><span class="section-title">판매 목록</span><button class="btn-primary" onclick="openSaleModal()"><i class="ti ti-plus"></i> 신규 판매</button></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>판매번호</th><th>날짜</th><th>고객명</th><th>모델</th><th>금액</th><th>상태</th></tr></thead>
+      <tbody>${state.sales.map(s=>`<tr><td style="font-family:monospace;font-size:12px">${s.id}</td><td>${s.date}</td><td>${s.customer}</td><td>${s.model}</td><td>${s.price.toLocaleString()}원</td><td><span class="badge ${s.status==='완료'?'badge-green':s.status==='계약중'?'badge-blue':'badge-amber'}">${s.status}</span></td></tr>`).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function customers() {
+  return `
+  <div class="search-bar"><i class="ti ti-search"></i><input placeholder="고객 검색..."></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
+    ${state.customers.map(c=>`
+    <div class="card" style="cursor:pointer" onclick="openCustomer('${c.id}')">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:40px;height:40px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;color:var(--primary);flex-shrink:0">${c.name[0]}</div>
+        <div><div style="font-weight:500">${c.name}</div><div style="font-size:12px;color:var(--text2)">${c.phone}</div></div>
+        <span class="badge ${c.grade==='VIP'?'badge-amber':'badge-gray'}" style="margin-left:auto">${c.grade}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+        <div style="color:var(--text2)">구매 횟수</div><div style="text-align:right;font-weight:500">${c.purchases}회</div>
+        <div style="color:var(--text2)">최근 방문</div><div style="text-align:right">${c.lastVisit}</div>
+      </div>
+    </div>`).join('')}
+    <div class="card" style="border-style:dashed;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:120px;gap:8px;color:var(--text3)" onclick="openAddCustomer()">
+      <i class="ti ti-user-plus" style="font-size:28px"></i><span style="font-size:13px">새 고객 추가</span>
+    </div>
+  </div>`;
+}
+
+function inventory() {
+  return `
+  <div class="tabs"><div class="tab active">차량 재고</div><div class="tab" onclick="goto('parts')">부품/소모품</div></div>
+  <div class="card">
+    <div class="section-header"><span class="section-title">차량 재고 현황</span><button class="btn-primary" onclick="openAddStock()"><i class="ti ti-plus"></i> 입고 등록</button></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>ID</th><th>모델명</th><th>연식</th><th>색상</th><th>재고</th><th>단가</th><th>상태</th></tr></thead>
+      <tbody>${state.inventory.map(m=>`<tr><td style="font-family:monospace;font-size:12px">${m.id}</td><td style="font-weight:500">${m.model}</td><td>${m.year}</td><td>${m.color}</td><td><strong ${m.stock===0?'style="color:#c62828"':''}>${m.stock}대</strong></td><td>${(m.price/10000).toFixed(0)}만원</td><td><span class="badge ${m.stock===0?'badge-red':m.stock===1?'badge-amber':'badge-green'}">${m.stock===0?'품절':m.stock===1?'부족':'정상'}</span></td></tr>`).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function parts() {
+  const partsData = [
+    {id:'P001',name:'엔진 오일 (10W-40)',category:'소모품',stock:48,unit:'L',minStock:10,price:8000},
+    {id:'P002',name:'타이어 (전방 120/70)',category:'타이어',stock:6,unit:'개',minStock:4,price:120000},
+    {id:'P003',name:'브레이크 패드',category:'제동',stock:12,unit:'셋트',minStock:5,price:45000},
+    {id:'P004',name:'에어 필터',category:'소모품',stock:20,unit:'개',minStock:8,price:18000},
+    {id:'P005',name:'스파크 플러그',category:'소모품',stock:35,unit:'개',minStock:10,price:7000},
+  ];
+  return `
+  <div class="tabs"><div class="tab" onclick="goto('inventory')">차량 재고</div><div class="tab active">부품/소모품</div></div>
+  <div class="card">
+    <div class="section-header"><span class="section-title">부품 재고</span><button class="btn-primary"><i class="ti ti-plus"></i> 부품 입고</button></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>품번</th><th>품명</th><th>카테고리</th><th>재고</th><th>최소재고</th><th>단가</th><th>상태</th></tr></thead>
+      <tbody>${partsData.map(p=>`<tr><td style="font-family:monospace;font-size:12px">${p.id}</td><td>${p.name}</td><td><span class="badge badge-blue">${p.category}</span></td><td>${p.stock}${p.unit}</td><td>${p.minStock}${p.unit}</td><td>${p.price.toLocaleString()}원</td><td><span class="badge ${p.stock<p.minStock?'badge-red':'badge-green'}">${p.stock<p.minStock?'발주필요':'정상'}</span></td></tr>`).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function repair() {
+  return `
+  <div class="stats-grid" style="margin-bottom:16px">
+    <div class="stat-card"><div class="stat-label">대기</div><div class="stat-value">${state.repairs.filter(r=>r.status==='대기').length}</div></div>
+    <div class="stat-card"><div class="stat-label">작업중</div><div class="stat-value" style="color:var(--primary)">${state.repairs.filter(r=>r.status==='작업중').length}</div></div>
+    <div class="stat-card"><div class="stat-label">완료</div><div class="stat-value" style="color:#2e7d32">${state.repairs.filter(r=>r.status==='완료').length}</div></div>
+  </div>
+  <div class="card">
+    <div class="section-header"><span class="section-title">수리 접수 현황</span><button class="btn-primary" onclick="openRepairModal()"><i class="ti ti-plus"></i> 수리 접수</button></div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      ${state.repairs.map(r=>`
+      <div style="border:0.5px solid var(--border);border-radius:10px;padding:14px;${r.status==='작업중'?'border-left:3px solid var(--primary)':''}">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-weight:500">${r.id}</span>
+          <span class="badge ${r.status==='완료'?'badge-green':r.status==='작업중'?'badge-blue':'badge-amber'}">${r.status}</span>
+          <span style="margin-left:auto;font-size:12px;color:var(--text2)">${r.date}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px">
+          <div><span style="color:var(--text2)">고객: </span>${r.customer}</div>
+          <div><span style="color:var(--text2)">담당: </span>${r.mechanic}</div>
+          <div style="grid-column:1/-1"><span style="color:var(--text2)">차량: </span>${r.model}</div>
+          <div style="grid-column:1/-1"><span style="color:var(--text2)">내용: </span>${r.issue}</div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function finance() {
+  return `
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">연간 매출 (예상)</div><div class="stat-value">8.3<small style="font-size:14px">억원</small></div><div class="stat-sub stat-up">↑ 18%</div></div>
+    <div class="stat-card"><div class="stat-label">이번달 매출</div><div class="stat-value">7,100<small style="font-size:12px">만</small></div><div class="stat-sub stat-up">↑ 12%</div></div>
+    <div class="stat-card"><div class="stat-label">평균 객단가</div><div class="stat-value">820<small style="font-size:12px">만</small></div></div>
+    <div class="stat-card"><div class="stat-label">순이익률</div><div class="stat-value">23<small style="font-size:14px">%</small></div><div class="stat-sub stat-up">↑ 3%p</div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">월별 매출 현황</div>
+    <div class="chart-bars" style="height:100px">${[42,58,35,67,71,80,68,90,55,78,65,88].map((v,i)=>`<div class="chart-bar${i<4?' dim':''}" style="height:${v}%"></div>`).join('')}</div>
+    <div class="chart-labels">${['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'].map(m=>`<div class="chart-label">${m}</div>`).join('')}</div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">브랜드별 판매 비중</div>
+      ${[['혼다',35,'badge-blue'],['야마하',28,'badge-green'],['BMW',18,'badge-amber'],['기타',19,'badge-gray']].map(([b,p,cls])=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>${b}</span><span class="badge ${cls}">${p}%</span></div><div class="progress"><div class="progress-bar" style="width:${p}%"></div></div></div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="card-title">수익 구조</div>
+      ${[['차량 판매',65],['부품/용품',20],['수리 서비스',12],['기타',3]].map(([cat,pct])=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>${cat}</span><span>${pct}%</span></div><div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function ai() {
+  return `
+  <div class="card" style="display:flex;flex-direction:column;gap:0;min-height:500px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:0.5px solid var(--border)">
+      <span style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500"><i class="ti ti-robot" style="color:var(--primary);font-size:18px"></i> AI 경영 어시스턴트</span>
+      <span style="font-size:11px;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px">Claude 기반</span>
+    </div>
+    <div id="ai-messages" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;min-height:300px;padding:4px 0">
+      ${state.aiMessages.map(m=>m.role==='ai'
+        ?`<div style="display:flex;gap:8px;align-items:flex-start"><div class="ai-avatar">AI</div><div class="ai-bubble">${m.text.replace(/\n/g,'<br>')}</div></div>`
+        :`<div style="display:flex;gap:8px;align-items:flex-start;flex-direction:row-reverse"><div class="user-bubble">${m.text}</div></div>`
+      ).join('')}
+    </div>
+    <div style="border-top:0.5px solid var(--border);padding-top:12px;margin-top:12px">
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+        ${['📊 이번달 매출 요약','📦 재고 부족 현황','🔧 수리 현황','💡 판매 전략 조언'].map(q=>`<button onclick="quickAsk('${q}')" style="font-size:11px;padding:5px 10px;border:0.5px solid var(--border2);border-radius:16px;background:transparent;cursor:pointer;color:var(--text2);transition:all .15s">${q}</button>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px">
+        <input id="ai-input" placeholder="매장 관련 무엇이든 물어보세요..." style="flex:1;padding:9px 14px;border:0.5px solid var(--border2);border-radius:20px;font-size:13px;background:var(--bg2);color:var(--text)" onkeydown="if(event.key==='Enter')sendAI()">
+        <button onclick="sendAI()" style="width:38px;height:38px;border-radius:50%;background:var(--primary);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px"><i class="ti ti-send"></i></button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function quickAsk(q) { document.getElementById('ai-input').value = q; sendAI(); }
+
+async function sendAI() {
+  const input = document.getElementById('ai-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  state.aiMessages.push({ role:'user', text });
+  const msgs = document.getElementById('ai-messages');
+  msgs.innerHTML += `<div style="display:flex;gap:8px;align-items:flex-start;flex-direction:row-reverse"><div class="user-bubble">${text}</div></div>`;
+  const typingEl = document.createElement('div');
+  typingEl.style.cssText = 'display:flex;gap:8px;align-items:flex-start';
+  typingEl.innerHTML = `<div class="ai-avatar">AI</div><div class="ai-bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(typingEl);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  const totalRevenue = state.sales.filter(s=>s.status==='완료').reduce((a,b)=>a+b.price,0);
+  const systemPrompt = `당신은 오토바이 매장 "강남 모터스"의 AI 경영 어시스턴트입니다. 현재 ERP 데이터: 이번달 매출 ${(totalRevenue/10000).toFixed(0)}만원 (${state.sales.length}건), 재고 알림 ${state.inventory.filter(i=>i.alert).length}개, 진행중 수리 ${state.repairs.filter(r=>r.status!=='완료').length}건, VIP 고객 ${state.customers.filter(c=>c.grade==='VIP').length}명. 친절하고 전문적으로 한국어로 답변하세요.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:1000,
+        system: systemPrompt,
+        messages: state.aiMessages.map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text}))
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || '응답을 받지 못했습니다.';
+    state.aiMessages.push({role:'ai',text:reply});
+    typingEl.querySelector('.ai-bubble').innerHTML = reply.replace(/\n/g,'<br>');
+  } catch(e) {
+    typingEl.querySelector('.ai-bubble').innerHTML = '네트워크 오류가 발생했습니다.';
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function openModal(html) { document.getElementById('modal-content').innerHTML = html; document.getElementById('modal').classList.add('open'); }
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.addEventListener('click', e => { if(e.target.id==='modal') closeModal(); });
+
+function openSaleModal() {
+  openModal(`<div class="modal-header"><span class="modal-title">신규 판매 등록</span><span class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></span></div>
+  <div class="form-group"><label class="form-label">고객명</label><input class="form-input" placeholder="고객 이름"></div>
+  <div class="form-group"><label class="form-label">차량 모델</label><select class="form-input">${state.inventory.map(m=>`<option>${m.model}</option>`).join('')}</select></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">판매가</label><input class="form-input" type="number" placeholder="원"></div><div class="form-group"><label class="form-label">판매일자</label><input class="form-input" type="date" value="2025-05-27"></div></div>
+  <div style="display:flex;gap:8px;margin-top:4px"><button class="btn-primary" style="flex:1" onclick="closeModal()">등록하기</button><button onclick="closeModal()" style="flex:1;padding:0 14px;height:34px;border:0.5px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;font-size:13px;color:var(--text)">취소</button></div>`);
+}
+
+function openRepairModal() {
+  openModal(`<div class="modal-header"><span class="modal-title">수리 접수</span><span class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></span></div>
+  <div class="form-group"><label class="form-label">고객명</label><input class="form-input" placeholder="고객 이름"></div>
+  <div class="form-group"><label class="form-label">차량 모델</label><input class="form-input" placeholder="차량 모델명"></div>
+  <div class="form-group"><label class="form-label">수리 내용</label><textarea class="form-input" rows="3" placeholder="수리 내용 및 증상"></textarea></div>
+  <div class="form-group"><label class="form-label">담당 기술자</label><select class="form-input"><option>이기술</option><option>박수리</option><option>미배정</option></select></div>
+  <div style="display:flex;gap:8px;margin-top:4px"><button class="btn-primary" style="flex:1" onclick="closeModal()">접수하기</button><button onclick="closeModal()" style="flex:1;padding:0 14px;height:34px;border:0.5px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;font-size:13px;color:var(--text)">취소</button></div>`);
+}
+
+function openAddCustomer() {
+  openModal(`<div class="modal-header"><span class="modal-title">새 고객 추가</span><span class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></span></div>
+  <div class="form-group"><label class="form-label">이름</label><input class="form-input" placeholder="고객 이름"></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">전화번호</label><input class="form-input" placeholder="010-0000-0000"></div><div class="form-group"><label class="form-label">등급</label><select class="form-input"><option>일반</option><option>VIP</option></select></div></div>
+  <div class="form-group"><label class="form-label">이메일</label><input class="form-input" type="email" placeholder="email@example.com"></div>
+  <div style="display:flex;gap:8px;margin-top:4px"><button class="btn-primary" style="flex:1" onclick="closeModal()">추가하기</button><button onclick="closeModal()" style="flex:1;padding:0 14px;height:34px;border:0.5px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;font-size:13px;color:var(--text)">취소</button></div>`);
+}
+
+function openAddStock() {
+  openModal(`<div class="modal-header"><span class="modal-title">입고 등록</span><span class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></span></div>
+  <div class="form-group"><label class="form-label">차량 모델</label><select class="form-input">${state.inventory.map(m=>`<option>${m.model}</option>`).join('')}</select></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">입고 수량</label><input class="form-input" type="number" placeholder="대"></div><div class="form-group"><label class="form-label">입고일</label><input class="form-input" type="date" value="2025-05-27"></div></div>
+  <div style="display:flex;gap:8px;margin-top:4px"><button class="btn-primary" style="flex:1" onclick="closeModal()">등록하기</button><button onclick="closeModal()" style="flex:1;padding:0 14px;height:34px;border:0.5px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;font-size:13px;color:var(--text)">취소</button></div>`);
+}
+
+function openCustomer(id) {
+  const c = state.customers.find(x=>x.id===id); if(!c) return;
+  openModal(`<div class="modal-header"><span class="modal-title">고객 상세</span><span class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></span></div>
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:0.5px solid var(--border)">
+    <div style="width:52px;height:52px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:500;color:var(--primary)">${c.name[0]}</div>
+    <div><div style="font-size:16px;font-weight:500">${c.name}</div><span class="badge ${c.grade==='VIP'?'badge-amber':'badge-gray'}">${c.grade}</span></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+    <div style="display:flex"><span style="color:var(--text2);width:80px">전화</span><span>${c.phone}</span></div>
+    <div style="display:flex"><span style="color:var(--text2);width:80px">이메일</span><span>${c.email}</span></div>
+    <div style="display:flex"><span style="color:var(--text2);width:80px">구매횟수</span><span>${c.purchases}회</span></div>
+    <div style="display:flex"><span style="color:var(--text2);width:80px">최근방문</span><span>${c.lastVisit}</span></div>
+  </div>
+  <div style="margin-top:16px;display:flex;gap:8px"><button class="btn-primary" style="flex:1">📞 연락하기</button><button onclick="closeModal()" style="flex:1;padding:0 14px;height:34px;border:0.5px solid var(--border2);border-radius:8px;background:transparent;cursor:pointer;font-size:13px;color:var(--text)">닫기</button></div>`);
+}
+
+function openNotif() {
+  openModal(`<div class="modal-header"><span class="modal-title">알림</span><span class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></span></div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    ${[['badge-red','재고 긴급','BMW G310R 재고 소진. 즉시 발주 필요','10분 전'],['badge-amber','재고 부족','야마하 MT-07 재고 1대 남음','1시간 전'],['badge-blue','수리 완료','R001 이기술 기술자 수리 완료','2시간 전'],['badge-green','신규 계약','이지연 고객 야마하 MT-07 계약','오늘 09:30']].map(([cls,title,desc,time])=>`
+    <div style="padding:12px;border:0.5px solid var(--border);border-radius:8px;display:flex;gap:10px">
+      <span class="badge ${cls}" style="align-self:flex-start;margin-top:2px;flex-shrink:0">${title}</span>
+      <div style="flex:1"><div style="font-size:13px">${desc}</div><div style="font-size:11px;color:var(--text3);margin-top:2px">${time}</div></div>
+    </div>`).join('')}
+  </div>`);
+}
+
+function topAction() {
+  const actions = { sales:openSaleModal, customers:openAddCustomer, inventory:openAddStock, repair:openRepairModal };
+  (actions[state.page] || openSaleModal)();
+}
+
+render();
+</script>
+</body>
+</html>
