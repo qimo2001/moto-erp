@@ -344,7 +344,6 @@ function rowsFromSnake(rows){ return rows.map(fromSnake); }
 // ── 초기 데이터 로드 ──
 let _dbReady=false;
 async function loadAllFromDB(){
-  if(!db()){console.warn('DB not ready');return;}
   showLoading(true);
   try{
     console.log('📡 DB 로드 시작...');
