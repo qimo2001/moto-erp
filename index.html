@@ -157,6 +157,7 @@ tr:hover td{background:var(--bg3)}
 .pbn{width:32px;height:32px;border:1px solid var(--bd2);border-radius:6px;background:transparent;cursor:pointer;font-size:13px;color:var(--tx2);display:flex;align-items:center;justify-content:center;transition:all .15s}
 .pbn:hover{background:var(--bg3)}.pbn.on{background:#CC0000;color:#fff;border-color:#CC0000;font-weight:700}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -234,6 +235,128 @@ id="mob-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,
 <div class="mo" id="modal" onclick="handleMO(event)"><div class="md" id="mc"></div></div>
 <script>
 // ── 이미지 저장: Cloudinary ──
+
+// ── Supabase DB 설정 ──
+const SB_URL = 'https://zunzruhwhypfiayaiytl.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1bnpydWh3eXBmaWF5YWl5dGwiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0ODQzNTAyOCwiZXhwIjoyMDY0MDExMDI4fQ.9KwPUhs1Re1VoP-1TPcoG8MZwBAzNTq4Uhp9MefK46o';
+let _db = null;
+function db(){
+  if(!_db && window.supabase) _db = window.supabase.createClient(SB_URL, SB_KEY);
+  return _db;
+}
+
+// ── DB 헬퍼 ──
+async function dbLoad(table){ 
+  const {data,error}=await db().from(table).select('*').order('created_at',{ascending:false});
+  if(error){console.error('load',table,error.message);return null;}
+  return data;
+}
+async function dbInsert(table,row){
+  const {error}=await db().from(table).insert(row);
+  if(error){console.error('insert',table,error.message);return false;}
+  return true;
+}
+async function dbUpdate(table,id,row){
+  const {error}=await db().from(table).update(row).eq('id',id);
+  if(error){console.error('update',table,error.message);return false;}
+  return true;
+}
+async function dbDelete(table,id){
+  const {error}=await db().from(table).delete().eq('id',id);
+  if(error){console.error('delete',table,error.message);return false;}
+  return true;
+}
+
+// ── 스네이크케이스 변환 헬퍼 ──
+function toSnake(obj){
+  const map={
+    plateNo:'plate_no',vehicleId:'vehicle_id',startDate:'start_date',endDate:'end_date',
+    dailyRate:'daily_rate',totalFee:'total_fee',payType:'pay_type',outMileage:'out_mileage',
+    inMileage:'in_mileage',deliveryAgency:'delivery_agency',outPhotos:'out_photos',
+    inPhotos:'in_photos',insuranceType:'insurance_type',minAge:'min_age',
+    driverName:'driver_name',driverType:'driver_type',agencyName:'agency_name',
+    driverPhone:'driver_phone',accidentDate:'accident_date',opponentInsurance:'opponent_insurance',
+    faultRatio:'fault_ratio',receiptNo:'receipt_no',estimatedCost:'estimated_cost',
+    insurancePaid:'insurance_paid',insurancePaidAmount:'insurance_paid_amount',
+    customerEstimate:'customer_estimate',totalAmount:'total_amount',approvedAt:'approved_at',
+    receivedAt:'received_at',workDate:'work_date',dueDate:'due_date',
+    createdAt:'created_at_time',lastVisit:'last_visit',minStock:'min_stock',
+    compatible:'compatible',company:'company'
+  };
+  const r={};
+  for(const[k,v]of Object.entries(obj)){
+    const sk=map[k]||k;
+    r[sk]= (v!==undefined&&v!==null)?v:null;
+  }
+  return r;
+}
+function fromSnake(obj){
+  const map={
+    plate_no:'plateNo',vehicle_id:'vehicleId',start_date:'startDate',end_date:'endDate',
+    daily_rate:'dailyRate',total_fee:'totalFee',pay_type:'payType',out_mileage:'outMileage',
+    in_mileage:'inMileage',delivery_agency:'deliveryAgency',out_photos:'outPhotos',
+    in_photos:'inPhotos',insurance_type:'insuranceType',min_age:'minAge',
+    driver_name:'driverName',driver_type:'driverType',agency_name:'agencyName',
+    driver_phone:'driverPhone',accident_date:'accidentDate',opponent_insurance:'opponentInsurance',
+    fault_ratio:'faultRatio',receipt_no:'receiptNo',estimated_cost:'estimatedCost',
+    insurance_paid:'insurancePaid',insurance_paid_amount:'insurancePaidAmount',
+    customer_estimate:'customerEstimate',total_amount:'totalAmount',approved_at:'approvedAt',
+    received_at:'receivedAt',work_date:'workDate',due_date:'dueDate',
+    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',
+  };
+  const r={};
+  for(const[k,v]of Object.entries(obj)){
+    const ck=map[k]||k;
+    r[ck]=v;
+  }
+  return r;
+}
+function rowsFromSnake(rows){ return rows.map(fromSnake); }
+
+// ── 초기 데이터 로드 ──
+let _dbReady=false;
+async function loadAllFromDB(){
+  if(!db()){console.warn('DB not ready');return;}
+  try{
+    showLoading(true);
+    const [cust,sls,rv,rnt,ml,rep,acc,vs,ps,po,wt]=await Promise.all([
+      dbLoad('customers'),dbLoad('sales'),dbLoad('rent_vehicles'),
+      dbLoad('rentals'),dbLoad('maint_logs'),dbLoad('repairs'),
+      dbLoad('accidents'),dbLoad('vehicle_stock'),dbLoad('parts_stock'),
+      dbLoad('purchase_orders'),dbLoad('work_tasks')
+    ]);
+    if(cust&&cust.length) S.customers=rowsFromSnake(cust);
+    if(sls&&sls.length) S.sales=rowsFromSnake(sls);
+    if(rv&&rv.length) S.rentVehicles=rowsFromSnake(rv);
+    if(rnt&&rnt.length) S.rentals=rowsFromSnake(rnt);
+    if(ml&&ml.length) S.maintLogs=rowsFromSnake(ml);
+    if(rep&&rep.length) S.repairs=rowsFromSnake(rep);
+    if(acc&&acc.length) S.accidents=rowsFromSnake(acc);
+    if(vs&&vs.length) S.vehicleStock=rowsFromSnake(vs);
+    if(ps&&ps.length) S.partsStock=rowsFromSnake(ps);
+    if(po&&po.length) S.purchaseOrders=rowsFromSnake(po);
+    if(wt&&wt.length) S.workTasks=rowsFromSnake(wt);
+    _dbReady=true;
+    console.log('✅ DB 로드 완료');
+  }catch(e){
+    console.error('DB 로드 실패:',e);
+  }finally{
+    showLoading(false);
+    updBadges();ren();
+  }
+}
+function showLoading(show){
+  let el=document.getElementById('db-loading');
+  if(!el){
+    el=document.createElement('div');el.id='db-loading';
+    el.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;height:3px;background:linear-gradient(90deg,#CC0000,#ff6666,#CC0000);background-size:200%;animation:dbload 1s linear infinite';
+    document.body.appendChild(el);
+    const st=document.createElement('style');
+    st.textContent='@keyframes dbload{0%{background-position:0%}100%{background-position:200%}}';
+    document.head.appendChild(st);
+  }
+  el.style.display=show?'block':'none';
+}
 // ── Cloudinary 설정 ──
 const CLOUDINARY_CLOUD = 'dp1o5rrcj';
 const CLOUDINARY_PRESET = 'erp_photos';
@@ -1012,7 +1135,7 @@ function openSaleModal(editId){
   if(s){setTimeout(()=>{selPay('sale',s.payType);selSaleType(s.type);},50);}
 }
 function selSaleType(t){window._saleType=t;['차량판매','부품판매'].forEach(x=>{const k=x==='차량판매'?'st-v':'st-p';const el=document.getElementById(k);if(el)el.className='tgb'+(x===t?' on':'');});}
-function saveSale(editId){
+async function saveSale(editId){
   const customer=document.getElementById('s-customer').value;
   const model=document.getElementById('s-model').value;
   const price=parseInt(document.getElementById('s-price').value)||0;
@@ -1020,8 +1143,14 @@ function saveSale(editId){
   if(!customer||!model){alert('고객명과 품목명을 입력하세요.');return;}
   if(!payType){alert('결제 방식을 선택하세요.');return;}
   const obj={date:document.getElementById('s-date').value,customer,phone:document.getElementById('s-phone').value,type:window._saleType||'차량판매',model,qty:parseInt(document.getElementById('s-qty').value)||1,price,payType,status:document.getElementById('s-status').value,memo:document.getElementById('s-memo').value};
-  if(editId){const s=S.sales.find(x=>x.id===editId);if(s)Object.assign(s,obj);}
-  else{S.sales.unshift({id:newId(S.sales,'S'),... obj});}
+  if(editId){
+    const s=S.sales.find(x=>x.id===editId);if(s)Object.assign(s,obj);
+    await dbUpdate('sales',editId,toSnake(obj));
+  }else{
+    const newObj={id:newId(S.sales,'S'),...obj};
+    S.sales.unshift(newObj);
+    await dbInsert('sales',toSnake(newObj));
+  }
   CM();updBadges();ren();
 }
 function openSaleDetail(id){
@@ -1063,11 +1192,17 @@ function openCustModal(editId){
   window._custType=c?c.type:'일반';
 }
 function selCustType(t){window._custType=t;['일반','업체'].forEach(x=>{const k=x==='일반'?'ct-p':'ct-b';const el=document.getElementById(k);if(el)el.className='tgb'+(x===t?' on':'');});const cr=document.getElementById('c-company-row');if(cr)cr.style.display=t==='업체'?'block':'none';}
-function saveCust(editId){
+async function saveCust(editId){
   const name=document.getElementById('c-name').value;if(!name){alert('성함을 입력하세요.');return;}
   const obj={name,phone:document.getElementById('c-phone').value,email:document.getElementById('c-email').value,type:window._custType||'일반',company:document.getElementById('c-company')?.value||'',grade:document.getElementById('c-grade').value,memo:document.getElementById('c-memo').value,visits:editId?S.customers.find(x=>x.id===editId).visits:0,lastVisit:editId?S.customers.find(x=>x.id===editId).lastVisit:'2025-05-28'};
-  if(editId){const c=S.customers.find(x=>x.id===editId);if(c)Object.assign(c,obj);}
-  else S.customers.unshift({id:newId(S.customers,'C'),...obj});
+  if(editId){
+    const c=S.customers.find(x=>x.id===editId);if(c)Object.assign(c,obj);
+    await dbUpdate('customers',editId,toSnake(obj));
+  }else{
+    const newObj={id:newId(S.customers,'C'),...obj};
+    S.customers.unshift(newObj);
+    await dbInsert('customers',toSnake(newObj));
+  }
   CM();ren();
 }
 function openCustDetail(id){
@@ -1108,7 +1243,7 @@ function openRentModal(){
   </div>
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveRent()"><i class="ti ti-logout"></i> 접수 + 즉시 출고</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
 }
-function saveRent(){
+async function saveRent(){
   const customer=document.getElementById('rn-name').value;
   const phone=document.getElementById('rn-phone').value;
   const km=parseInt(document.getElementById('rn-km').value)||0;
@@ -1124,8 +1259,10 @@ function saveRent(){
   const startDate=document.getElementById('rn-start').value;
   const days=openEnd?0:Math.max(0,Math.round((new Date(endDate)-new Date(startDate))/(86400000)));
   const v=S.rentVehicles.find(x=>x.id===vid);
-  S.rentals.unshift({id:newId(S.rentals,'RT'),customer,phone,vehicleId:vid,model:v?v.model:'',plateNo:v?v.plateNo:'',startDate,endDate,days,dailyRate,deposit,totalFee:openEnd?0:days*dailyRate,status:'대여중',paid:false,payType:'',outMileage:km,inMileage:'',deliveryAgency:document.getElementById('rn-agency').value.trim()||'개인',outPhotos:outPhotoUrls,inPhotos:[]});
-  if(v){v.status='대여중';v.mileage=km;}
+  const newRental={id:newId(S.rentals,'RT'),customer,phone,vehicleId:vid,model:v?v.model:'',plateNo:v?v.plateNo:'',startDate,endDate,days,dailyRate,deposit,totalFee:openEnd?0:days*dailyRate,status:'대여중',paid:false,payType:'',outMileage:km,inMileage:'',deliveryAgency:document.getElementById('rn-agency').value.trim()||'개인',outPhotos:outPhotoUrls,inPhotos:[]};
+  S.rentals.unshift(newRental);
+  await dbInsert('rentals',toSnake(newRental));
+  if(v){v.status='대여중';v.mileage=km;await dbUpdate('rent_vehicles',v.id,{status:'대여중',mileage:km});}
   CM();ren();
 }
 
@@ -1137,13 +1274,14 @@ function openRentEditModal(id){
   <div class="fr">${fi('re-end','반납일','','date',r.endDate==='미정'?'':r.endDate)}<div class="fg"><label class="fl">반납일 미정</label><input type="checkbox" ${r.endDate==='미정'?'checked':''} id="re-open" onchange="document.getElementById('re-end').disabled=this.checked"></div></div>
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveRentEdit('${id}')">수정 완료</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
 }
-function saveRentEdit(id){
+async function saveRentEdit(id){
   const r=S.rentals.find(x=>x.id===id);if(!r)return;
   r.customer=document.getElementById('re-customer').value;
   r.phone=document.getElementById('re-phone').value;
   r.deliveryAgency=document.getElementById('re-agency').value||'개인';
   const openEnd=document.getElementById('re-open').checked;
   r.endDate=openEnd?'미정':document.getElementById('re-end').value;
+  await dbUpdate('rentals',id,{customer:r.customer,phone:r.phone,delivery_agency:r.deliveryAgency,end_date:r.endDate});
   CM();ren();
 }
 
@@ -1157,12 +1295,18 @@ function openReturnModal(id){
   <div class="fg"><label class="fl">반납 사진</label>${pPhoto('ret-p',['전면','후면','좌측','우측','계기판'])}</div>
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="processReturn('${id}')"><i class="ti ti-check"></i> 반납 완료</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
 }
-function processReturn(id){
+async function processReturn(id){
   const pay=getPay('ret');if(!pay){alert('결제 방식을 선택하세요.');return;}
   const km=parseInt(document.getElementById('ret-km').value)||0;if(!km){alert('반납 키로수를 입력하세요.');return;}
   const inPhotoUrls=collectPhotoUrls('ret-p',5);
   const r=S.rentals.find(x=>x.id===id);
-  if(r){r.inMileage=km;r.status='반납완료';r.payType=pay;if(pay!=='외상')r.paid=true;r.inPhotos=inPhotoUrls;const v=S.rentVehicles.find(x=>x.id===r.vehicleId);if(v){v.mileage=km;v.status='가용';}}
+  if(r){
+    r.inMileage=km;r.status='반납완료';r.payType=pay;
+    if(pay!=='외상')r.paid=true;r.inPhotos=inPhotoUrls;
+    await dbUpdate('rentals',id,{status:'반납완료',pay_type:pay,paid:pay!=='외상',in_mileage:km,in_photos:inPhotoUrls});
+    const v=S.rentVehicles.find(x=>x.id===r.vehicleId);
+    if(v){v.mileage=km;v.status='가용';await dbUpdate('rent_vehicles',v.id,{status:'가용',mileage:km});}
+  }
   CM();ren();updBadges();
 }
 
@@ -1195,12 +1339,18 @@ function openAddRVehicleModal(editId){
   <div class="fr">${fi('rv-dep','보증금','200000','number',v?v.deposit:'')}${fi('rv-km','현재 주행거리 (km)','','number',v?v.mileage:'')}</div>
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveRVehicle('${editId||''}')"><i class="ti ti-check"></i> ${v?'수정완료':'추가하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
 }
-function saveRVehicle(editId){
+async function saveRVehicle(editId){
   const model=document.getElementById('rv-model').value;const plate=document.getElementById('rv-plate').value;
   if(!model||!plate){alert('차량 모델과 차량번호를 입력하세요.');return;}
   const obj={model,plateNo:plate,year:parseInt(document.getElementById('rv-year').value)||2025,color:document.getElementById('rv-color').value,insurer:document.getElementById('rv-insurer').value,insuranceType:document.getElementById('rv-itype').value,minAge:document.getElementById('rv-age').value,dailyRate:parseInt(document.getElementById('rv-rate').value)||0,deposit:parseInt(document.getElementById('rv-dep').value)||0,mileage:parseInt(document.getElementById('rv-km').value)||0};
-  if(editId){const v=S.rentVehicles.find(x=>x.id===editId);if(v)Object.assign(v,obj);}
-  else S.rentVehicles.push({id:newId(S.rentVehicles,'RV'),status:'가용',...obj});
+  if(editId){
+    const v=S.rentVehicles.find(x=>x.id===editId);if(v)Object.assign(v,obj);
+    await dbUpdate('rent_vehicles',editId,toSnake(obj));
+  }else{
+    const newV={id:newId(S.rentVehicles,'RV'),status:'가용',...obj};
+    S.rentVehicles.push(newV);
+    await dbInsert('rent_vehicles',toSnake(newV));
+  }
   CM();ren();
 }
 
@@ -1231,7 +1381,7 @@ function openMaintModal(preVehicleId,editLogId){
   window._driverType=log&&log.driverType==='배달대행'?'delivery':'personal';
 }
 function selDT(t){window._driverType=t;document.getElementById('dt-p').className='tgb'+(t==='personal'?' on':'');document.getElementById('dt-d').className='tgb'+(t==='delivery'?' on':'');document.getElementById('ag-row').style.display=t==='delivery'?'block':'none';}
-function saveMaint(editId){
+async function saveMaint(editId){
   const vid=document.getElementById('mt-v').value;const date=document.getElementById('mt-date').value;
   const km=parseInt(document.getElementById('mt-km').value)||0;
   const dn=document.getElementById('mt-dn').value.trim();const dp=document.getElementById('mt-dp').value.trim();
@@ -1245,8 +1395,17 @@ function saveMaint(editId){
   const fItems=items.map(i=>({...i,name:i.name==='기타(직접입력)'&&i.customName?i.customName+'(기타)':i.name}));
   const photoUrls=collectPhotoUrls('mt-ph',5);
   const obj={vehicleId:vid,date,mileage:km,items:fItems,cost:parseInt(document.getElementById('mt-cost').value)||0,memo:document.getElementById('mt-memo').value,mechanic:document.getElementById('mt-mec').value,driverName:dn,driverType:dt==='delivery'?'배달대행':'개인',agencyName:ag,driverPhone:dp,photos:photoUrls};
-  if(editId){const l=S.maintLogs.find(x=>x.id===editId);if(l)Object.assign(l,obj);}
-  else{deductParts(fItems);S.maintLogs.push({id:newId(S.maintLogs,'MN'),...obj});const v=S.rentVehicles.find(x=>x.id===vid);if(v&&km>v.mileage)v.mileage=km;}
+  if(editId){
+    const l=S.maintLogs.find(x=>x.id===editId);if(l)Object.assign(l,obj);
+    await dbUpdate('maint_logs',editId,toSnake(obj));
+  }else{
+    deductParts(fItems);
+    const newLog={id:newId(S.maintLogs,'MN'),...obj};
+    S.maintLogs.push(newLog);
+    await dbInsert('maint_logs',toSnake(newLog));
+    const v=S.rentVehicles.find(x=>x.id===vid);
+    if(v&&km>v.mileage){v.mileage=km;await dbUpdate('rent_vehicles',v.id,{mileage:km});}
+  }
   CM();ren();
 }
 
@@ -1265,7 +1424,7 @@ function openRepairModal(editId){
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveRepair('${editId||''}')"><i class="ti ti-check"></i> ${r?'수정완료':'접수하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
   if(r)setTimeout(()=>selPay('rp',r.payType),50);
 }
-function saveRepair(editId){
+async function saveRepair(editId){
   const plate=document.getElementById('rp-plate').value;const km=parseInt(document.getElementById('rp-km').value)||0;
   const items=window._rItems||[];const payType=getPay('rp');
   if(!plate){alert('차량번호를 입력하세요.');return;}if(!km){alert('키로수를 입력하세요.');return;}
@@ -1273,8 +1432,15 @@ function saveRepair(editId){
   const fItems=items.map(i=>({...i,name:i.name==='기타(직접입력)'&&i.customName?i.customName+'(기타)':i.name}));
   const repairPhotoUrls=collectPhotoUrls('rpp',5);
   const obj={date:'2025-05-28',customer:document.getElementById('rp-cust').value,phone:document.getElementById('rp-phone').value,plateNo:plate,model:document.getElementById('rp-model').value,mileage:km,items:fItems,cost:parseInt(document.getElementById('rp-cost').value)||0,payType,status:editId?S.repairs.find(x=>x.id===editId).status:'대기',mechanic:document.getElementById('rp-mec').value,memo:document.getElementById('rp-memo').value,photos:editId?S.repairs.find(x=>x.id===editId).photos||[]:repairPhotoUrls};
-  if(editId){const r=S.repairs.find(x=>x.id===editId);if(r)Object.assign(r,obj);}
-  else{deductParts(fItems);S.repairs.unshift({id:newId(S.repairs,'R'),...obj});}
+  if(editId){
+    const r=S.repairs.find(x=>x.id===editId);if(r)Object.assign(r,obj);
+    await dbUpdate('repairs',editId,toSnake(obj));
+  }else{
+    deductParts(fItems);
+    const newRep={id:newId(S.repairs,'R'),...obj};
+    S.repairs.unshift(newRep);
+    await dbInsert('repairs',toSnake(newRep));
+  }
   CM();updBadges();ren();
 }
 
@@ -1304,16 +1470,22 @@ function openAccidentModal(editId){
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveAccident('${editId||''}')"><i class="ti ti-check"></i> ${a?'수정완료':'접수하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
 }
 function selAccSt(s){window._accStatus=s;['입고','수리중','출고완료'].forEach(x=>{const el=document.getElementById('acst-'+x);if(el)el.className='tgb'+(x===s?' on':'');});}
-function saveAccident(editId){
+async function saveAccident(editId){
   const plateNo=document.getElementById('ac-plate').value;const model=document.getElementById('ac-model').value;
   const driverName=document.getElementById('ac-driver').value;const driverPhone=document.getElementById('ac-phone').value;const opponentInsurance=document.getElementById('ac-ins').value;
   if(!plateNo||!model||!driverName||!driverPhone||!opponentInsurance){alert('필수 항목을 모두 입력해주세요.');return;}
   const obj={accidentDate:document.getElementById('ac-date').value,plateNo,model,driverName,driverPhone,opponentInsurance,faultRatio:document.getElementById('ac-fault').value,receiptNo:document.getElementById('ac-rec').value,manager:document.getElementById('ac-mgr').value,estimatedCost:parseInt(document.getElementById('ac-cost').value)||0,status:window._accStatus||'입고',memo:document.getElementById('ac-memo').value,insurancePaid:editId?S.accidents.find(x=>x.id===editId)?.insurancePaid||false:false,insurancePaidAmount:editId?S.accidents.find(x=>x.id===editId)?.insurancePaidAmount||0:0};
-  if(editId){const a=S.accidents.find(x=>x.id===editId);if(a)Object.assign(a,obj);}
-  else S.accidents.unshift({id:newId(S.accidents,'AC'),...obj});
+  if(editId){
+    const a=S.accidents.find(x=>x.id===editId);if(a)Object.assign(a,obj);
+    await dbUpdate('accidents',editId,toSnake(obj));
+  }else{
+    const newAcc={id:newId(S.accidents,'AC'),...obj};
+    S.accidents.unshift(newAcc);
+    await dbInsert('accidents',toSnake(newAcc));
+  }
   CM();ren();
 }
-function updAccStatus(id,status){const a=S.accidents.find(x=>x.id===id);if(a)a.status=status;ren();}
+async function updAccStatus(id,status){const a=S.accidents.find(x=>x.id===id);if(a){a.status=status;await dbUpdate('accidents',id,{status});}ren();}
 function openInsurancePayModal(id){
   const a=S.accidents.find(x=>x.id===id);if(!a)return;
   OM(`${mhdr('보험사 지급 처리')}
@@ -1328,7 +1500,7 @@ function openInsurancePayModal(id){
   </div>
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveInsurancePay('${id}')"><i class="ti ti-check"></i> 지급완료 처리</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
 }
-function saveInsurancePay(id){
+async function saveInsurancePay(id){
   const a=S.accidents.find(x=>x.id===id);if(!a)return;
   const amt=parseInt(document.getElementById('ins-amount').value)||0;
   if(!amt){alert('지급 금액을 입력하세요.');return;}
@@ -1347,12 +1519,18 @@ function openIVehicleModal(editId){
   ${fi('iv-memo','메모','',null,v?v.memo:'')}
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveIVehicle('${editId||''}')"><i class="ti ti-check"></i> ${v?'수정완료':'등록하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
 }
-function saveIVehicle(editId){
+async function saveIVehicle(editId){
   const model=document.getElementById('iv-model').value;const vin=document.getElementById('iv-vin').value;
   if(!model||!vin){alert('차량명과 차대번호를 입력하세요.');return;}
   const obj={model,vin,year:parseInt(document.getElementById('iv-year').value)||2025,color:document.getElementById('iv-color').value,price:parseInt(document.getElementById('iv-price').value)||0,status:document.getElementById('iv-status').value,memo:document.getElementById('iv-memo').value};
-  if(editId){const v=S.vehicleStock.find(x=>x.id===editId);if(v)Object.assign(v,obj);}
-  else S.vehicleStock.push({id:newId(S.vehicleStock,'VS'),...obj});
+  if(editId){
+    const v=S.vehicleStock.find(x=>x.id===editId);if(v)Object.assign(v,obj);
+    await dbUpdate('vehicle_stock',editId,toSnake(obj));
+  }else{
+    const newV={id:newId(S.vehicleStock,'VS'),...obj};
+    S.vehicleStock.push(newV);
+    await dbInsert('vehicle_stock',toSnake(newV));
+  }
   CM();ren();
 }
 function openIVehicleDetail(id){
@@ -1375,11 +1553,17 @@ function openIPartsModal(editId){
   ${fi('ip-price','단가 (원)','','number',p?p.price:'')}
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveIParts('${editId||''}')"><i class="ti ti-check"></i> ${p?'수정완료':'등록하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
 }
-function saveIParts(editId){
+async function saveIParts(editId){
   const name=document.getElementById('ip-name').value;if(!name){alert('부품명을 입력하세요.');return;}
   const obj={name,maker:document.getElementById('ip-maker').value,compatible:document.getElementById('ip-compat').value,location:document.getElementById('ip-loc').value,unit:document.getElementById('ip-unit').value,stock:parseInt(document.getElementById('ip-stock').value)||0,minStock:parseInt(document.getElementById('ip-min').value)||5,price:parseInt(document.getElementById('ip-price').value)||0};
-  if(editId){const p=S.partsStock.find(x=>x.id===editId);if(p)Object.assign(p,obj);}
-  else S.partsStock.push({id:newId(S.partsStock,'P'),...obj});
+  if(editId){
+    const p=S.partsStock.find(x=>x.id===editId);if(p)Object.assign(p,obj);
+    await dbUpdate('parts_stock',editId,toSnake(obj));
+  }else{
+    const newP={id:newId(S.partsStock,'P'),...obj};
+    S.partsStock.push(newP);
+    await dbInsert('parts_stock',toSnake(newP));
+  }
   CM();ren();
 }
 
@@ -1405,19 +1589,21 @@ function addPOItem(){
   d.innerHTML=`<select class="fi" id="po-p-${i}" style="font-size:12px"><option value="">-- 선택 --</option>${S.partsStock.map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}</select><input class="fi" type="number" id="po-q-${i}" placeholder="수량" value="1" style="font-size:12px"><input class="fi" type="number" id="po-pr-${i}" placeholder="단가" style="font-size:12px">`;
   c.appendChild(d);window._poN=(window._poN||1)+1;
 }
-function savePO(){
+async function savePO(){
   const supplier=document.getElementById('po-sup').value;if(!supplier){alert('공급업체명을 입력하세요.');return;}
   const items=[];for(let i=0;i<(window._poN||1);i++){const pe=document.getElementById('po-p-'+i);const qe=document.getElementById('po-q-'+i);const pre=document.getElementById('po-pr-'+i);if(pe&&pe.value){const p=S.partsStock.find(x=>x.id===pe.value);items.push({partId:pe.value,partName:p?p.name:pe.options[pe.selectedIndex].text,qty:parseInt(qe.value)||1,unitPrice:parseInt(pre.value)||0});}}
   if(!items.length){alert('발주 부품을 선택하세요.');return;}
-  S.purchaseOrders.unshift({id:newId(S.purchaseOrders,'PO'),date:document.getElementById('po-date').value,supplier,items,totalAmount:items.reduce((a,b)=>a+b.qty*b.unitPrice,0),status:'결재대기',approver:document.getElementById('po-app').value,approvedAt:'',receivedAt:'',memo:document.getElementById('po-memo').value});
+  const newPO={id:newId(S.purchaseOrders,'PO'),date:document.getElementById('po-date').value,supplier,items,totalAmount:items.reduce((a,b)=>a+b.qty*b.unitPrice,0),status:'결재대기',approver:document.getElementById('po-app').value,approvedAt:'',receivedAt:'',memo:document.getElementById('po-memo').value};
+  S.purchaseOrders.unshift(newPO);
+  await dbInsert('purchase_orders',toSnake(newPO));
   CM();ren();
 }
-function approvePO(id){const po=S.purchaseOrders.find(x=>x.id===id);if(po){po.status='결재완료';po.approvedAt='2025-05-28';ren();}}
+async function approvePO(id){const po=S.purchaseOrders.find(x=>x.id===id);if(po){po.status='결재완료';po.approvedAt='2025-05-28';await dbUpdate('purchase_orders',id,{status:'결재완료',approved_at:'2025-05-28'});ren();}}
 function receivePO(id){const po=S.purchaseOrders.find(x=>x.id===id);if(!po)return;po.status='입고완료';po.receivedAt='2025-05-28';po.items.forEach(item=>{const p=S.partsStock.find(x=>x.id===item.partId);if(p)p.stock+=item.qty;});alert('입고 확인 완료! 부품 재고가 자동 업데이트되었습니다.');ren();}
 
 // ── 기타 ──
-function markRepairPaid(id){const r=S.repairs.find(x=>x.id===id);if(r){r.payType='현금';ren();updBadges();}}
-function markRentPaid(id){const r=S.rentals.find(x=>x.id===id);if(r){r.paid=true;ren();updBadges();}}
+async function markRepairPaid(id){const r=S.repairs.find(x=>x.id===id);if(r){r.payType='현금';await dbUpdate('repairs',id,{pay_type:'현금'});ren();updBadges();}}
+async function markRentPaid(id){const r=S.rentals.find(x=>x.id===id);if(r){r.paid=true;await dbUpdate('rentals',id,{paid:true});ren();updBadges();}}
 function openNotif(){OM(`${mhdr('알림')}<div style="display:flex;flex-direction:column;gap:8px">${[['br','미수금','수리 외상 2건 미결제'],['bb','렌트','RT001 오늘 반납 예정'],['ba','발주','타이어 발주서 결재 대기'],['bg','입고','엔진오일 입고 완료']].map(([c,t,d])=>`<div style="padding:12px;border:1px solid var(--bd);border-radius:8px;display:flex;gap:10px">${badge(c,t)}<div style="font-size:13px">${d}</div></div>`).join('')}</div>`);}
 
 function topAction(){const m={dashboard:openRentModal,worklog:openAddWorkModal,sales:openSaleModal,customers:openCustModal,rent:openRentModal,rvehicles:openAddRVehicleModal,rcalendar:openRentModal,rbilling:openRentModal,rmaint:openMaintModal,repair:openRepairModal,accident:openAccidentModal,unpaid:()=>{},ivehicle:openIVehicleModal,iparts:openIPartsModal,purchase:openPOModal,finance:()=>{},ai:()=>{}};(m[S.page]||openRentModal)();}
@@ -1547,17 +1733,19 @@ function openAddWorkModal(editId){
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveWorkTask('${editId||''}')"><i class="ti ti-check"></i> ${t?'수정완료':'등록하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
 }
 
-function saveWorkTask(editId){
+async function saveWorkTask(editId){
   const title=document.getElementById('wt-title').value;
   if(!title){alert('작업 제목을 입력하세요.');return;}
   const now=new Date();
   const timeStr=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   const obj={title,category:document.getElementById('wt-cat').value,assignee:document.getElementById('wt-assignee').value,priority:document.getElementById('wt-priority').value,plateNo:document.getElementById('wt-plate').value,customer:document.getElementById('wt-customer').value,dueDate:document.getElementById('wt-due').value,workDate:document.getElementById('wt-wdate')?.value||S._workDate||'2025-05-28',status:document.getElementById('wt-status').value,memo:document.getElementById('wt-memo').value};
   if(editId){
-    const t=S.workTasks.find(x=>x.id===editId);
-    if(t)Object.assign(t,obj);
+    const t=S.workTasks.find(x=>x.id===editId);if(t)Object.assign(t,obj);
+    await dbUpdate('work_tasks',editId,toSnake(obj));
   }else{
-    S.workTasks.unshift({id:newId(S.workTasks,'WT'),progress:0,startDate:'2025-05-28',createdAt:timeStr,...obj});
+    const newT={id:newId(S.workTasks,'WT'),progress:0,startDate:'2025-05-28',createdAt:timeStr,...obj};
+    S.workTasks.unshift(newT);
+    await dbInsert('work_tasks',toSnake(newT));
   }
   CM();ren();
 }
@@ -1593,14 +1781,26 @@ function saveInsurancePay(id){
     const est=parseInt(document.getElementById('cust-estimate')?.value)||0;
     if(!est){alert('고객 견적 비용을 입력하세요.');return;}
     a.customerEstimate=est;a.status='출고완료';a.insurancePaid=true;a.insurancePaidAmount=0;
+    await dbUpdate('accidents',id,{customer_estimate:est,status:'출고완료',insurance_paid:true,insurance_paid_amount:0});
   }else{
     const amt=parseInt(document.getElementById('ins-amount')?.value)||0;
     if(!amt){alert('지급 금액을 입력하세요.');return;}
     a.insurancePaid=true;a.insurancePaidAmount=amt;
+    await dbUpdate('accidents',id,{insurance_paid:true,insurance_paid_amount:amt});
   }
   CM();ren();
 }
 
+async function updTask(id,status,progress){
+  const t=S.workTasks.find(x=>x.id===id);
+  if(t){t.status=status;t.progress=progress;await dbUpdate('work_tasks',id,{status,progress});}
+  ren();
+}
+async function updTaskProgress(id,delta){
+  const t=S.workTasks.find(x=>x.id===id);
+  if(t){t.progress=Math.max(0,Math.min(99,t.progress+delta));await dbUpdate('work_tasks',id,{progress:t.progress});}
+  ren();
+}
 async function sendAI(){
   const input=document.getElementById('aiin');const text=input.value.trim();if(!text)return;
   input.value='';S.aiMessages.push({role:'user',text});
@@ -1616,6 +1816,10 @@ async function sendAI(){
 }
 
 updBadges();ren();
+// DB에서 데이터 로드 (Supabase 준비되면)
+window.addEventListener('load', ()=>{
+  setTimeout(()=>{ loadAllFromDB(); }, 300);
+});
 </script>
 </body>
 </html>
