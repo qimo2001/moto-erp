@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS모터스포츠 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1284,9 +1284,22 @@ function fsel(id,lbl,opts,val,req){return`<div class="fg"><label class="fl">${lb
 function payRow(pfx){return`<div class="fg"><label class="fl">결제 방식</label><div class="pbg"><div class="pb" id="${pfx}-c" onclick="selPay('${pfx}','현금')">💵 현금</div><div class="pb" id="${pfx}-k" onclick="selPay('${pfx}','카드')">💳 카드</div><div class="pb" id="${pfx}-x" onclick="selPay('${pfx}','외상')">📋 외상</div></div></div>`;}
 function selPay(p,t){window._ps=window._ps||{};window._ps[p]=t;const m={현금:'c',카드:'k',외상:'x'};['c','k','x'].forEach(k=>{const e=document.getElementById(`${p}-${k}`);if(e)e.className='pb';});const s=document.getElementById(`${p}-${m[t]}`);if(s)s.className='pb '+(t==='현금'?'sc':t==='카드'?'scard':'scr');}
 function getPay(p){return(window._ps||{})[p]||'';}
-function pPhoto(pfx,labels,folder){
+function pPhoto(pfx,labels,folder,existingPhotos){
   const f=folder||pfx;
-  return`<div class="pgrid">${labels.map((l,i)=>`<div class="pslot req-slot" id="${pfx}-${i}" onclick="openPhotoChoice('${pfx}-${i}','${f}')"><i class="ti ti-camera"></i><span>${l}</span></div>`).join('')}</div>`;
+  const ep=existingPhotos||[];
+  return`<div class="pgrid">${labels.map((l,i)=>{
+    const existing=ep[i]||null;
+    if(existing){
+      return`<div class="pslot" id="${pfx}-${i}" data-url="${existing}" onclick="openPhotoChoice('${pfx}-${i}','${f}')" style="border-color:#2e7d32;cursor:pointer;position:relative">
+        <img src="${existing}" style="width:100%;height:100%;object-fit:cover;border-radius:6px">
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+          <span style="color:#fff;font-size:11px;font-weight:700">탭하여 교체</span>
+        </div>
+        <div class="uc" style="position:absolute;top:4px;right:4px;background:#2e7d32;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">✓</div>
+      </div>`;
+    }
+    return`<div class="pslot req-slot" id="${pfx}-${i}" onclick="openPhotoChoice('${pfx}-${i}','${f}')"><i class="ti ti-camera"></i><span>${l}</span></div>`;
+  }).join('')}</div>`;
 }
 
 function openPhotoChoice(slotId,folder){
@@ -1680,7 +1693,27 @@ function selRvDriver(isAll){
 async function saveRVehicle(editId){
   const model=document.getElementById('rv-model').value;const plate=document.getElementById('rv-plate').value;
   if(!model||!plate){alert('차량 모델과 차량번호를 입력하세요.');return;}
-  const obj={model,plateNo:plate,year:parseInt(document.getElementById('rv-year').value)||2025,color:document.getElementById('rv-color').value,insurer:document.getElementById('rv-insurer').value,insuranceType:document.getElementById('rv-itype').value,minAge:document.getElementById('rv-age').value,dailyRate:parseInt(document.getElementById('rv-rate').value)||0,deposit:parseInt(document.getElementById('rv-dep').value)||0,mileage:parseInt(document.getElementById('rv-km').value)||0};
+  // 지정 운전자 정보 수집
+  const driverScope=window._rvDriverScope||'누구나';
+  const designatedDrivers=[];
+  if(driverScope==='지정운전자'){
+    const d1={name:document.getElementById('drv1-name')?.value||'',phone:document.getElementById('drv1-phone')?.value||'',birth:document.getElementById('drv1-birth')?.value||'',platform:document.getElementById('drv1-platform')?.value||''};
+    const d2={name:document.getElementById('drv2-name')?.value||'',phone:document.getElementById('drv2-phone')?.value||'',birth:document.getElementById('drv2-birth')?.value||'',platform:document.getElementById('drv2-platform')?.value||''};
+    if(d1.name)designatedDrivers.push(d1);
+    if(d2.name)designatedDrivers.push(d2);
+  }
+  const obj={model,plateNo:plate,
+    year:parseInt(document.getElementById('rv-year').value)||2025,
+    color:document.getElementById('rv-color').value,
+    insurer:document.getElementById('rv-insurer')?.value||'',
+    insured:document.getElementById('rv-insured')?.value||'',
+    insuranceType:window._rvInsType||'종합보험',
+    driverScope,designatedDrivers,
+    minAge:document.getElementById('rv-age').value,
+    dailyRate:parseInt(document.getElementById('rv-rate').value)||0,
+    deposit:parseInt(document.getElementById('rv-dep').value)||0,
+    mileage:parseInt(document.getElementById('rv-km').value)||0
+  };
   if(editId){
     const v=S.rentVehicles.find(x=>x.id===editId);if(v)Object.assign(v,obj);
     await dbUpdate('rent_vehicles',editId,toSnake(obj));
@@ -1712,7 +1745,7 @@ function openMaintModal(preVehicleId,editLogId){
   ${fi('mt-memo','메모','',null,log?log.memo:'')}
   <div style="border:2px solid #CC0000;border-radius:10px;padding:14px;margin-bottom:14px;background:var(--pl)">
     <div style="font-size:13px;font-weight:700;color:#D32F2F;margin-bottom:12px">📸 차량 사진 (필수 - 전/후/좌/우/계기판)</div>
-    ${pPhoto('mt-ph',['전면 ★','후면 ★','좌측 ★','우측 ★','계기판 ★'])}
+    ${pPhoto('mt-ph',['전면 ★','후면 ★','좌측 ★','우측 ★','계기판 ★'],'mt-ph',log?log.photos||[]:[])}
     <div style="font-size:11px;color:#D32F2F;margin-top:4px">※ 정비 전 차량 상태 사진을 반드시 등록하세요</div>
   </div>
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveMaint('${editLogId||''}')"><i class="ti ti-check"></i> ${log?'수정완료':'정비 등록'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
@@ -1731,7 +1764,9 @@ async function saveMaint(editId){
   if(dt==='delivery'&&!ag){alert('배달대행사 명을 입력하세요.');return;}
   if(!items.length){alert('정비 항목을 선택하세요.');return;}
   const fItems=items.map(i=>({...i,name:i.name==='기타(직접입력)'&&i.customName?i.customName+'(기타)':i.name}));
-  const photoUrls=collectPhotoUrls('mt-ph',5);
+  const newPhotos=collectPhotoUrls('mt-ph',5);
+  const existLog=editId?S.maintLogs.find(x=>x.id===editId):null;
+  const photoUrls=newPhotos.length>0?newPhotos:(existLog?existLog.photos||[]:[]);
   const obj={vehicleId:vid,date,mileage:km,items:fItems,cost:parseInt(document.getElementById('mt-cost').value)||0,memo:document.getElementById('mt-memo').value,mechanic:document.getElementById('mt-mec').value,driverName:dn,driverType:dt==='delivery'?'배달대행':'개인',agencyName:ag,driverPhone:dp,photos:photoUrls};
   if(editId){
     const l=S.maintLogs.find(x=>x.id===editId);if(l)Object.assign(l,obj);
@@ -1758,7 +1793,7 @@ function openRepairModal(editId){
   <div class="fg"><label class="fl">정비 항목 <span class="req">★</span></label>${mcHTML('repair')}</div>
   <div class="fr">${fi('rp-cost','수리 비용 (원)','','number',r?r.cost:'')}${fi('rp-memo','메모','',null,r?r.memo:'')}</div>
   ${payRow('rp')}
-  <div class="fg"><label class="fl">정비 사진</label>${pPhoto('rpp',['수리전 1','수리전 2','수리후 1','수리후 2','기타'])}</div>
+  <div class="fg"><label class="fl">정비 사진</label>${pPhoto('rpp',['수리전 1','수리전 2','수리후 1','수리후 2','기타'],'rpp',r?r.photos||[]:[])}</div>
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveRepair('${editId||''}')"><i class="ti ti-check"></i> ${r?'수정완료':'접수하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
   if(r)setTimeout(()=>selPay('rp',r.payType),50);
 }
@@ -1768,8 +1803,10 @@ async function saveRepair(editId){
   if(!plate){alert('차량번호를 입력하세요.');return;}if(!km){alert('키로수를 입력하세요.');return;}
   if(!items.length){alert('정비 항목을 선택하세요.');return;}if(!payType){alert('결제 방식을 선택하세요.');return;}
   const fItems=items.map(i=>({...i,name:i.name==='기타(직접입력)'&&i.customName?i.customName+'(기타)':i.name}));
-  const repairPhotoUrls=collectPhotoUrls('rpp',5);
-  const obj={date:'2025-05-28',customer:document.getElementById('rp-cust').value,phone:document.getElementById('rp-phone').value,plateNo:plate,model:document.getElementById('rp-model').value,mileage:km,items:fItems,cost:parseInt(document.getElementById('rp-cost').value)||0,payType,status:editId?S.repairs.find(x=>x.id===editId).status:'대기',mechanic:document.getElementById('rp-mec').value,memo:document.getElementById('rp-memo').value,photos:editId?S.repairs.find(x=>x.id===editId).photos||[]:repairPhotoUrls};
+  const newRepairPhotos=collectPhotoUrls('rpp',5);
+  const existRep=editId?S.repairs.find(x=>x.id===editId):null;
+  const repairPhotoUrls=newRepairPhotos.length>0?newRepairPhotos:(existRep?existRep.photos||[]:[]);
+  const obj={date:'2025-05-28',customer:document.getElementById('rp-cust').value,phone:document.getElementById('rp-phone').value,plateNo:plate,model:document.getElementById('rp-model').value,mileage:km,items:fItems,cost:parseInt(document.getElementById('rp-cost').value)||0,payType,status:editId?S.repairs.find(x=>x.id===editId).status:'대기',mechanic:document.getElementById('rp-mec').value,memo:document.getElementById('rp-memo').value,photos:repairPhotoUrls};
   if(editId){
     const r=S.repairs.find(x=>x.id===editId);if(r)Object.assign(r,obj);
     await dbUpdate('repairs',editId,toSnake(obj));
