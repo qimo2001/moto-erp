@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 모터스포츠 통합 ERP</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -451,8 +451,8 @@ async function uploadPhoto(file, folder){
 
 // ── CONSTANTS ──
 const MITEMS=['엔진 오일 교환','오일 필터 교환','에어 필터 교환','타이어 교체(전)','타이어 교체(후)','브레이크 패드(전)','브레이크 패드(후)','브레이크 오일','냉각수 보충','점화 플러그','구동 벨트','배터리 교체','체인 조정/교환','각종 소모품','기타(직접입력)'];
-const ITYPES=['누구나 보험','지정 운전자 보험'];
-const AGES=['만 21세 이상','만 26세 이상','만 30세 이상','연령 무관'];
+const ITYPES=['책임보험','종합보험'];
+const AGES=['전 연령','만 21세 이상','만 24세 이상','만 26세 이상','만 30세 이상','만 35세 이상'];
 const PAGE_SIZE=15;
 
 // ── STATE ──
@@ -476,11 +476,11 @@ const S={
     {id:'RT003',customer:'박준혁',phone:'010-5555-6666',vehicleId:'RV004',model:'혼다 PCX125',plateNo:'90마3456',startDate:'2025-05-28',endDate:'미정',days:0,dailyRate:50000,deposit:200000,totalFee:0,status:'대여중',paid:false,payType:'',outMileage:3400,inMileage:'',deliveryAgency:'배민커넥트'},
   ],
   rentVehicles:[
-    {id:'RV001',model:'혼다 PCX125',plateNo:'12가3456',year:2024,color:'화이트',dailyRate:50000,status:'대여중',mileage:12500,insuranceType:'누구나 보험',minAge:'만 21세 이상',insurer:'현대해상',deposit:200000},
-    {id:'RV002',model:'야마하 NMAX',plateNo:'34나5678',year:2024,color:'블루',dailyRate:55000,status:'가용',mileage:8412,insuranceType:'지정 운전자 보험',minAge:'만 26세 이상',insurer:'DB손보',deposit:200000},
-    {id:'RV003',model:'스즈키 버그만',plateNo:'78라9012',year:2023,color:'실버',dailyRate:60000,status:'정비중',mileage:22100,insuranceType:'누구나 보험',minAge:'만 30세 이상',insurer:'KB손보',deposit:300000},
-    {id:'RV004',model:'혼다 PCX125',plateNo:'90마3456',year:2025,color:'블랙',dailyRate:50000,status:'대여중',mileage:3400,insuranceType:'누구나 보험',minAge:'만 21세 이상',insurer:'삼성화재',deposit:200000},
-    {id:'RV005',model:'킴코 아지레',plateNo:'11바7890',year:2024,color:'레드',dailyRate:45000,status:'가용',mileage:15600,insuranceType:'지정 운전자 보험',minAge:'연령 무관',insurer:'롯데손보',deposit:150000},
+    {id:'RV001',model:'혼다 PCX125',plateNo:'12가3456',year:2024,color:'화이트',dailyRate:50000,status:'대여중',mileage:12500,insuranceType:'종합보험',minAge:'만 21세 이상',insurer:'현대해상',deposit:200000},
+    {id:'RV002',model:'야마하 NMAX',plateNo:'34나5678',year:2024,color:'블루',dailyRate:55000,status:'가용',mileage:8412,insuranceType:'책임보험',minAge:'만 26세 이상',insurer:'DB손보',deposit:200000},
+    {id:'RV003',model:'스즈키 버그만',plateNo:'78라9012',year:2023,color:'실버',dailyRate:60000,status:'정비중',mileage:22100,insuranceType:'종합보험',minAge:'만 30세 이상',insurer:'KB손보',deposit:300000},
+    {id:'RV004',model:'혼다 PCX125',plateNo:'90마3456',year:2025,color:'블랙',dailyRate:50000,status:'대여중',mileage:3400,insuranceType:'종합보험',minAge:'만 21세 이상',insurer:'삼성화재',deposit:200000},
+    {id:'RV005',model:'킴코 아지레',plateNo:'11바7890',year:2024,color:'레드',dailyRate:45000,status:'가용',mileage:15600,insuranceType:'책임보험',minAge:'전 연령',insurer:'롯데손보',deposit:150000},
   ],
   maintLogs:[
     {id:'MN001',vehicleId:'RV001',date:'2025-04-15',mileage:11200,items:[{name:'엔진 오일 교환',src:'매장재고',partId:'P001'},{name:'오일 필터 교환',src:'매장재고',partId:'P006'}],cost:45000,memo:'정기점검',mechanic:'이기술',driverName:'홍길동',driverType:'배달대행',agencyName:'쿠팡이츠',driverPhone:'010-1111-2222'},
@@ -804,12 +804,15 @@ function pgRent(){
 // ── 렌트 차량 ──
 function pgRVehicles(){
   let data=S.rentVehicles;
-  const q=(document.getElementById('rvq')||{}).value||'';
   return`
-  <div class="sbar"><i class="ti ti-search"></i><input id="rvq" placeholder="차량번호, 모델명 검색..." value="${q}" oninput="ren()"></div>
+  <div style="display:flex;gap:8px;margin-bottom:16px">
+    <div class="sbar" style="flex:1;margin-bottom:0"><i class="ti ti-search"></i><input id="rvq" placeholder="차량번호, 모델명, 색상 검색..." value="${S._rvQ||''}" onkeydown="if(event.key==='Enter'){S._rvQ=this.value;ren();}"></div>
+    <button class="bp" style="height:38px;padding:0 14px" onclick="S._rvQ=document.getElementById('rvq').value;ren()">검색</button>
+    <button class="bs" style="height:38px;padding:0 10px" onclick="S._rvQ='';ren()">초기화</button>
+  </div>
   <div class="sh"><span class="st">렌트 차량 목록</span><button class="bp" onclick="openAddRVehicleModal()"><i class="ti ti-plus"></i> 차량 추가</button></div>
   <div class="card">
-    ${data.filter(v=>!q||[v.plateNo,v.model,v.color].some(x=>(x||'').includes(q))).map(v=>`
+    ${data.filter(v=>!S._rvQ||[v.plateNo,v.model,v.color].some(x=>(x||'').includes(S._rvQ))).map(v=>`
     <div class="irow" onclick="openRVehicleDetail('${v.id}')">
       <div style="width:44px;height:44px;background:var(--pl);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🛵</div>
       <div style="flex:1;min-width:0">
@@ -818,7 +821,7 @@ function pgRVehicles(){
           <span style="font-size:13px;font-weight:600;color:var(--tx2)">${v.model}</span>
           ${statusBadge(v.status)}
         </div>
-        <div style="font-size:11px;color:var(--tx3);margin-top:2px">${v.year}년 • ${v.color} • ${v.mileage.toLocaleString()}km • ${v.insurer} • ${badge(v.insuranceType==='누구나 보험'?'bb':'bpu',v.insuranceType)}</div>
+        <div style="font-size:11px;color:var(--tx3);margin-top:2px">${v.year}년 • ${v.color} • ${v.mileage.toLocaleString()}km • ${v.insurer} • ${badge(v.insuranceType==='종합보험'?'bb':'bpu',v.insuranceType)}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font-weight:700;color:#CC0000">${v.dailyRate.toLocaleString()}원/일</div>
@@ -1446,7 +1449,7 @@ function openRVehicleDetail(id){
   OM(`${mhdr(v.plateNo+' 상세')}
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:13px">
     <div style="background:var(--bg3);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:700">차량 정보</div><div class="plate">${v.plateNo}</div><div style="font-weight:700">${v.model}</div><div style="color:var(--tx2)">${v.year}년 • ${v.color} • ${v.mileage.toLocaleString()}km</div></div>
-    <div style="background:var(--bg3);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:700">보험 정보</div><div style="font-weight:700">${v.insurer}</div><div style="margin-top:4px">${badge(v.insuranceType==='누구나 보험'?'bb':'bpu',v.insuranceType)}</div><div style="margin-top:4px">${badge('bt',v.minAge)}</div></div>
+    <div style="background:var(--bg3);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:700">보험 정보</div><div style="font-weight:700">${v.insurer}</div><div style="margin-top:4px">${badge(v.insuranceType==='종합보험'?'bb':'bpu',v.insuranceType)}</div><div style="margin-top:4px">${badge('bt',v.minAge)}</div></div>
   </div>
   <div style="font-size:13px;font-weight:700;margin-bottom:10px">정비 이력 (${logs.length}건)</div>
   <div style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px">
@@ -1464,7 +1467,7 @@ function openAddRVehicleModal(editId){
   OM(`${mhdr(v?'렌트 차량 수정':'렌트 차량 추가')}
   <div class="fr">${fi('rv-model','차량 모델','혼다 PCX125',null,v?v.model:'')}${fi('rv-plate','차량번호','12가3456',null,v?v.plateNo:'')}</div>
   <div class="fr">${fi('rv-year','연식','2025','number',v?v.year:'')}${fi('rv-color','색상','화이트',null,v?v.color:'')}</div>
-  <div class="fr">${fi('rv-insurer','보험사','현대해상',null,v?v.insurer:'')}${fsel('rv-itype','보험 종류',ITYPES,v?v.insuranceType:'누구나 보험')}</div>
+  <div class="fr">${fi('rv-insurer','보험사','현대해상',null,v?v.insurer:'')}${fsel('rv-itype','보험 종류',ITYPES,v?v.insuranceType:'종합보험')}</div>
   <div class="fr">${fsel('rv-age','최소 연령',AGES,v?v.minAge:'만 21세 이상')}${fi('rv-rate','일일 요금','50000','number',v?v.dailyRate:'')}</div>
   <div class="fr">${fi('rv-dep','보증금','200000','number',v?v.deposit:'')}${fi('rv-km','현재 주행거리 (km)','','number',v?v.mileage:'')}</div>
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveRVehicle('${editId||''}')"><i class="ti ti-check"></i> ${v?'수정완료':'추가하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
