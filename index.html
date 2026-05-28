@@ -893,7 +893,7 @@ function pgRMaint(){
     <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${log.items.map(i=>badge(i.src==='매장재고'?'bb':'ba',i.name+' '+(i.src==='매장재고'?'🏪':'👤'))).join('')}</div>
     ${log.memo?`<div style="font-size:12px;color:var(--tx2)">${log.memo}</div>`:''}
     <div style="font-size:11px;color:var(--tx3)">담당: ${log.mechanic}</div>
-    ${log.photos&&log.photos.length?`<div style="display:flex;gap:4px;margin-top:6px">${log.photos.map((_,i)=>`<div style="width:40px;height:30px;background:var(--bg3);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--tx3)">📷</div>`).join('')}</div>`:''}
+    ${log.photos&&log.photos.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${log.photos.map((url,i)=>`<div onclick="openPhotoViewer('${url}')" style="width:56px;height:42px;border-radius:6px;overflow:hidden;cursor:pointer;border:1px solid var(--bd);flex-shrink:0;background:var(--bg3)"><img src="${url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='📷'"></div>`).join('')}</div>`:''}
     <button class="bsm" style="margin-top:6px" onclick="openMaintModal(null,'${log.id}')">수정</button>
   </div></div>`;}).join('')}</div>`;
 }
@@ -934,6 +934,7 @@ function pgRepair(){
         <div><span style="color:var(--tx2)">담당: </span>${r.mechanic}</div>
         <div><span style="color:var(--tx2)">비용: </span><strong style="color:#CC0000">${fmtMoney(r.cost)}</strong></div>
         <div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px">${r.items.map(i=>badge(i.src==='매장재고'?'bb':'ba',i.name+' '+(i.src==='매장재고'?'🏪':'👤'))).join('')}</div>
+        ${r.photos&&r.photos.length?`<div style="grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${r.photos.map(url=>`<div onclick="openPhotoViewer('${url}')" style="width:56px;height:42px;border-radius:6px;overflow:hidden;cursor:pointer;border:1px solid var(--bd);flex-shrink:0"><img src="${url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='📷'"></div>`).join('')}</div>`:''}
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         ${r.payType==='외상'?`<button class="bs" style="height:28px;font-size:12px;padding:0 10px" onclick="markRepairPaid('${r.id}')">💰 외상 결제</button>`:''}
@@ -1135,6 +1136,8 @@ async function prevPhoto(input,id,folder){
     const chk=document.createElement('div');chk.className='uc';
     chk.style.cssText='position:absolute;top:4px;right:4px;background:#2e7d32;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;z-index:2';
     chk.textContent='✓';slot.appendChild(chk);
+    // 업로드 완료 후 클릭 시 확대 보기
+    slot.onclick=()=>openPhotoViewer(url);
   }else{
     slot.style.borderColor='#c62828';
     if(sp){sp.style.display='block';sp.textContent='⚠ 실패';}
@@ -1733,6 +1736,21 @@ async function updTaskProgress(id,delta){
   if(t){t.progress=Math.max(0,Math.min(99,t.progress+delta));await dbUpdate('work_tasks',id,{progress:t.progress});}
   ren();
 }
+function openPhotoViewer(url){
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  wrap.onclick=()=>wrap.remove();
+  wrap.innerHTML=`
+    <div style="position:relative;max-width:100%;max-height:100%;display:flex;flex-direction:column;align-items:center;gap:12px">
+      <img src="${url}" style="max-width:calc(100vw-40px);max-height:calc(100vh-100px);object-fit:contain;border-radius:8px;box-shadow:0 0 40px rgba(0,0,0,0.5)">
+      <div style="display:flex;gap:10px">
+        <a href="${url}" target="_blank" style="padding:8px 16px;background:#CC0000;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">🔗 원본 보기</a>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:8px 16px;background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">✕ 닫기</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+
 async function sendAI(){
   const input=document.getElementById('aiin');const text=input.value.trim();if(!text)return;
   input.value='';S.aiMessages.push({role:'user',text});
