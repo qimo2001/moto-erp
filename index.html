@@ -301,7 +301,7 @@ function toSnake(obj){
     customerEstimate:'customer_estimate',totalAmount:'total_amount',approvedAt:'approved_at',
     receivedAt:'received_at',workDate:'work_date',dueDate:'due_date',
     createdAt:'created_at_time',lastVisit:'last_visit',minStock:'min_stock',
-    compatible:'compatible',company:'company'
+    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage'
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -1053,6 +1053,7 @@ function pgPurchase(){
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         ${po.status==='결재대기'?`<button class="bpm" style="height:28px;padding:0 10px;font-size:12px" onclick="approvePO('${po.id}')">✅ 결재 승인</button>`:''}
         ${po.status==='결재완료'?`<button class="bpm" style="height:28px;padding:0 10px;font-size:12px" onclick="receivePO('${po.id}')">📦 입고 확인</button>`:''}
+        ${po.status==='결재대기'?`<button class="bsm" onclick="openPOModal('${po.id}')">수정</button>`:''}
       </div>
     </div>`).join('')}
   </div></div>`;
@@ -1736,6 +1737,210 @@ async function updTaskProgress(id,delta){
   if(t){t.progress=Math.max(0,Math.min(99,t.progress+delta));await dbUpdate('work_tasks',id,{progress:t.progress});}
   ren();
 }
+// ── 차량 재고 모달 ──
+function openIVehicleModal(editId){
+  const v=editId?S.vehicleStock.find(x=>x.id===editId):null;
+  window._vtype=v?v.vtype||'신차':'신차';
+  OM(`${mhdr(v?'차량 수정':'차량 입고')}
+  <div class="fg"><label class="fl">차량 구분</label>
+    <div class="tg">
+      <div class="tgb ${!v||window._vtype==='신차'?'on':''}" id="vt-new" onclick="selVType('신차')">🆕 신차</div>
+      <div class="tgb ${v&&window._vtype==='중고차'?'on':''}" id="vt-used" onclick="selVType('중고차')">🔄 중고차</div>
+    </div>
+  </div>
+  <div class="fr">${fi('iv-model','차량명 ★','혼다 CB500F',null,v?v.model:'')}${fi('iv-year','연식','2025','number',v?v.year:'')}</div>
+  <div class="fg"><label class="fl">차대번호 (VIN) ★</label><input class="fi" id="iv-vin" placeholder="17자리 VIN" style="font-family:monospace" value="${v?v.vin:''}"></div>
+  <div class="fr">${fi('iv-color','색상','',null,v?v.color:'')}${fi('iv-price','판매가 (원)','','number',v?v.price:'')}</div>
+  <div class="fr" id="iv-km-row" style="${v&&v.vtype==='중고차'?'':'display:none'}">${fi('iv-mileage','주행거리 (km)','','number',v?v.mileage||'':'')}</div>
+  ${fsel('iv-status','상태',['재고','예약','판매완료'],v?v.status:'재고')}
+  ${fi('iv-memo','메모','',null,v?v.memo:'')}
+  <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveIVehicle('${editId||''}')"><i class="ti ti-check"></i> ${v?'수정완료':'등록하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
+}
+function selVType(t){
+  window._vtype=t;
+  document.getElementById('vt-new').className='tgb'+(t==='신차'?' on':'');
+  document.getElementById('vt-used').className='tgb'+(t==='중고차'?' on':'');
+  const kr=document.getElementById('iv-km-row');
+  if(kr)kr.style.display=t==='중고차'?'grid':'none';
+}
+async function saveIVehicle(editId){
+  const model=document.getElementById('iv-model').value;
+  const vin=document.getElementById('iv-vin').value;
+  if(!model||!vin){alert('차량명과 차대번호를 입력하세요.');return;}
+  const obj={model,vin,year:parseInt(document.getElementById('iv-year').value)||2025,
+    color:document.getElementById('iv-color').value,
+    price:parseInt(document.getElementById('iv-price').value)||0,
+    status:document.getElementById('iv-status').value,
+    memo:document.getElementById('iv-memo').value,
+    vtype:window._vtype||'신차',
+    mileage:window._vtype==='중고차'?(parseInt(document.getElementById('iv-mileage')?.value)||0):0
+  };
+  if(editId){
+    const v=S.vehicleStock.find(x=>x.id===editId);if(v)Object.assign(v,obj);
+    await dbUpdate('vehicle_stock',editId,toSnake(obj));
+  }else{
+    const newV={id:newId(S.vehicleStock,'VS'),...obj};
+    S.vehicleStock.push(newV);
+    await dbInsert('vehicle_stock',toSnake(newV));
+  }
+  CM();ren();
+}
+function openIVehicleDetail(id){
+  const v=S.vehicleStock.find(x=>x.id===id);if(!v)return;
+  OM(`${mhdr('차량 상세')}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;margin-bottom:16px">
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;grid-column:1/-1">
+      <div style="font-size:11px;color:var(--tx2);font-weight:700;margin-bottom:4px">차대번호 (VIN)</div>
+      <div style="font-family:monospace;font-size:14px;font-weight:700;color:#CC0000;letter-spacing:1px">${v.vin}</div>
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px">
+      <div style="font-size:11px;color:var(--tx2);font-weight:700;margin-bottom:4px">차량명</div>
+      <div style="font-weight:800;font-size:16px">${v.model}</div>
+      <div style="color:var(--tx2)">${v.year}년 • ${v.color}</div>
+      ${v.vtype?`<div style="margin-top:4px">${badge(v.vtype==='중고차'?'ba':'bb',v.vtype||'신차')}</div>`:''}
+      ${v.mileage?`<div style="color:var(--tx2);font-size:12px;margin-top:4px">${v.mileage.toLocaleString()}km</div>`:''}
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px">
+      <div style="font-size:11px;color:var(--tx2);font-weight:700;margin-bottom:4px">상태/금액</div>
+      ${statusBadge(v.status)}
+      <div style="font-weight:800;font-size:18px;color:#CC0000;margin-top:6px">${(v.price/10000).toFixed(0)}만원</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="bp" style="flex:1" onclick="CM();setTimeout(()=>openIVehicleModal('${id}'),100)"><i class="ti ti-edit"></i> 수정</button>
+    <button onclick="CM()" class="bs" style="flex:1">닫기</button>
+  </div>`);
+}
+
+// ── 부품 재고 모달 ──
+function openIPartsModal(editId){
+  const p=editId?S.partsStock.find(x=>x.id===editId):null;
+  OM(`${mhdr(p?'부품 수정':'부품 등록')}
+  <div class="fr">${fi('ip-name','부품명 ★','',null,p?p.name:'')}${fi('ip-maker','제조사','',null,p?p.maker:'')}</div>
+  ${fi('ip-compat','적용 차량','혼다 CB500F, MT-07',null,p?p.compatible:'')}
+  <div class="fr">${fi('ip-loc','매장 위치','A-1 선반',null,p?p.location:'')}${fsel('ip-unit','단위',['개','L','셋트','m'],p?p.unit:'개')}</div>
+  <div class="fr">${fi('ip-stock','현재 재고','0','number',p?p.stock:'')}${fi('ip-min','최소 재고','5','number',p?p.minStock:'5')}</div>
+  ${fi('ip-price','단가 (원)','','number',p?p.price:'')}
+  <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveIParts('${editId||''}')"><i class="ti ti-check"></i> ${p?'수정완료':'등록하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
+}
+async function saveIParts(editId){
+  const name=document.getElementById('ip-name').value;
+  if(!name){alert('부품명을 입력하세요.');return;}
+  const obj={name,maker:document.getElementById('ip-maker').value,
+    compatible:document.getElementById('ip-compat').value,
+    location:document.getElementById('ip-loc').value,
+    unit:document.getElementById('ip-unit').value,
+    stock:parseInt(document.getElementById('ip-stock').value)||0,
+    minStock:parseInt(document.getElementById('ip-min').value)||5,
+    price:parseInt(document.getElementById('ip-price').value)||0
+  };
+  if(editId){
+    const p=S.partsStock.find(x=>x.id===editId);if(p)Object.assign(p,obj);
+    await dbUpdate('parts_stock',editId,toSnake(obj));
+  }else{
+    const newP={id:newId(S.partsStock,'P'),...obj};
+    S.partsStock.push(newP);
+    await dbInsert('parts_stock',toSnake(newP));
+  }
+  CM();ren();
+}
+
+// ── 발주/입고 모달 ──
+function openPOModal(editId){
+  const po=editId?S.purchaseOrders.find(x=>x.id===editId):null;
+  window._poN=1;
+  OM(`${mhdr(po?'발주서 수정':'발주서 작성')}
+  <div class="fr">${fi('po-date','발주일','','date',po?po.date:'2025-05-28')}${fi('po-sup','공급업체명 ★','업체명',null,po?po.supplier:'')}</div>
+  ${fi('po-app','결재자','김사장',null,po?po.approver:'김사장')}
+  <div class="fg"><label class="fl">발주 부품</label>
+    <div id="po-items">
+      <div style="display:grid;grid-template-columns:1fr 80px 100px;gap:6px;margin-bottom:6px">
+        <select class="fi" id="po-p-0" style="font-size:12px"><option value="">-- 부품 선택 --</option>${S.partsStock.map(p=>`<option value="${p.id}">${p.name} [${p.stock}${p.unit}]</option>`).join('')}</select>
+        <input class="fi" type="number" id="po-q-0" placeholder="수량" value="${po?po.items[0]?.qty||1:1}" style="font-size:12px">
+        <input class="fi" type="number" id="po-pr-0" placeholder="단가" value="${po?po.items[0]?.unitPrice||'':''}" style="font-size:12px">
+      </div>
+    </div>
+    <button onclick="addPOItem()" class="bs" style="height:30px;font-size:12px;width:100%;margin-top:4px"><i class="ti ti-plus"></i> 부품 추가</button>
+  </div>
+  ${fi('po-memo','메모','',null,po?po.memo:'')}
+  <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="savePO('${editId||''}')"><i class="ti ti-check"></i> ${po?'수정완료':'발주서 제출'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
+}
+function addPOItem(){
+  const i=window._poN||1;
+  const c=document.getElementById('po-items');
+  const d=document.createElement('div');
+  d.style.cssText='display:grid;grid-template-columns:1fr 80px 100px;gap:6px;margin-bottom:6px';
+  d.innerHTML=`<select class="fi" id="po-p-${i}" style="font-size:12px"><option value="">-- 선택 --</option>${S.partsStock.map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}</select><input class="fi" type="number" id="po-q-${i}" placeholder="수량" value="1" style="font-size:12px"><input class="fi" type="number" id="po-pr-${i}" placeholder="단가" style="font-size:12px">`;
+  c.appendChild(d);window._poN=(window._poN||1)+1;
+}
+async function savePO(editId){
+  const supplier=document.getElementById('po-sup').value;
+  if(!supplier){alert('공급업체명을 입력하세요.');return;}
+  const items=[];
+  for(let i=0;i<(window._poN||1);i++){
+    const pe=document.getElementById('po-p-'+i);
+    const qe=document.getElementById('po-q-'+i);
+    const pre=document.getElementById('po-pr-'+i);
+    if(pe&&pe.value){
+      const p=S.partsStock.find(x=>x.id===pe.value);
+      items.push({partId:pe.value,partName:p?p.name:pe.options[pe.selectedIndex].text,qty:parseInt(qe.value)||1,unitPrice:parseInt(pre.value)||0});
+    }
+  }
+  if(!items.length){alert('발주 부품을 선택하세요.');return;}
+  const obj={date:document.getElementById('po-date').value,supplier,items,
+    totalAmount:items.reduce((a,b)=>a+b.qty*b.unitPrice,0),
+    approver:document.getElementById('po-app').value,
+    memo:document.getElementById('po-memo').value
+  };
+  if(editId){
+    const po=S.purchaseOrders.find(x=>x.id===editId);
+    if(po)Object.assign(po,{...obj});
+    await dbUpdate('purchase_orders',editId,toSnake(obj));
+  }else{
+    const newPO={id:newId(S.purchaseOrders,'PO'),status:'결재대기',approvedAt:'',receivedAt:'',...obj};
+    S.purchaseOrders.unshift(newPO);
+    await dbInsert('purchase_orders',toSnake(newPO));
+  }
+  CM();ren();
+}
+async function approvePO(id){
+  const po=S.purchaseOrders.find(x=>x.id===id);
+  if(po){po.status='결재완료';po.approvedAt='2025-05-28';
+  await dbUpdate('purchase_orders',id,{status:'결재완료',approved_at:'2025-05-28'});}ren();
+}
+async function receivePO(id){
+  const po=S.purchaseOrders.find(x=>x.id===id);if(!po)return;
+  po.status='입고완료';po.receivedAt='2025-05-28';
+  const ups=[];
+  po.items.forEach(item=>{const p=S.partsStock.find(x=>x.id===item.partId);if(p){p.stock+=item.qty;ups.push(dbUpdate('parts_stock',p.id,{stock:p.stock}));}});
+  await Promise.all([dbUpdate('purchase_orders',id,{status:'입고완료',received_at:'2025-05-28'}),...ups]);
+  alert('입고 완료! 부품 재고가 업데이트되었습니다.');ren();
+}
+
+function topAction(){
+  const m={
+    dashboard:openRentModal,worklog:openAddWorkModal,
+    sales:openSaleModal,customers:openCustModal,
+    rent:openRentModal,rvehicles:openAddRVehicleModal,
+    rcalendar:openRentModal,rbilling:openRentModal,
+    rmaint:openMaintModal,repair:openRepairModal,
+    accident:openAccidentModal,unpaid:()=>{},
+    ivehicle:openIVehicleModal,iparts:openIPartsModal,
+    purchase:openPOModal,finance:()=>{},ai:()=>{}
+  };
+  (m[S.page]||openRentModal)();
+}
+
+function markRepairPaid(id){const r=S.repairs.find(x=>x.id===id);if(r){r.payType='현금';dbUpdate('repairs',id,{pay_type:'현금'});ren();updBadges();}}
+async function markRentPaid(id){const r=S.rentals.find(x=>x.id===id);if(r){r.paid=true;await dbUpdate('rentals',id,{paid:true});ren();updBadges();}}
+async function updAccStatus(id,status){const a=S.accidents.find(x=>x.id===id);if(a){a.status=status;await dbUpdate('accidents',id,{status});}ren();}
+
+function openNotif(){OM(`${mhdr('알림')}<div style="display:flex;flex-direction:column;gap:8px">
+  ${[['br','미수금','수리 외상 미결제'],['bb','렌트','오늘 반납 예정 차량 확인'],['ba','발주','결재 대기 발주서 있음'],['bg','DB','데이터 동기화 완료']].map(([c,t,d])=>`<div style="padding:12px;border:1px solid var(--bd);border-radius:8px;display:flex;gap:10px">${badge(c,t)}<div style="font-size:13px">${d}</div></div>`).join('')}
+</div>`);}
+
+function handleMO(e){if(e.target.id==='modal')CM();}
+
 function openPhotoViewer(url){
   const wrap=document.createElement('div');
   wrap.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
