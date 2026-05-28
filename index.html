@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 모터스포츠 통합 ERP</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1620,60 +1620,62 @@ function openAddRVehicleModal(editId){
   const v=editId?S.rentVehicles.find(x=>x.id===editId):null;
   window._rvInsType=v?v.insuranceType||'종합보험':'종합보험';
   window._rvDriverScope=v?v.driverScope||'누구나':'누구나';
-  const drivers=v?v.designatedDrivers||[]:[{name:'',phone:'',birth:'',platform:''},{name:'',phone:'',birth:'',platform:''}];
+  const d0=(v&&v.designatedDrivers&&v.designatedDrivers[0])||{name:'',phone:'',birth:'',platform:''};
+  const d1=(v&&v.designatedDrivers&&v.designatedDrivers[1])||{name:'',phone:'',birth:'',platform:''};
 
-  const insCompClass='tgb'+(window._rvInsType==='종합보험'?' on':'');
-  const insLiabClass='tgb'+(window._rvInsType==='책임보험'?' on':'');
-  const drvAllClass='tgb'+(window._rvDriverScope==='누구나'?' on':'');
-  const drvDesClass='tgb'+(window._rvDriverScope==='지정운전자'?' on':'');
-  const drvSecStyle=window._rvDriverScope==='지정운전자'?'':'display:none';
-  const d0=drivers[0]||{name:'',phone:'',birth:'',platform:''};
-  const d1=drivers[1]||{name:'',phone:'',birth:'',platform:''};
+  const insComp='tgb'+(window._rvInsType==='종합보험'?' on':'');
+  const insLiab='tgb'+(window._rvInsType==='책임보험'?' on':'');
+  const drvAll='tgb'+(window._rvDriverScope==='누구나'?' on':'');
+  const drvDes='tgb'+(window._rvDriverScope==='지정운전자'?' on':'');
+  const drvSec=window._rvDriverScope==='지정운전자'?'':'display:none';
 
-  OM(`${mhdr(v?'렌트 차량 수정':'렌트 차량 추가')}
-  <div class="fr">${fi('rv-model','차량 모델 ★','혼다 PCX125',null,v?v.model:'')}${fi('rv-plate','차량번호 ★','12가3456',null,v?v.plateNo:'')}</div>
-  <div class="fr">${fi('rv-year','연식','2025','number',v?v.year:'')}${fi('rv-color','색상','화이트',null,v?v.color:'')}</div>
-  <div class="fg"><label class="fl">보험 종류</label>
-    <div class="tg">
-      <div class="${insCompClass}" id="ins-comp" onclick="selRvIns('종합보험')">🛡 종합보험</div>
-      <div class="${insLiabClass}" id="ins-liab" onclick="selRvIns('책임보험')">📋 책임보험</div>
-    </div>
-  </div>
-  <div class="fr">${fi('rv-insurer','보험사','현대해상',null,v?v.insurer:'')}${fi('rv-insured','피보험자','홍길동',null,v?v.insured||'')}</div>
-  <div class="fg"><label class="fl">운전자 범위</label>
-    <div class="tg">
-      <div class="${drvAllClass}" id="drv-all" onclick="selRvDriver('누구나')">👥 누구나</div>
-      <div class="${drvDesClass}" id="drv-des" onclick="selRvDriver('지정운전자')">👤 지정운전자</div>
-    </div>
-  </div>
-  <div id="des-driver-section" style="${drvSecStyle}">
-    <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px">
-      <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:10px;text-transform:uppercase">지정 운전자 1</div>
-      <div class="fr">${fi('drv1-name','이름','',null,d0.name)}${fi('drv1-phone','연락처','010-0000-0000',null,d0.phone)}</div>
-      <div class="fr">${fi('drv1-birth','생년월일','1990-01-01','date',d0.birth)}${fi('drv1-platform','플랫폼','쿠팡이츠 등',null,d0.platform)}</div>
-    </div>
-    <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px">
-      <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:10px;text-transform:uppercase">지정 운전자 2 (선택)</div>
-      <div class="fr">${fi('drv2-name','이름','',null,d1.name)}${fi('drv2-phone','연락처','010-0000-0000',null,d1.phone)}</div>
-      <div class="fr">${fi('drv2-birth','생년월일','','date',d1.birth)}${fi('drv2-platform','플랫폼','쿠팡이츠 등',null,d1.platform)}</div>
-    </div>
-  </div>
-  <div class="fr">${fsel('rv-age','최소 연령',AGES,v?v.minAge:'전 연령')}${fi('rv-rate','일일 요금','50000','number',v?v.dailyRate:'')}</div>
-  <div class="fr">${fi('rv-dep','보증금','200000','number',v?v.deposit:'')}${fi('rv-km','현재 주행거리 (km)','','number',v?v.mileage:'')}</div>
-  <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveRVehicle('${editId||''}')"><i class="ti ti-check"></i> ${v?'수정완료':'추가하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
+  const eid=editId||'';
+  const parts=[
+    mhdr(v?'렌트 차량 수정':'렌트 차량 추가'),
+    '<div class="fr">',fi('rv-model','차량 모델 ★','혼다 PCX125',null,v?v.model:''),fi('rv-plate','차량번호 ★','12가3456',null,v?v.plateNo:''),'</div>',
+    '<div class="fr">',fi('rv-year','연식','2025','number',v?v.year:''),fi('rv-color','색상','화이트',null,v?v.color:''),'</div>',
+    '<div class="fg"><label class="fl">보험 종류</label><div class="tg">',
+      '<div class="'+insComp+'" id="ins-comp" onclick="selRvIns(1)">🛡 종합보험</div>',
+      '<div class="'+insLiab+'" id="ins-liab" onclick="selRvIns(0)">📋 책임보험</div>',
+    '</div></div>',
+    '<div class="fr">',fi('rv-insurer','보험사','현대해상',null,v?v.insurer:''),fi('rv-insured','피보험자','',null,v&&v.insured?v.insured:''),'</div>',
+    '<div class="fg"><label class="fl">운전자 범위</label><div class="tg">',
+      '<div class="'+drvAll+'" id="drv-all" onclick="selRvDriver(1)">👥 누구나</div>',
+      '<div class="'+drvDes+'" id="drv-des" onclick="selRvDriver(0)">👤 지정운전자</div>',
+    '</div></div>',
+    '<div id="des-driver-section" style="'+drvSec+'">',
+      '<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px">',
+        '<div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:10px">지정 운전자 1</div>',
+        '<div class="fr">',fi('drv1-name','이름','',null,d0.name),fi('drv1-phone','연락처','010-0000-0000',null,d0.phone),'</div>',
+        '<div class="fr">',fi('drv1-birth','생년월일','','date',d0.birth),fi('drv1-platform','플랫폼','쿠팡이츠',null,d0.platform),'</div>',
+      '</div>',
+      '<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px">',
+        '<div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:10px">지정 운전자 2 (선택)</div>',
+        '<div class="fr">',fi('drv2-name','이름','',null,d1.name),fi('drv2-phone','연락처','010-0000-0000',null,d1.phone),'</div>',
+        '<div class="fr">',fi('drv2-birth','생년월일','','date',d1.birth),fi('drv2-platform','플랫폼','쿠팡이츠',null,d1.platform),'</div>',
+      '</div>',
+    '</div>',
+    '<div class="fr">',fsel('rv-age','최소 연령',AGES,v?v.minAge:'전 연령'),fi('rv-rate','일일 요금','50000','number',v?v.dailyRate:''),'</div>',
+    '<div class="fr">',fi('rv-dep','보증금','200000','number',v?v.deposit:''),fi('rv-km','현재 주행거리(km)','','number',v?v.mileage:''),'</div>',
+    '<div style="display:flex;gap:8px">',
+      '<button class="bp" style="flex:1" onclick="saveRVehicle(\''+eid+'\')"><i class="ti ti-check"></i> '+(v?'수정완료':'추가하기')+'</button>',
+      '<button onclick="CM()" class="bs" style="flex:1">취소</button>',
+    '</div>'
+  ];
+  OM(parts.join(''));
 }
 
-function selRvIns(type){
-  window._rvInsType=type;
-  document.getElementById('ins-comp').className='tgb'+(type==='종합보험'?' on':'');
-  document.getElementById('ins-liab').className='tgb'+(type==='책임보험'?' on':'');
+function selRvIns(isComp){
+  window._rvInsType=isComp?'종합보험':'책임보험';
+  document.getElementById('ins-comp').className='tgb'+(isComp?' on':'');
+  document.getElementById('ins-liab').className='tgb'+(isComp?'':' on');
 }
-function selRvDriver(scope){
-  window._rvDriverScope=scope;
-  document.getElementById('drv-all').className='tgb'+(scope==='누구나'?' on':'');
-  document.getElementById('drv-des').className='tgb'+(scope==='지정운전자'?' on':'');
+function selRvDriver(isAll){
+  window._rvDriverScope=isAll?'누구나':'지정운전자';
+  document.getElementById('drv-all').className='tgb'+(isAll?' on':'');
+  document.getElementById('drv-des').className='tgb'+(isAll?'':' on');
   const sec=document.getElementById('des-driver-section');
-  if(sec)sec.style.display=scope==='지정운전자'?'block':'none';
+  if(sec)sec.style.display=isAll?'none':'block';
 }
 async function saveRVehicle(editId){
   const model=document.getElementById('rv-model').value;const plate=document.getElementById('rv-plate').value;
