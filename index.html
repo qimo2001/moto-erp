@@ -1378,8 +1378,16 @@ async function prevPhoto(input,id,folder){
 // ── 정비 항목 ──
 window._mItems=[];window._rItems=[];
 function mcHTML(pfx){
-  return`<div class="mc-grid">${MITEMS.map((item,i)=>`<label class="mc" id="${pfx}-mi-${i}" onclick="togMI('${pfx}',${i},'${item}')"><i class="ti ti-circle" id="${pfx}-mi-icon-${i}" style="font-size:16px;color:var(--tx3)"></i><span>${item}</span></label>`).join('')}</div>
-  <div style="font-size:11px;color:var(--tx3);margin-bottom:10px" id="${pfx}-mc"></div>
+  const key=pfx==='rent'?'_mItems':'_rItems';
+  const selected=window[key]||[];
+  return`<div class="mc-grid">${MITEMS.map((item,i)=>{
+    const isOn=selected.some(x=>x.name===item||(item==='기타(직접입력)'&&x.name&&x.name.endsWith('(기타)')));
+    return`<label class="mc${isOn?' on':''}" id="${pfx}-mi-${i}" onclick="togMI('${pfx}',${i},'${item}')">
+      <i class="ti ti-circle${isOn?'-check':''}" id="${pfx}-mi-icon-${i}" style="font-size:16px;color:${isOn?'var(--primary)':'var(--tx3)'}"></i>
+      <span>${item}</span>
+    </label>`;
+  }).join('')}</div>
+  <div style="font-size:11px;color:var(--tx3);margin-bottom:10px" id="${pfx}-mc">${selected.length?selected.length+'개 선택됨':''}</div>
   <div id="${pfx}-md"></div>`;
 }
 function togMI(pfx,idx,name){
@@ -1751,8 +1759,9 @@ async function saveRVehicle(editId){
 
 // ── 정비 모달 ──
 function openMaintModal(preVehicleId,editLogId){
-  window._mItems=[];window._driverType='';
   const log=editLogId?S.maintLogs.find(x=>x.id===editLogId):null;
+  window._mItems=log&&log.items?JSON.parse(JSON.stringify(log.items)):[];
+  window._driverType='';
   OM(`${mhdr(log?'정비 수정':'렌트 차량 정비 등록')}${reqNote()}
   <div class="fr"><div class="fg"><label class="fl">차량 선택 <span class="req">★</span></label><select class="fi" id="mt-v">${S.rentVehicles.map(v=>`<option value="${v.id}" ${(preVehicleId||log?.vehicleId)===v.id?'selected':''}>${v.plateNo} | ${v.model}</option>`).join('')}</select></div>${fi('mt-date','정비일','','date',log?log.date:'2025-05-28',true)}</div>
   ${fi('mt-km','정비 시 현재 키로수 (km)','필수 입력','number',log?log.mileage:'',true)}
@@ -1774,6 +1783,10 @@ function openMaintModal(preVehicleId,editLogId){
   </div>
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveMaint('${editLogId||''}')"><i class="ti ti-check"></i> ${log?'수정완료':'정비 등록'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
   window._driverType=log&&log.driverType==='배달대행'?'delivery':'personal';
+  setTimeout(()=>{
+    selDT(window._driverType);
+    if(window._mItems&&window._mItems.length)rendMD('rent',window._mItems);
+  },50);
 }
 function selDT(t){window._driverType=t;document.getElementById('dt-p').className='tgb'+(t==='personal'?' on':'');document.getElementById('dt-d').className='tgb'+(t==='delivery'?' on':'');document.getElementById('ag-row').style.display=t==='delivery'?'block':'none';}
 async function saveMaint(editId){
@@ -1808,8 +1821,9 @@ async function saveMaint(editId){
 
 // ── 수리 모달 ──
 function openRepairModal(editId){
-  window._rItems=[];window._ps={};
   const r=editId?S.repairs.find(x=>x.id===editId):null;
+  window._rItems=r&&r.items?JSON.parse(JSON.stringify(r.items)):[];
+  window._ps={};
   OM(`${mhdr(r?'수리 수정':'일반 수리 접수')}
   <div class="fr">${fi('rp-cust','고객명','',null,r?r.customer:'')}${fi('rp-phone','연락처','',null,r?r.phone:'')}</div>
   <div class="fr">${fi('rp-plate','차량번호 <span class="req">★</span>','123가4567',null,r?r.plateNo:'')}${fi('rp-model','차량 모델','',null,r?r.model:'')}</div>
@@ -1819,7 +1833,10 @@ function openRepairModal(editId){
   ${payRow('rp')}
   <div class="fg"><label class="fl">정비 사진</label>${pPhoto('rpp',['수리전 1','수리전 2','수리후 1','수리후 2','기타'],'rpp',r?r.photos||[]:[])}</div>
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveRepair('${editId||''}')"><i class="ti ti-check"></i> ${r?'수정완료':'접수하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
-  if(r)setTimeout(()=>selPay('rp',r.payType),50);
+  setTimeout(()=>{
+    if(r)selPay('rp',r.payType);
+    if(window._rItems&&window._rItems.length)rendMD('repair',window._rItems);
+  },50);
 }
 async function saveRepair(editId){
   const plate=document.getElementById('rp-plate').value;const km=parseInt(document.getElementById('rp-km').value)||0;
