@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS 모터스포츠 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -709,6 +709,7 @@ function pgSales(){
         <td><div style="display:flex;gap:4px">
           <button class="bsm" onclick="openSaleModal('${s.id}')">수정</button>
           <button class="bsm" onclick="openSaleDetail('${s.id}')">상세</button>
+          <button class="bsm" style="color:#c62828" onclick="delSale('${s.id}')">삭제</button>
         </div></td>
       </tr>`).join('')}</tbody>
     </table></div>
@@ -749,6 +750,7 @@ function pgCustomers(){
       <div style="display:flex;gap:6px;margin-top:10px">
         <button class="bsm" style="flex:1" onclick="event.stopPropagation();openCustModal('${c.id}')">수정</button>
         <button class="bpm" style="flex:1" onclick="event.stopPropagation();openRentModal()">대여 접수</button>
+        <button class="bsm" style="color:#c62828" onclick="event.stopPropagation();delCustomer('${c.id}')">삭제</button>
       </div>
     </div>`).join('')}
   </div>
@@ -791,6 +793,7 @@ function pgRent(){
           ${r.status==='대여중'?`<button class="bpm" onclick="openReturnModal('${r.id}')"><i class="ti ti-arrow-back-up" style="font-size:12px"></i> 반납</button>`:''}
           ${!r.paid&&r.status==='반납완료'?`<button class="bs" style="height:30px;font-size:12px;padding:0 10px" onclick="markRentPaid('${r.id}')">결제완료</button>`:''}
           <button class="bsm" onclick="openRentEditModal('${r.id}')">수정</button>
+          <button class="bsm" style="color:#c62828" onclick="delRental('${r.id}')">삭제</button>
         </div>
       </div>`).join('')}
       ${data.length===0?`<div style="text-align:center;padding:30px;color:var(--tx3)">검색 결과 없음</div>`:''}
@@ -821,6 +824,7 @@ function pgRVehicles(){
         <div style="font-weight:700;color:#CC0000">${v.dailyRate.toLocaleString()}원/일</div>
         <div style="display:flex;gap:4px;margin-top:6px">
           <button class="bsm" onclick="event.stopPropagation();openAddRVehicleModal('${v.id}')">수정</button>
+        <button class="bsm" style="color:#c62828" onclick="event.stopPropagation();delRVehicle('${v.id}')">삭제</button>
         </div>
       </div>
     </div>`).join('')}
@@ -849,53 +853,97 @@ function pgRBilling(){
 function pgRMaint(){
   const sel=S._rmV||'all';
   const period=S._rmPeriod||'monthly';
-  const viewDate=S._rmViewDate||'2025-05';
-  let logs=(sel==='all'?S.maintLogs:S.maintLogs.filter(m=>m.vehicleId===sel)).sort((a,b)=>b.date.localeCompare(a.date));
-  // period filter
-  if(period==='daily'){logs=logs.filter(l=>l.date===viewDate);}
-  else if(period==='weekly'){
-    const d=new Date(viewDate);const day=d.getDay();
-    const mon=new Date(d);mon.setDate(d.getDate()-day+1);
-    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
-    const ms=mon.toISOString().slice(0,10);const ss=sun.toISOString().slice(0,10);
-    logs=logs.filter(l=>l.date>=ms&&l.date<=ss);
-  }else{logs=logs.filter(l=>l.date.startsWith(viewDate.slice(0,7)));}
-  const totalCost=logs.reduce((a,b)=>a+b.cost,0);
+  const viewDate=S._rmViewDate||'2025-05-28';
+  const searchQ=S._rmQ||'';
 
-  // vehicle filter pills - plate only, grid style
-  const vHtml=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;align-items:center">
-    <button onclick="S._rmV='all';ren()" style="padding:6px 14px;border:1px solid var(--bd2);border-radius:6px;background:${sel==='all'?'#CC0000':'transparent'};color:${sel==='all'?'#fff':'var(--tx2)'};cursor:pointer;font-size:12px;font-weight:700;min-width:60px">전체</button>
-    ${S.rentVehicles.map(v=>`<button onclick="S._rmV='${v.id}';ren()" style="padding:6px 10px;border:2px solid ${sel===v.id?'#CC0000':' var(--bd2)'};border-radius:6px;background:${sel===v.id?'#CC0000':'var(--bg2)'};color:${sel===v.id?'#fff':'var(--tx)'};cursor:pointer;font-size:13px;font-weight:800;letter-spacing:.5px;font-family:monospace;min-width:80px;text-align:center">${v.plateNo}<div style="font-size:9px;font-weight:400;opacity:.8;font-family:sans-serif;margin-top:1px">${v.status==='가용'?'✅':v.status==='대여중'?'🔵':'🟡'} ${v.status}</div></button>`).join('')}
+  // 날짜 범위 계산
+  let dateFrom='',dateTo='';
+  if(period==='daily'){dateFrom=viewDate;dateTo=viewDate;}
+  else if(period==='weekly'){
+    const d=new Date(viewDate);
+    const day=d.getDay();
+    const mon=new Date(d);mon.setDate(d.getDate()-(day===0?6:day-1));
+    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+    dateFrom=mon.toISOString().slice(0,10);
+    dateTo=sun.toISOString().slice(0,10);
+  }else{
+    const ym=viewDate.slice(0,7);
+    dateFrom=ym+'-01';
+    dateTo=ym+'-31';
+  }
+
+  let logs=S.maintLogs;
+  // 차량 필터
+  if(sel!=='all') logs=logs.filter(m=>m.vehicleId===sel);
+  // 기간 필터
+  logs=logs.filter(l=>l.date>=dateFrom&&l.date<=dateTo);
+  // 검색 필터
+  if(searchQ) logs=logs.filter(l=>[l.driverName,l.driverPhone,l.agencyName].some(v=>(v||'').includes(searchQ))||(S.rentVehicles.find(v=>v.id===l.vehicleId)||{}).plateNo?.includes(searchQ));
+  logs=logs.sort((a,b)=>b.date.localeCompare(a.date));
+
+  const totalCost=logs.reduce((a,b)=>a+(b.cost||0),0);
+
+  // 기간 표시 텍스트
+  const periodLabel=period==='daily'?viewDate:period==='weekly'?`${dateFrom} ~ ${dateTo}`:viewDate.slice(0,7);
+
+  // 차량 필터 버튼
+  const vHtml=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+    <button onclick="S._rmV='all';ren()" style="padding:6px 14px;border:1px solid ${sel==='all'?'#CC0000':'var(--bd2)'};border-radius:6px;background:${sel==='all'?'#CC0000':'transparent'};color:${sel==='all'?'#fff':'var(--tx2)'};cursor:pointer;font-size:12px;font-weight:700">전체</button>
+    ${S.rentVehicles.map(v=>`<button onclick="S._rmV='${v.id}';ren()" style="padding:6px 12px;border:2px solid ${sel===v.id?'#CC0000':'var(--bd2)'};border-radius:6px;background:${sel===v.id?'#CC0000':'var(--bg2)'};color:${sel===v.id?'#fff':'var(--tx)'};cursor:pointer;font-size:13px;font-weight:800;letter-spacing:.5px;font-family:monospace">${v.plateNo}<div style="font-size:9px;font-weight:400;opacity:.8;font-family:sans-serif;margin-top:1px">${v.status==='가용'?'✅':v.status==='대여중'?'🔵':'🟡'} ${v.status}</div></button>`).join('')}
   </div>`;
 
-  // period nav
-  const periodTabs=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+  // 기간 탭 + 검색
+  const ctrlHtml=`
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
     <div style="display:flex;border:1px solid var(--bd2);border-radius:8px;overflow:hidden">
       ${['daily','weekly','monthly'].map(p=>`<button onclick="S._rmPeriod='${p}';ren()" style="padding:6px 14px;border:none;border-right:1px solid var(--bd2);background:${period===p?'#CC0000':'transparent'};color:${period===p?'#fff':'var(--tx2)'};cursor:pointer;font-size:12px;font-weight:600">${p==='daily'?'일별':p==='weekly'?'주간별':'월별'}</button>`).join('')}
     </div>
-    <button onclick="prevPeriod()" style="width:30px;height:30px;border:1px solid var(--bd2);border-radius:6px;background:transparent;cursor:pointer;font-size:14px">‹</button>
-    <input type="${period==='monthly'?'month':'date'}" value="${period==='monthly'?viewDate.slice(0,7):viewDate}" onchange="S._rmViewDate=this.value;ren()" style="border:1px solid var(--bd2);border-radius:6px;padding:4px 8px;font-size:13px;background:var(--bg2);color:var(--tx)">
-    <button onclick="nextPeriod()" style="width:30px;height:30px;border:1px solid var(--bd2);border-radius:6px;background:transparent;cursor:pointer;font-size:14px">›</button>
-    <span style="font-size:13px;color:var(--tx2)">${logs.length}건 • <strong>${fmtMoney(totalCost)}</strong></span>
+    <button onclick="prevPeriod()" style="width:30px;height:30px;border:1px solid var(--bd2);border-radius:6px;background:transparent;cursor:pointer;font-size:16px;color:var(--tx)">‹</button>
+    <input type="${period==='monthly'?'month':'date'}" value="${period==='monthly'?viewDate.slice(0,7):viewDate}" onchange="S._rmViewDate=this.value;ren()" style="border:1px solid var(--bd2);border-radius:6px;padding:5px 8px;font-size:13px;background:var(--bg2);color:var(--tx)">
+    <button onclick="nextPeriod()" style="width:30px;height:30px;border:1px solid var(--bd2);border-radius:6px;background:transparent;cursor:pointer;font-size:16px;color:var(--tx)">›</button>
+    <span style="font-size:13px;color:var(--tx2)">${logs.length}건 • <strong style="color:#CC0000">${totalCost.toLocaleString()}원</strong></span>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <div class="sbar" style="flex:1;margin-bottom:0"><i class="ti ti-search"></i><input id="rmq" placeholder="운전자명, 차량번호, 연락처 검색..." value="${searchQ}" onkeydown="if(event.key==='Enter'){S._rmQ=this.value;ren();}"></div>
+    <button class="bp" style="height:38px;padding:0 14px" onclick="S._rmQ=document.getElementById('rmq').value;ren()">검색</button>
+    <button class="bs" style="height:38px;padding:0 10px" onclick="S._rmQ='';ren()">초기화</button>
   </div>`;
 
   return`<div class="sh"><span class="st">렌트 차량 정비</span><button class="bp" onclick="openMaintModal()"><i class="ti ti-plus"></i> 정비 등록</button></div>
-  ${vHtml}${periodTabs}
-  <div class="card">${logs.length===0?`<div style="text-align:center;padding:30px;color:var(--tx3)"><i class="ti ti-calendar-off" style="font-size:40px;display:block;margin-bottom:8px"></i>해당 기간 정비 이력 없음</div>`:logs.map(log=>{const v=S.rentVehicles.find(x=>x.id===log.vehicleId);return`<div class="tl"><div class="td"></div><div style="flex:1">
+  ${vHtml}${ctrlHtml}
+  <div class="card">${logs.length===0?`<div style="text-align:center;padding:30px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:8px">📋</div><div style="font-size:14px;font-weight:600">${periodLabel} 정비 이력 없음</div></div>`:
+  logs.map(log=>{const v=S.rentVehicles.find(x=>x.id===log.vehicleId);return`<div class="tl"><div class="td"></div><div style="flex:1">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
       <span style="font-weight:700">${log.date}</span>
       <span class="plate-sm">${v?v.plateNo:''}</span>
-      <span style="font-size:12px;color:var(--tx2)">${v?v.model:''} • ${log.mileage.toLocaleString()}km</span>
-      ${badge(log.driverType==='배달대행'?'bdk':'bgr',log.driverType==='배달대행'?log.agencyName:'개인')}
-      <span style="color:#CC0000;font-weight:700;margin-left:auto">${fmtMoney(log.cost)}</span>
+      <span style="font-size:12px;color:var(--tx2)">${v?v.model:''} • ${(log.mileage||0).toLocaleString()}km</span>
+      ${badge(log.driverType==='배달대행'?'bdk':'bgr',log.driverType==='배달대행'?log.agencyName||'배달대행':'개인')}
+      <span style="color:#CC0000;font-weight:700;margin-left:auto">${(log.cost||0).toLocaleString()}원</span>
     </div>
-    <div style="font-size:12px;color:var(--tx2);margin-bottom:6px">운전자: <strong>${log.driverName}</strong> ${log.driverPhone}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${log.items.map(i=>badge(i.src==='매장재고'?'bb':'ba',i.name+' '+(i.src==='매장재고'?'🏪':'👤'))).join('')}</div>
-    ${log.memo?`<div style="font-size:12px;color:var(--tx2)">${log.memo}</div>`:''}
-    <div style="font-size:11px;color:var(--tx3)">담당: ${log.mechanic}</div>
-    ${log.photos&&log.photos.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${log.photos.map((url,i)=>`<div onclick="openPhotoViewer('${url}')" style="width:56px;height:42px;border-radius:6px;overflow:hidden;cursor:pointer;border:1px solid var(--bd);flex-shrink:0;background:var(--bg3)"><img src="${url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='📷'"></div>`).join('')}</div>`:''}
-    <button class="bsm" style="margin-top:6px" onclick="openMaintModal(null,'${log.id}')">수정</button>
+    <div style="font-size:12px;color:var(--tx2);margin-bottom:6px">운전자: <strong>${log.driverName||''}</strong> ${log.driverPhone||''}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${(log.items||[]).map(i=>badge(i.src==='매장재고'?'bb':'ba',i.name+' '+(i.src==='매장재고'?'🏪':'👤'))).join('')}</div>
+    ${log.photos&&log.photos.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${log.photos.map(url=>`<div onclick="openPhotoViewer('${url}')" style="width:56px;height:42px;border-radius:6px;overflow:hidden;cursor:pointer;border:1px solid var(--bd);flex-shrink:0;background:var(--bg3)"><img src="${url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='📷'"></div>`).join('')}</div>`:''}
+    ${log.memo?`<div style="font-size:12px;color:var(--tx2);margin-top:4px">${log.memo}</div>`:''}
+    <div style="font-size:11px;color:var(--tx3)">담당: ${log.mechanic||''}</div>
+    <div style="display:flex;gap:6px;margin-top:6px">
+      <button class="bsm" onclick="openMaintModal(null,'${log.id}')">수정</button>
+      <button class="bsm" style="color:#c62828" onclick="delMaintLog('${log.id}')">삭제</button>
+    </div>
   </div></div>`;}).join('')}</div>`;
+}
+function prevPeriod(){
+  const p=S._rmPeriod||'monthly';const d=S._rmViewDate||'2025-05-28';
+  if(p==='daily'){const dt=new Date(d);dt.setDate(dt.getDate()-1);S._rmViewDate=dt.toISOString().slice(0,10);}
+  else if(p==='weekly'){const dt=new Date(d);dt.setDate(dt.getDate()-7);S._rmViewDate=dt.toISOString().slice(0,10);}
+  else{const ym=d.slice(0,7);const dt=new Date(ym+'-01');dt.setMonth(dt.getMonth()-1);S._rmViewDate=dt.toISOString().slice(0,7);}
+  ren();
+}
+function nextPeriod(){
+  const p=S._rmPeriod||'monthly';const d=S._rmViewDate||'2025-05-28';
+  if(p==='daily'){const dt=new Date(d);dt.setDate(dt.getDate()+1);S._rmViewDate=dt.toISOString().slice(0,10);}
+  else if(p==='weekly'){const dt=new Date(d);dt.setDate(dt.getDate()+7);S._rmViewDate=dt.toISOString().slice(0,10);}
+  else{const ym=d.slice(0,7);const dt=new Date(ym+'-01');dt.setMonth(dt.getMonth()+1);S._rmViewDate=dt.toISOString().slice(0,7);}
+  ren();
 }
 function prevPeriod(){
   const p=S._rmPeriod||'monthly';const d=S._rmViewDate||'2025-05-28';
@@ -939,6 +987,7 @@ function pgRepair(){
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         ${r.payType==='외상'?`<button class="bs" style="height:28px;font-size:12px;padding:0 10px" onclick="markRepairPaid('${r.id}')">💰 외상 결제</button>`:''}
         <button class="bsm" onclick="openRepairModal('${r.id}')">수정</button>
+          <button class="bsm" style="color:#c62828" onclick="delRepair('${r.id}')">삭제</button>
       </div>
     </div>`).join('')}
     ${data.length===0?`<div style="text-align:center;padding:30px;color:var(--tx3)">검색 결과 없음</div>`:''}
@@ -978,6 +1027,7 @@ function pgAccident(){
         ${a.status==='입고'?`<button class="bpm" style="height:28px;padding:0 10px;font-size:12px" onclick="updAccStatus('${a.id}','수리중')">🔧 수리 시작</button>`:''}
         ${a.status==='수리중'?`<button class="bpm" style="height:28px;padding:0 10px;font-size:12px" onclick="updAccStatus('${a.id}','출고완료')">✅ 출고 완료</button>`:''}
         <button class="bsm" onclick="openAccidentModal('${a.id}')">수정</button>
+          <button class="bsm" style="color:#c62828" onclick="delAccident('${a.id}')">삭제</button>
       </div>
     </div>`).join('')}
     ${data.length===0?`<div style="text-align:center;padding:30px;color:var(--tx3)">검색 결과 없음</div>`:''}
@@ -1014,7 +1064,10 @@ function pgIVehicle(){
     </div>
     <div style="text-align:right;flex-shrink:0">
       <div style="font-weight:700;color:#CC0000">${(v.price/10000).toFixed(0)}만원</div>
-      <button class="bsm" style="margin-top:6px" onclick="event.stopPropagation();openIVehicleModal('${v.id}')">수정</button>
+      <div style="display:flex;gap:4px;margin-top:6px">
+      <button class="bsm" onclick="event.stopPropagation();openIVehicleModal('${v.id}')">수정</button>
+      <button class="bsm" style="color:#c62828" onclick="event.stopPropagation();delVehicleStock('${v.id}')">삭제</button>
+    </div>
     </div>
   </div>`).join('')}
   </div>`;
@@ -1030,7 +1083,7 @@ function pgIParts(){
   <div class="sgrid"><div class="sc"><div class="sl">부품 종류</div><div class="sv">${S.partsStock.length}<small style="font-size:14px">종</small></div></div><div class="sc"><div class="sl">발주 필요</div><div class="sv" style="color:#c62828">${S.partsStock.filter(p=>p.stock<=p.minStock).length}<small style="font-size:14px">종</small></div></div><div class="sc"><div class="sl">재고 총액</div><div class="sv">${(S.partsStock.reduce((a,b)=>a+b.stock*b.price,0)/10000).toFixed(0)}<small style="font-size:14px">만</small></div></div></div>
   <div class="card"><div class="sh"><span class="st">부품 재고</span><div style="display:flex;gap:6px"><button class="bs" onclick="openPOModal()"><i class="ti ti-file-invoice"></i> 발주서</button><button class="bp" onclick="openIPartsModal()"><i class="ti ti-plus"></i> 부품 등록</button></div></div>
   <div class="tw"><table><thead><tr><th>품번</th><th>부품명</th><th>제조사</th><th>적용 차량</th><th>위치</th><th>재고</th><th>단가</th><th>상태</th><th>관리</th></tr></thead>
-  <tbody>${items.map(p=>`<tr><td style="font-family:monospace;font-size:11px">${p.id}</td><td style="font-weight:700">${p.name}</td><td style="font-size:12px">${p.maker}</td><td style="font-size:12px;color:var(--tx2)">${p.compatible}</td><td><span style="background:var(--bg3);padding:2px 8px;border-radius:6px;font-size:11px;font-family:monospace;font-weight:700">${p.location}</span></td><td><strong ${p.stock<=p.minStock?'style="color:#c62828"':''}>${p.stock}${p.unit}</strong></td><td>${p.price.toLocaleString()}원</td><td>${statusBadge(p.stock===0?'품절':p.stock<=p.minStock?'부족':'정상')}</td><td><button class="bsm" onclick="openIPartsModal('${p.id}')">수정</button></td></tr>`).join('')}</tbody></table></div>
+  <tbody>${items.map(p=>`<tr><td style="font-family:monospace;font-size:11px">${p.id}</td><td style="font-weight:700">${p.name}</td><td style="font-size:12px">${p.maker}</td><td style="font-size:12px;color:var(--tx2)">${p.compatible}</td><td><span style="background:var(--bg3);padding:2px 8px;border-radius:6px;font-size:11px;font-family:monospace;font-weight:700">${p.location}</span></td><td><strong ${p.stock<=p.minStock?'style="color:#c62828"':''}>${p.stock}${p.unit}</strong></td><td>${p.price.toLocaleString()}원</td><td>${statusBadge(p.stock===0?'품절':p.stock<=p.minStock?'부족':'정상')}</td><td><div style="display:flex;gap:4px"><button class="bsm" onclick="openIPartsModal('${p.id}')">수정</button><button class="bsm" style="color:#c62828" onclick="delPartsStock('${p.id}')">삭제</button></div></td></tr>`).join('')}</tbody></table></div>
   ${paginationHTML(total,cur,'_ipPage')}</div>`;
 }
 
@@ -1054,6 +1107,7 @@ function pgPurchase(){
         ${po.status==='결재대기'?`<button class="bpm" style="height:28px;padding:0 10px;font-size:12px" onclick="approvePO('${po.id}')">✅ 결재 승인</button>`:''}
         ${po.status==='결재완료'?`<button class="bpm" style="height:28px;padding:0 10px;font-size:12px" onclick="receivePO('${po.id}')">📦 입고 확인</button>`:''}
         ${po.status==='결재대기'?`<button class="bsm" onclick="openPOModal('${po.id}')">수정</button>`:''}
+        <button class="bsm" style="color:#c62828" onclick="delPO('${po.id}')">삭제</button>
       </div>
     </div>`).join('')}
   </div></div>`;
@@ -1648,6 +1702,7 @@ function pgWorklog(){
         `:''}
         ${t.status==='완료'?`<span style="font-size:12px;color:#2e7d32;font-weight:700">✅ 작업 완료</span>`:''}
         <button class="bsm" onclick="openAddWorkModal('${t.id}')">수정</button>
+        <button class="bsm" style="color:#c62828" onclick="delWorkTask('${t.id}')">삭제</button>
       </div>
     </div>`;
   }
@@ -1917,6 +1972,26 @@ async function receivePO(id){
   alert('입고 완료! 부품 재고가 업데이트되었습니다.');ren();
 }
 
+
+// ── 삭제 함수들 ──
+async function deleteRecord(table, id, arrKey, confirmMsg){
+  if(!confirm(confirmMsg||'정말 삭제하시겠습니까?')) return;
+  await dbDelete(table, id);
+  S[arrKey] = S[arrKey].filter(x=>x.id!==id);
+  CM(); ren(); updBadges();
+}
+function delSale(id){ deleteRecord('sales',id,'sales','판매 기록을 삭제하시겠습니까?'); }
+function delCustomer(id){ deleteRecord('customers',id,'customers','고객 정보를 삭제하시겠습니까?'); }
+function delRental(id){ deleteRecord('rentals',id,'rentals','렌트 기록을 삭제하시겠습니까?'); }
+function delRVehicle(id){ deleteRecord('rent_vehicles',id,'rentVehicles','렌트 차량을 삭제하시겠습니까?'); }
+function delMaintLog(id){ deleteRecord('maint_logs',id,'maintLogs','정비 기록을 삭제하시겠습니까?'); }
+function delRepair(id){ deleteRecord('repairs',id,'repairs','수리 기록을 삭제하시겠습니까?'); }
+function delAccident(id){ deleteRecord('accidents',id,'accidents','사고 수리 기록을 삭제하시겠습니까?'); }
+function delVehicleStock(id){ deleteRecord('vehicle_stock',id,'vehicleStock','차량 재고를 삭제하시겠습니까?'); }
+function delPartsStock(id){ deleteRecord('parts_stock',id,'partsStock','부품을 삭제하시겠습니까?'); }
+function delPO(id){ deleteRecord('purchase_orders',id,'purchaseOrders','발주서를 삭제하시겠습니까?'); }
+function delWorkTask(id){ deleteRecord('work_tasks',id,'workTasks','작업을 삭제하시겠습니까?'); }
+
 function topAction(){
   const m={
     dashboard:openRentModal,worklog:openAddWorkModal,
@@ -1943,16 +2018,20 @@ function handleMO(e){if(e.target.id==='modal')CM();}
 
 function openPhotoViewer(url){
   const wrap=document.createElement('div');
-  wrap.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  wrap.onclick=()=>wrap.remove();
+  wrap.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;touch-action:none';
+  const vw=window.innerWidth;
+  const vh=window.innerHeight;
   wrap.innerHTML=`
-    <div style="position:relative;max-width:100%;max-height:100%;display:flex;flex-direction:column;align-items:center;gap:12px">
-      <img src="${url}" style="max-width:calc(100vw-40px);max-height:calc(100vh-100px);object-fit:contain;border-radius:8px;box-shadow:0 0 40px rgba(0,0,0,0.5)">
-      <div style="display:flex;gap:10px">
-        <a href="${url}" target="_blank" style="padding:8px 16px;background:#CC0000;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">🔗 원본 보기</a>
-        <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:8px 16px;background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">✕ 닫기</button>
-      </div>
-    </div>`;
+    <div style="position:absolute;top:12px;right:12px;display:flex;gap:8px;z-index:10">
+      <a href="${url}" target="_blank" style="padding:8px 14px;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;backdrop-filter:blur(4px)">🔗 원본</a>
+      <button onclick="document.getElementById('photo-viewer-wrap').remove()" style="padding:8px 14px;background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px)">✕</button>
+    </div>
+    <img src="${url}" style="max-width:100vw;max-height:100vh;width:auto;height:auto;object-fit:contain;display:block" onclick="document.getElementById('photo-viewer-wrap').remove()">`;
+  wrap.id='photo-viewer-wrap';
+  wrap.addEventListener('click',e=>{if(e.target===wrap)wrap.remove();});
+  // 키보드 ESC 닫기
+  const escHandler=e=>{if(e.key==='Escape'){wrap.remove();document.removeEventListener('keydown',escHandler);}};
+  document.addEventListener('keydown',escHandler);
   document.body.appendChild(wrap);
 }
 
