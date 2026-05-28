@@ -976,6 +976,11 @@ function pgRVehicles(){
           ${v.driverScope==='지정운전자'?badge('bpu','👤 지정운전자'):''}
           <span style="font-size:11px;color:var(--tx3)">${v.year}년 • ${v.color} • ${v.mileage.toLocaleString()}km</span>
         </div>
+        ${v.insured?`<div style="font-size:11px;color:var(--tx2);margin-top:3px">🛡 피보험자: <strong>${v.insured}</strong></div>`:''}
+        ${v.driverScope==='지정운전자'&&v.designatedDrivers&&v.designatedDrivers.length?`
+          <div style="margin-top:5px;display:flex;flex-direction:column;gap:2px">
+            ${v.designatedDrivers.map((d,i)=>d.name?`<div style="font-size:11px;color:var(--tx2)">👤 지정운전자${i+1}: <strong>${d.name}</strong>${d.phone?' · '+d.phone:''}${d.platform?' · '+d.platform:''}</div>`:'').join('')}
+          </div>`:''}
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font-weight:700;color:#D32F2F">${v.dailyRate.toLocaleString()}원/일</div>
