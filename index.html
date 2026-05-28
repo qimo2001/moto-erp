@@ -1621,7 +1621,25 @@ function openRVehicleDetail(id){
   OM(`${mhdr(v.plateNo+' 상세')}
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:13px">
     <div style="background:var(--bg3);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:700">차량 정보</div><div class="plate">${v.plateNo}</div><div style="font-weight:700">${v.model}</div><div style="color:var(--tx2)">${v.year}년 • ${v.color} • ${v.mileage.toLocaleString()}km</div></div>
-    <div style="background:var(--bg3);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:700">보험 정보</div><div style="font-weight:700">${v.insurer}</div><div style="margin-top:4px">${badge(v.insuranceType==='종합보험'?'bb':'bpu',v.insuranceType)}</div><div style="margin-top:4px">${badge('bt',v.minAge)}</div></div>
+    <div style="background:var(--bg3);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:700">보험 정보</div><div style="font-weight:700">${v.insurer||'-'}</div>
+      ${v.insured?`<div style="font-size:12px;color:var(--tx2);margin-top:2px">피보험자: <strong>${v.insured}</strong></div>`:''}
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">
+        ${badge(v.insuranceType==='종합보험'?'bb':'ba',v.insuranceType||'책임보험')}
+        ${badge('bt',v.minAge||'전 연령')}
+        ${v.driverScope==='지정운전자'?badge('bpu','👤 지정운전자'):''}
+      </div>
+      ${v.driverScope==='지정운전자'&&v.designatedDrivers&&v.designatedDrivers.length?`
+        <div style="margin-top:10px;border-top:1px solid var(--bd);padding-top:8px">
+          <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px">지정 운전자</div>
+          ${v.designatedDrivers.filter(d=>d.name).map((d,i)=>`
+            <div style="background:var(--bg2);border-radius:6px;padding:8px;margin-bottom:4px;font-size:12px">
+              <div style="font-weight:700;margin-bottom:2px">운전자 ${i+1}: ${d.name}</div>
+              ${d.phone?`<div style="color:var(--tx2)">📞 ${d.phone}</div>`:''}
+              ${d.birth?`<div style="color:var(--tx2)">🎂 ${d.birth}</div>`:''}
+              ${d.platform?`<div style="color:var(--tx2)">🏍 ${d.platform}</div>`:''}
+            </div>`).join('')}
+        </div>`:''}
+    </div>
   </div>
   <div style="font-size:13px;font-weight:700;margin-bottom:10px">정비 이력 (${logs.length}건)</div>
   <div style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px">
