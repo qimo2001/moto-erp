@@ -476,11 +476,11 @@ function fromSnake(obj){
   for(const[k,v]of Object.entries(obj)){
     const ck=map[k]||k;
     // JSONB 필드 파싱
-    if((ck==='items'||ck==='photos'||ck==='outPhotos'||ck==='inPhotos')&&typeof v==='string'){
+    if((ck==='items'||ck==='photos'||ck==='outPhotos'||ck==='inPhotos'||ck==='designatedDrivers'||ck==='allowed_menus'||ck==='can_add'||ck==='can_edit'||ck==='can_delete')&&typeof v==='string'){
       try{ r[ck]=JSON.parse(v); }catch{ r[ck]=v||[]; }
     } else {
       r[ck]= (v===null||v===undefined) ? (
-        (ck==='items'||ck==='photos'||ck==='outPhotos'||ck==='inPhotos') ? [] :
+        (ck==='items'||ck==='photos'||ck==='outPhotos'||ck==='inPhotos'||ck==='designatedDrivers') ? [] :
         (ck==='paid'||ck==='insurancePaid'||ck==='uninsured') ? false : v
       ) : v;
     }
