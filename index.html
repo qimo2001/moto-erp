@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS모터스포츠 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -431,7 +431,7 @@ async function dbInsert(table,row){
     }
     console.log('✅ insert ok ['+table+']');
     if(table!=='audit_logs'){
-      const keyField=cleanRow.name||cleanRow.model||cleanRow.customer||cleanRow.plateNo||cleanRow.title||cleanRow.id||'';
+      const keyField=cleanRow.name||cleanRow.model||cleanRow.customer||cleanRow.plateNo||cleanRow.title||'';
       addAuditLog('insert',table,cleanRow.id||'',(TABLE_LABELS[table]||table)+' 등록'+(keyField?' ['+keyField+']':''));
     }
     return true;
@@ -460,7 +460,7 @@ async function dbDelete(table,id){
       headers: _sbHeaders()
     });
     if(!res.ok){ const e=await res.text(); console.error('delete',table,e); return false; }
-    if(table!=='audit_logs') addAuditLog('delete',table,id,(TABLE_LABELS[table]||table)+' 삭제 [id: '+id+']');
+    if(table!=='audit_logs') addAuditLog('delete',table,id,(TABLE_LABELS[table]||table)+' 삭제');
     return true;
   }catch(e){ console.error('delete',table,e.message); return false; }
 }
