@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS모터스포츠 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1640,7 +1640,7 @@ async function saveRent(){
   const startDate=document.getElementById('rn-start').value;
   const days=openEnd?0:Math.max(0,Math.round((new Date(endDate)-new Date(startDate))/(86400000)));
   const v=S.rentVehicles.find(x=>x.id===vid);
-  const newRental={id:newId(S.rentals,'RT'),customer,phone,vehicleId:vid,model:v?v.model:'',plateNo:v?v.plateNo:'',startDate,endDate,days,dailyRate,deposit,totalFee:openEnd?0:days*dailyRate,status:'대여중',paid:false,payType:'',outMileage:km,inMileage:'',deliveryAgency:document.getElementById('rn-agency').value.trim()||'개인',outPhotos:outPhotoUrls,inPhotos:[]};
+  const newRental={id:newId(S.rentals,'RT'),customer,phone,vehicleId:vid,model:v?v.model:'',plateNo:v?v.plateNo:'',startDate,endDate,days,dailyRate,deposit,totalFee:openEnd?0:days*dailyRate,status:'대여중',paid:false,payType:'',outMileage:km,inMileage:null,deliveryAgency:document.getElementById('rn-agency').value.trim()||'개인',outPhotos:outPhotoUrls,inPhotos:[]};
   S.rentals.unshift(newRental);
   await dbInsert('rentals',toSnake(newRental));
   if(v){v.status='대여중';v.mileage=km;await dbUpdate('rent_vehicles',v.id,{status:'대여중',mileage:km});}
@@ -2556,29 +2556,15 @@ async function scanIdCard(input){
       r.readAsDataURL(compressed);
     });
 
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch('/api/ocr',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:600,
-        messages:[{
-          role:'user',
-          content:[
-            {type:'image',source:{type:'base64',media_type:'image/jpeg',data:base64}},
-            {type:'text',text:`한국 주민등록증 또는 자동차운전면허증 이미지입니다.
-이미지에서 텍스트를 정확히 읽어 아래 JSON 형식으로만 응답하세요.
-
-주민등록증 예시: 이름(한자포함시 한글만), 주민등록번호 6자리-7자리, 주소, 발급일
-면허증 예시: 면허번호(00-00-000000-00형식), 이름, 주민등록번호 앞6자리-뒷7자리, 주소
-
-반드시 JSON만 응답 (다른 텍스트 금지):
-{"name":"한글이름만","rrn":"000000-0000000","address":"전체주소","licenseNo":"면허번호또는빈값","birthDate":"생년월일YYYY-MM-DD또는빈값","issueDate":"발급일YYYY-MM-DD또는빈값"}`}
-          ]
-        }]
+        image:base64,
+        mediaType:'image/jpeg',
+        prompt:'한국 주민등록증 또는 자동차운전면허증 이미지입니다. 이미지에서 텍스트를 정확히 읽어 JSON으로만 응답. 주민등록증: 이름(한글만), 주민번호(000000-0000000), 주소, 발급일. 면허증: 면허번호, 이름, 주민번호, 주소. 응답형식(JSON만): {"name":"한글이름","rrn":"000000-0000000","address":"주소","licenseNo":"면허번호","birthDate":"","issueDate":""}'
       })
-    });
-
+    })
     const data=await res.json();
     const raw=(data.content?.[0]?.text||'{}').replace(/```json|```/g,'').trim();
     let info={};
@@ -2806,7 +2792,7 @@ async function sendAI(){
   el.innerHTML=`<div class="aav">DS</div><div class="ab"><div class="typing"><span></span><span></span><span></span></div></div>`;
   msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;
   const sys=`당신은 DS MOTORSPORT 통합 ERP AI입니다. 현재: 수리 ${S.repairs.length}건(외상 ${S.repairs.filter(r=>r.payType==='외상').length}건), 사고수리 ${S.accidents.filter(a=>a.status!=='출고완료').length}건, 렌트 대여중 ${S.rentals.filter(r=>r.status==='대여중').length}대, 고객 ${S.customers.length}명(업체 ${S.customers.filter(c=>c.type==='업체').length}개), 발주 결재대기 ${S.purchaseOrders.filter(p=>p.status==='결재대기').length}건. 한국어로 전문적이고 친절하게 답변하세요.`;
-  try{const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:S.aiMessages.map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text}))})});const data=await res.json();const reply=data.content?.[0]?.text||'오류';S.aiMessages.push({role:'ai',text:reply});el.querySelector('.ab').innerHTML=reply.replace(/\n/g,'<br>');}
+  try{const res=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:S.aiMessages.map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text}))})});const data=await res.json();const reply=data.content?.[0]?.text||'오류';S.aiMessages.push({role:'ai',text:reply});el.querySelector('.ab').innerHTML=reply.replace(/\n/g,'<br>');}
   catch(e){el.querySelector('.ab').innerHTML='네트워크 오류';}
   msgs.scrollTop=msgs.scrollHeight;
 }
