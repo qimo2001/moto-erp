@@ -6,22 +6,19 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
-  }
 
   try {
     const { image, mediaType, prompt } = req.body;
 
-    if (!image) return res.status(400).json({ error: 'image is required' });
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    
+    console.log('API Key exists:', !!apiKey, apiKey ? apiKey.slice(0,10) : 'NONE');
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'x-api-key': apiKey,
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
@@ -30,43 +27,25 @@ export default async function handler(req, res) {
         messages: [{
           role: 'user',
           content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mediaType || 'image/jpeg',
-                data: image
-              }
-            },
+            { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: image } },
             { type: 'text', text: prompt }
           ]
         }]
       })
     });
 
-    const contentType = response.headers.get('content-type') || '';
     const rawText = await response.text();
+    console.log('Anthropic status:', response.status, rawText.slice(0,100));
 
-    if (!contentType.includes('application/json')) {
-      console.error('Non-JSON from Anthropic:', rawText.slice(0, 200));
-      return res.status(502).json({ error: 'Anthropic API returned non-JSON', preview: rawText.slice(0, 100) });
-    }
-
-    let data;
     try {
-      data = JSON.parse(rawText);
-    } catch (e) {
-      return res.status(502).json({ error: 'Failed to parse Anthropic response' });
+      const data = JSON.parse(rawText);
+      return res.status(response.ok ? 200 : response.status).json(data);
+    } catch(e) {
+      return res.status(502).json({ error: 'Parse error', raw: rawText.slice(0,200) });
     }
-
-    if (!response.ok) {
-      return res.status(response.status).json({ error: data.error?.message || 'Anthropic API error' });
-    }
-
-    return res.status(200).json(data);
 
   } catch (error) {
-    console.error('OCR error:', error.message);
+    console.error('Handler error:', error.message);
     return res.status(500).json({ error: error.message });
   }
 }
