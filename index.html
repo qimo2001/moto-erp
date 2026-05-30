@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS모터스포츠 통합 ERP</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -469,7 +469,7 @@ function toSnake(obj){
     customerEstimate:'customer_estimate',totalAmount:'total_amount',approvedAt:'approved_at',
     receivedAt:'received_at',workDate:'work_date',dueDate:'due_date',
     createdAt:'created_at_time',lastVisit:'last_visit',minStock:'min_stock',
-    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data'
+    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo'
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -490,7 +490,7 @@ function fromSnake(obj){
     insurance_paid:'insurancePaid',insurance_paid_amount:'insurancePaidAmount',
     customer_estimate:'customerEstimate',total_amount:'totalAmount',approved_at:'approvedAt',
     received_at:'receivedAt',work_date:'workDate',due_date:'dueDate',
-    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',
+    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',id_card_photo:'idCardPhoto',
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -934,6 +934,7 @@ function pgRent(){
           <div><span style="color:var(--tx2)">대여: </span>${r.startDate}</div>
           <div><span style="color:var(--tx2)">반납: </span>${r.endDate}${r.days>0?' ('+r.days+'일)':''}</div>
           <div><span style="color:var(--tx2)">출고km: </span><strong>${r.outMileage?r.outMileage.toLocaleString()+'km':'미기록'}</strong></div>
+          ${r.idCardData&&r.idCardData.name?`<div style="font-size:11px;color:#1565c0;margin-top:2px;display:flex;align-items:center;gap:6px"><span>🪪 ${r.idCardData.name}${r.idCardData.rrn?' | '+r.idCardData.rrn.slice(0,6)+'-*******':''}${r.idCardData.licenseNo?' | 면허: '+r.idCardData.licenseNo:''}</span>${r.idCardPhoto?`<span onclick="event.stopPropagation();openPhotoViewer('${r.idCardPhoto}')" style="text-decoration:underline;cursor:pointer">사진보기</span>`:''}</div>`:''}
           <div><span style="color:var(--tx2)">요금: </span><strong>${r.totalFee>0?fmtMoney(r.totalFee):'미정'}</strong></div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -1093,17 +1094,23 @@ function pgRMaint(){
   </div></div>`;}).join('')}</div>`;
 }
 function prevPeriod(){
-  const p=S._rmPeriod||'monthly';const d=S._rmViewDate||new Date().toISOString().slice(0,10);
+  const p=S._rmPeriod||'all';
+  if(p==='all') return; // 전체 기간엔 이전/다음 없음
+  const today=new Date().toISOString().slice(0,10);
+  const d=S._rmViewDate&&S._rmViewDate!=='all'?S._rmViewDate:today;
   if(p==='daily'){const dt=new Date(d);dt.setDate(dt.getDate()-1);S._rmViewDate=dt.toISOString().slice(0,10);}
   else if(p==='weekly'){const dt=new Date(d);dt.setDate(dt.getDate()-7);S._rmViewDate=dt.toISOString().slice(0,10);}
-  else{const ym=d.slice(0,7);const dt=new Date(ym+'-01');dt.setMonth(dt.getMonth()-1);S._rmViewDate=dt.toISOString().slice(0,7);}
+  else if(p==='monthly'){const ym=(d.length>=7?d.slice(0,7):today.slice(0,7));const dt=new Date(ym+'-01');dt.setMonth(dt.getMonth()-1);S._rmViewDate=dt.toISOString().slice(0,7);}
   ren();
 }
 function nextPeriod(){
-  const p=S._rmPeriod||'monthly';const d=S._rmViewDate||new Date().toISOString().slice(0,10);
+  const p=S._rmPeriod||'all';
+  if(p==='all') return;
+  const today=new Date().toISOString().slice(0,10);
+  const d=S._rmViewDate&&S._rmViewDate!=='all'?S._rmViewDate:today;
   if(p==='daily'){const dt=new Date(d);dt.setDate(dt.getDate()+1);S._rmViewDate=dt.toISOString().slice(0,10);}
   else if(p==='weekly'){const dt=new Date(d);dt.setDate(dt.getDate()+7);S._rmViewDate=dt.toISOString().slice(0,10);}
-  else{const ym=d.slice(0,7);const dt=new Date(ym+'-01');dt.setMonth(dt.getMonth()+1);S._rmViewDate=dt.toISOString().slice(0,7);}
+  else if(p==='monthly'){const ym=(d.length>=7?d.slice(0,7):today.slice(0,7));const dt=new Date(ym+'-01');dt.setMonth(dt.getMonth()+1);S._rmViewDate=dt.toISOString().slice(0,7);}
   ren();
 }
 function prevPeriod(){
@@ -1626,6 +1633,7 @@ function openRentModal(){
 async function saveRent(){
   const customer=document.getElementById('rn-name').value;
   const idCardData=window._idCardData||{};
+  const idCardPhoto=window._idCardPhotoUrl||'';
   const phone=document.getElementById('rn-phone').value;
   const km=parseInt(document.getElementById('rn-km').value)||0;
   if(!customer){alert('고객명을 입력하세요.');return;}
@@ -1640,7 +1648,7 @@ async function saveRent(){
   const startDate=document.getElementById('rn-start').value;
   const days=openEnd?0:Math.max(0,Math.round((new Date(endDate)-new Date(startDate))/(86400000)));
   const v=S.rentVehicles.find(x=>x.id===vid);
-  const newRental={id:newId(S.rentals,'RT'),customer,phone,vehicleId:vid,model:v?v.model:'',plateNo:v?v.plateNo:'',startDate,endDate,days,dailyRate,deposit,totalFee:openEnd?0:days*dailyRate,status:'대여중',paid:false,payType:'',outMileage:km,inMileage:null,deliveryAgency:document.getElementById('rn-agency').value.trim()||'개인',outPhotos:outPhotoUrls,inPhotos:[]};
+  const newRental={id:newId(S.rentals,'RT'),customer,phone,vehicleId:vid,model:v?v.model:'',plateNo:v?v.plateNo:'',startDate,endDate,days,dailyRate,deposit,totalFee:openEnd?0:days*dailyRate,status:'대여중',paid:false,payType:'',outMileage:km,inMileage:null,deliveryAgency:document.getElementById('rn-agency').value.trim()||'개인',outPhotos:outPhotoUrls,inPhotos:[],idCardData:idCardData,idCardPhoto:idCardPhoto};
   S.rentals.unshift(newRental);
   await dbInsert('rentals',toSnake(newRental));
   if(v){v.status='대여중';v.mileage=km;await dbUpdate('rent_vehicles',v.id,{status:'대여중',mileage:km});}
@@ -2550,6 +2558,7 @@ async function scanIdCard(input){
   try{
     // 압축 후 base64
     const compressed=await compressImage(file,1600,0.95);
+    try{const pu=await uploadPhoto(compressed,'id-cards');if(pu)window._idCardPhotoUrl=pu;}catch(e){console.warn(e);}
     const base64=await new Promise(resolve=>{
       const r=new FileReader();
       r.onload=e=>resolve(e.target.result.split(',')[1]);
@@ -2565,6 +2574,11 @@ async function scanIdCard(input){
         prompt:'한국 주민등록증 또는 자동차운전면허증 이미지입니다. 이미지에서 텍스트를 정확히 읽어 JSON으로만 응답. 주민등록증: 이름(한글만), 주민번호(000000-0000000), 주소, 발급일. 면허증: 면허번호, 이름, 주민번호, 주소. 응답형식(JSON만): {"name":"한글이름","rrn":"000000-0000000","address":"주소","licenseNo":"면허번호","birthDate":"","issueDate":""}'
       })
     })
+    if(!res.ok){
+      const errText=await res.text();
+      console.error('OCR API 오류:',res.status,errText);
+      throw new Error('OCR 서버 오류 ('+res.status+'): '+errText.slice(0,100));
+    }
     const data=await res.json();
     const raw=(data.content?.[0]?.text||'{}').replace(/```json|```/g,'').trim();
     let info={};
