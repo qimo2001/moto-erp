@@ -518,8 +518,18 @@ async function loadAllFromDB(){
     if(acc!==null){ S.accidents=rowsFromSnake(acc||[]); console.log('사고',(acc||[]).length); }
     if(vs!==null){ S.vehicleStock=rowsFromSnake(vs||[]); console.log('차량재고',(vs||[]).length); }
     if(ps!==null){ S.partsStock=rowsFromSnake(ps||[]); console.log('부품',(ps||[]).length); }
-    if(po&&po.length){ S.purchaseOrders=rowsFromSnake(po); console.log('발주',po.length); }
-    if(wt&&wt.length){ S.workTasks=rowsFromSnake(wt); console.log('작업',wt.length); }
+    if(po!==null){ S.purchaseOrders=rowsFromSnake(po||[]); console.log('발주',(po||[]).length); }
+    if(wt!==null){ S.workTasks=rowsFromSnake(wt||[]); console.log('작업',(wt||[]).length); }
+    // 담당자 + 사용자 권한 로드
+    const _ud = await dbLoad('erp_users');
+    if(_ud){
+      const sysRow = _ud.find(u=>u.id==='system-mechanics');
+      if(sysRow && Array.isArray(sysRow.allowed_menus) && sysRow.allowed_menus.length){
+        S.mechanics = sysRow.allowed_menus;
+        console.log('담당자 로드:', S.mechanics);
+      }
+      if(isAdmin()) S._erpUsers = _ud.filter(u=>u.role!=='system');
+    }
     _dbReady=true;
     console.log('✅ DB 로드 완료');
   }catch(e){
@@ -1241,7 +1251,13 @@ function pgAI(){return`<div class="card" style="display:flex;flex-direction:colu
 // ── MODAL HELPERS ──
 function OM(html){document.getElementById('mc').innerHTML=html;document.getElementById('modal').classList.add('open');}
 function CM(){document.getElementById('modal').classList.remove('open');}
-function handleMO(e){if(e.target.id==='modal')CM();}
+function handleMO(e){
+  // 드래그로 인한 실수 닫힘 방지: mousedown이 modal에서 시작했을 때만 닫기
+  if(e.target.id==='modal' && window._modalMousedownTarget===e.target) CM();
+}
+document.addEventListener('mousedown', e=>{
+  window._modalMousedownTarget = e.target;
+});
 function mhdr(t){return`<div class="mh"><span class="mt">${t}</span><button class="mx" onclick="CM()">✕</button></div>`;}
 function reqNote(){return`<div style="background:var(--pl);border-left:4px solid #CC0000;border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#D32F2F;font-weight:600">★ 표시 항목은 필수 입력입니다</div>`;}
 function fi(id,lbl,ph,type,val,req){return`<div class="fg"><label class="fl">${lbl}${req?'<span class="req">★</span>':''}</label><input class="fi" id="${id}" type="${type||'text'}" placeholder="${ph||''}" value="${val||''}"></div>`;}
@@ -2335,11 +2351,38 @@ function saveMechanic(editIdx){
     if(S.mechanics.includes(name)){alert('이미 등록된 담당자입니다.');return;}
     S.mechanics.push(name);
   }
+  saveMechanicsToDB();
   CM();ren();
 }
 function delMechanic(i){
   if(!confirm('담당자를 삭제하시겠습니까?'))return;
-  S.mechanics.splice(i,1);ren();
+  S.mechanics.splice(i,1);
+  saveMechanicsToDB();
+  ren();
+}
+async function saveMechanicsToDB(){
+  try{
+    const check=await fetch(`${_SB_URL}/rest/v1/erp_users?id=eq.system-mechanics&select=id`,{
+      headers:{'apikey':_SB_KEY,'Authorization':'Bearer '+_SB_KEY}
+    });
+    const exists=await check.json();
+    const payload={id:'system-mechanics',name:'__mechanics__',email:'system@mechanics',
+      role:'system',allowed_menus:S.mechanics,can_add:[],can_edit:[],can_delete:[],is_active:true};
+    if(exists&&exists.length>0){
+      await fetch(`${_SB_URL}/rest/v1/erp_users?id=eq.system-mechanics`,{
+        method:'PATCH',
+        headers:{'apikey':_SB_KEY,'Authorization':'Bearer '+_SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify(payload)
+      });
+    }else{
+      await fetch(`${_SB_URL}/rest/v1/erp_users`,{
+        method:'POST',
+        headers:{'apikey':_SB_KEY,'Authorization':'Bearer '+_SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify(payload)
+      });
+    }
+    console.log('담당자 저장 완료:', S.mechanics);
+  }catch(e){console.warn('mechanics 저장 실패:',e);}
 }
 
 function topAction(){
@@ -2364,7 +2407,13 @@ function openNotif(){OM(`${mhdr('알림')}<div style="display:flex;flex-directio
   ${[['br','미수금','수리 외상 미결제'],['bb','렌트','오늘 반납 예정 차량 확인'],['ba','발주','결재 대기 발주서 있음'],['bg','DB','데이터 동기화 완료']].map(([c,t,d])=>`<div style="padding:12px;border:1px solid var(--bd);border-radius:8px;display:flex;gap:10px">${badge(c,t)}<div style="font-size:13px">${d}</div></div>`).join('')}
 </div>`);}
 
-function handleMO(e){if(e.target.id==='modal')CM();}
+function handleMO(e){
+  // 드래그로 인한 실수 닫힘 방지: mousedown이 modal에서 시작했을 때만 닫기
+  if(e.target.id==='modal' && window._modalMousedownTarget===e.target) CM();
+}
+document.addEventListener('mousedown', e=>{
+  window._modalMousedownTarget = e.target;
+});
 
 // ── 설정 페이지 ──
 function pgSettings(){
