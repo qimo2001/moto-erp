@@ -223,7 +223,6 @@ tr:hover td{background:var(--bg3)}
       <div class="ni" onclick="go('rbilling')"><i class="ti ti-cash"></i> 요금/결제</div>
       <div class="ni" onclick="go('rmaint')"><i class="ti ti-tool"></i> 렌트 차량 정비</div>
       <div class="ni" onclick="go('idcards')"><i class="ti ti-id"></i> 신분증 관리</div>
-      <div class="ni" onclick="go('auditlog')"><i class="ti ti-clipboard-list"></i> 작업 로그</div>
       <div class="nl">수리</div>
       <div class="ni" onclick="go('repair')"><i class="ti ti-settings"></i> 일반 수리</div>
       <div class="ni" onclick="go('accident')"><i class="ti ti-car-crash"></i> 사고 수리</div>
@@ -364,7 +363,8 @@ function addSettingsMenu(){
   const nb=document.querySelector('.nb');
   if(!nb||document.getElementById('settings-ni')) return;
   const d=document.createElement('div');
-  d.innerHTML=`<div class="nl">관리</div><div class="ni" id="settings-ni" onclick="go('settings')"><i class="ti ti-settings"></i> 시스템 설정 <span style="font-size:9px;background:#D32F2F;color:#fff;padding:1px 5px;border-radius:4px;margin-left:4px">ADMIN</span></div>`;
+  d.innerHTML=`<div class="nl">관리</div><div class="ni" id="settings-ni" onclick="go('settings')"><i class="ti ti-settings"></i> 시스템 설정 <span style="font-size:9px;background:#D32F2F;color:#fff;padding:1px 5px;border-radius:4px;margin-left:4px">ADMIN</span></div>
+      <div class="ni" onclick="go('auditlog')"><i class="ti ti-clipboard-list"></i> 작업 로그</div>`;
   nb.appendChild(d);
 }
 
@@ -430,11 +430,14 @@ async function dbInsert(table,row){
       return false;
     }
     console.log('✅ insert ok ['+table+']');
-    if(table!=='audit_logs') addAuditLog('insert',table,cleanRow.id||'','등록: '+table);
+    if(table!=='audit_logs'){
+      const keyField=cleanRow.name||cleanRow.model||cleanRow.customer||cleanRow.plateNo||cleanRow.title||cleanRow.id||'';
+      addAuditLog('insert',table,cleanRow.id||'',(TABLE_LABELS[table]||table)+' 등록'+(keyField?' ['+keyField+']':''));
+    }
     return true;
   }catch(e){ console.error('insert',table,e.message); return false; }
 }
-async function dbUpdate(table,id,row){
+async function dbUpdate(table,id,row,oldData){
   try{
     const cleanRow={};
     for(const[k,v] of Object.entries(row)){
@@ -446,7 +449,34 @@ async function dbUpdate(table,id,row){
       body: JSON.stringify(cleanRow)
     });
     if(!res.ok){const e=await res.text(); console.error('❌ update ['+table+']:', e); return false;}
-    if(table!=='audit_logs') addAuditLog('update',table,id,'수정: '+table);
+    if(table!=='audit_logs'){
+      // 변경 내역 비교
+      let diffStr='';
+      if(oldData){
+        const LABEL={
+          model:'모델',plateNo:'차량번호',customer:'고객명',phone:'연락처',
+          status:'상태',dailyRate:'일일요금',deposit:'보증금',mileage:'주행거리',
+          endDate:'반납일',startDate:'대여일',cost:'비용',memo:'메모',
+          name:'이름',address:'주소',licenseNo:'면허번호',rrn:'주민번호',
+          insurer:'보험사',minAge:'최소연령',insuranceType:'보험종류',
+          insuranceEnd:'보험만기',mechanic:'담당자',price:'금액',
+          stock:'재고',payType:'결제방식',driverScope:'운전자범위'
+        };
+        const diffs=[];
+        for(const[k,v] of Object.entries(row)){
+          const ok=oldData[k];
+          // 배열/객체는 JSON 비교
+          const oldStr=Array.isArray(ok)||typeof ok==='object'?JSON.stringify(ok):String(ok??'');
+          const newStr=Array.isArray(v)||typeof v==='object'?JSON.stringify(v):String(v??'');
+          if(oldStr!==newStr && k!=='updated_at' && k!=='created_at'){
+            const label=LABEL[k]||k;
+            diffs.push(`${label}: "${oldStr}"→"${newStr}"`);
+          }
+        }
+        diffStr=diffs.slice(0,5).join(' | ');
+      }
+      addAuditLog('update',table,id,(TABLE_LABELS[table]||table)+' 수정'+(diffStr?' ['+diffStr+']':''));
+    }
     return true;
   }catch(e){console.error('update',table,e.message);return false;}
 }
@@ -457,7 +487,7 @@ async function dbDelete(table,id){
       headers: _sbHeaders()
     });
     if(!res.ok){ const e=await res.text(); console.error('delete',table,e); return false; }
-    if(table!=='audit_logs') addAuditLog('delete',table,id,'삭제: '+table);
+    if(table!=='audit_logs') addAuditLog('delete',table,id,(TABLE_LABELS[table]||table)+' 삭제 [id: '+id+']');
     return true;
   }catch(e){ console.error('delete',table,e.message); return false; }
 }
@@ -1784,8 +1814,8 @@ async function saveRentEdit(id){
   };
   updates.id_card_data=updatedIdCard;
   r.idCardData=updatedIdCard;
-  await dbUpdate('rentals',id,updates);
-  addAuditLog('update','rentals',id,`렌트 수정: ${r.customer} ${r.plateNo}`);
+  const _oldRent=S.rentals.find(x=>x.id===id)||{};
+  await dbUpdate('rentals',id,updates,_oldRent);
   CM();ren();
 }
 
@@ -1943,7 +1973,8 @@ async function saveRVehicle(editId){
   };
   if(editId){
     const v=S.rentVehicles.find(x=>x.id===editId);if(v)Object.assign(v,obj);
-    await dbUpdate('rent_vehicles',editId,toSnake(obj));
+    const _oldRV=S.rentVehicles.find(x=>x.id===editId)||{};
+    await dbUpdate('rent_vehicles',editId,toSnake(obj),_oldRV);
   }else{
     const newV={id:newId(S.rentVehicles,'RV'),status:'가용',...obj};
     S.rentVehicles.push(newV);
@@ -2002,7 +2033,8 @@ async function saveMaint(editId){
   const obj={vehicleId:vid,date,mileage:km,items:fItems,cost:parseInt(document.getElementById('mt-cost').value)||0,memo:document.getElementById('mt-memo').value,mechanic:getMechanicValue('mt-mec'),driverName:dn,driverType:dt==='delivery'?'배달대행':'개인',agencyName:ag,driverPhone:dp,photos:photoUrls};
   if(editId){
     const l=S.maintLogs.find(x=>x.id===editId);if(l)Object.assign(l,obj);
-    await dbUpdate('maint_logs',editId,toSnake(obj)); addAuditLog('update','maint_logs',editId,`정비 수정: ${obj.driverName} ${obj.vehicleId}`);
+    const _oldMaint=S.maintLogs.find(x=>x.id===editId)||{};
+    await dbUpdate('maint_logs',editId,toSnake(obj),_oldMaint);
   }else{
     deductParts(fItems);
     const newLog={id:newId(S.maintLogs,'MN'),...obj};
@@ -2045,7 +2077,8 @@ async function saveRepair(editId){
   const obj={date:new Date().toISOString().slice(0,10),customer:document.getElementById('rp-cust').value,phone:document.getElementById('rp-phone').value,plateNo:plate,model:document.getElementById('rp-model').value,mileage:km,items:fItems,cost:parseInt(document.getElementById('rp-cost').value)||0,payType,status:editId?S.repairs.find(x=>x.id===editId).status:'대기',mechanic:getMechanicValue('rp-mec'),memo:document.getElementById('rp-memo').value,photos:repairPhotoUrls};
   if(editId){
     const r=S.repairs.find(x=>x.id===editId);if(r)Object.assign(r,obj);
-    await dbUpdate('repairs',editId,toSnake(obj)); addAuditLog('update','repairs',editId,`수리 수정: ${obj.customer} ${obj.plateNo}`);
+    const _oldRepair=S.repairs.find(x=>x.id===editId)||{};
+    await dbUpdate('repairs',editId,toSnake(obj),_oldRepair);
   }else{
     deductParts(fItems);
     const newRep={id:newId(S.repairs,'R'),...obj};
