@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS모터스포츠 통합 ERP</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1297,20 +1297,59 @@ function getPay(p){return(window._ps||{})[p]||'';}
 function pPhoto(pfx,labels,folder,existingPhotos){
   const f=folder||pfx;
   const ep=existingPhotos||[];
-  return`<div class="pgrid">${labels.map((l,i)=>{
+  // Dynamic slot count: max of labels length or existing photos count, plus room to add
+  const totalSlots=Math.max(labels.length, ep.length);
+  window['_pSlots_'+pfx]=totalSlots; // track slot count
+  const slots=Array.from({length:totalSlots},(_,i)=>i);
+  return`<div id="${pfx}-grid" class="pgrid">${slots.map(i=>{
+    const label=labels[i]||('사진 '+(i+1));
     const existing=ep[i]||null;
     if(existing){
       return`<div class="pslot" id="${pfx}-${i}" data-url="${existing}" onclick="openPhotoChoice('${pfx}-${i}','${f}')" style="border-color:#2e7d32;cursor:pointer;position:relative">
         <img src="${existing}" style="width:100%;height:100%;object-fit:cover;border-radius:6px">
-        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.3);border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
           <span style="color:#fff;font-size:11px;font-weight:700">탭하여 교체</span>
         </div>
-        <div class="uc" style="position:absolute;top:4px;right:4px;background:#2e7d32;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">✓</div>
+        <div class="uc" style="position:absolute;top:4px;right:4px;background:#2e7d32;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;z-index:2">✓</div>
+        <button onclick="event.stopPropagation();delPhotoSlot('${pfx}',${i},'${f}')" style="position:absolute;top:4px;left:4px;background:rgba(200,0,0,0.85);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3;line-height:1">×</button>
       </div>`;
     }
-    return`<div class="pslot req-slot" id="${pfx}-${i}" onclick="openPhotoChoice('${pfx}-${i}','${f}')"><i class="ti ti-camera"></i><span>${l}</span></div>`;
-  }).join('')}</div>`;
+    return`<div class="pslot req-slot" id="${pfx}-${i}" onclick="openPhotoChoice('${pfx}-${i}','${f}')">
+      <i class="ti ti-camera"></i><span>${label}</span>
+      <button onclick="event.stopPropagation();delPhotoSlot('${pfx}',${i},'${f}')" style="position:absolute;top:4px;left:4px;background:rgba(100,100,100,0.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3;line-height:1">×</button>
+    </div>`;
+  }).join('')}</div>
+  <button onclick="addPhotoSlot('${pfx}','${f}')" style="margin-top:8px;width:100%;height:34px;border:1px dashed var(--bd2);border-radius:8px;background:transparent;color:var(--tx2);cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px">
+    <i class="ti ti-plus" style="font-size:14px"></i> 사진 추가
+  </button>`;
 }
+
+function addPhotoSlot(pfx, folder){
+  const grid=document.getElementById(pfx+'-grid');
+  if(!grid) return;
+  // Count current slots
+  let i=0;
+  while(document.getElementById(pfx+'-'+i)) i++;
+  // Add new empty slot
+  const div=document.createElement('div');
+  div.className='pslot req-slot';
+  div.id=pfx+'-'+i;
+  div.style.position='relative';
+  div.innerHTML=`<i class="ti ti-camera"></i><span>사진 ${i+1}</span>
+    <button onclick="event.stopPropagation();delPhotoSlot('${pfx}',${i},'${folder}')" style="position:absolute;top:4px;left:4px;background:rgba(100,100,100,0.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3;line-height:1">×</button>`;
+  div.onclick=()=>openPhotoChoice(pfx+'-'+i, folder);
+  grid.appendChild(div);
+}
+
+function delPhotoSlot(pfx, idx, folder){
+  const slot=document.getElementById(pfx+'-'+idx);
+  if(!slot) return;
+  // Remove the slot element
+  slot.remove();
+  // Re-index remaining slots for collectPhotoUrls
+  // Actually keep IDs as-is - collectPhotoUrls will just skip missing IDs
+}
+
 
 function openPhotoChoice(slotId,folder){
   const old=document.getElementById('photo-choice-wrap');if(old)old.remove();
@@ -1371,7 +1410,24 @@ async function prevPhoto(input,id,folder){
     const chk=document.createElement('div');chk.className='uc';
     chk.style.cssText='position:absolute;top:4px;right:4px;background:#2e7d32;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;z-index:2';
     chk.textContent='✓';slot.appendChild(chk);
-    // 업로드 완료 후 클릭 시 확대 보기
+    // 삭제 버튼
+    const existDelBtn=slot.querySelector('.slot-del-btn');
+    if(!existDelBtn){
+      const delBtn=document.createElement('button');
+      delBtn.className='slot-del-btn';
+      delBtn.style.cssText='position:absolute;top:4px;left:4px;background:rgba(200,0,0,0.85);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3;line-height:1';
+      delBtn.textContent='×';
+      delBtn.onclick=(e)=>{
+        e.stopPropagation();
+        slot.dataset.url='';
+        slot.style.borderColor='var(--bd)';
+        slot.innerHTML='<i class="ti ti-camera" style="font-size:24px;color:var(--tx3)"></i><span style="font-size:11px;color:var(--tx3)">사진</span>';
+        slot.className='pslot req-slot';
+        slot.onclick=()=>openPhotoChoice(slot.id, folderName);
+      };
+      slot.appendChild(delBtn);
+    }
+    // 클릭 시 확대 보기
     slot.onclick=()=>openPhotoViewer(url);
   }else{
     slot.style.borderColor='#c62828';
@@ -1419,13 +1475,19 @@ function rendMD(pfx,arr){
 function setSrc(pfx,idx,src){const key=pfx==='rent'?'_mItems':'_rItems';window[key][idx].src=src;if(src==='고객지참')window[key][idx].partId='';rendMD(pfx,window[key]);}
 function collectPhotoUrls(pfx, count){
   const urls=[];
-  for(let i=0;i<count;i++){
+  // Scan all slots including dynamically added ones
+  let i=0; let consecutive_missing=0;
+  while(consecutive_missing < 5){
     const slot=document.getElementById(`${pfx}-${i}`);
-    if(slot&&slot.dataset.url) urls.push(slot.dataset.url);
-    else{
-      const img=slot?.querySelector('img');
+    if(!slot){ consecutive_missing++; i++; continue; }
+    consecutive_missing=0;
+    if(slot.dataset.url){
+      urls.push(slot.dataset.url);
+    } else {
+      const img=slot.querySelector('img');
       if(img&&img.src&&img.src.startsWith('http')) urls.push(img.src);
     }
+    i++;
   }
   return urls;
 }
