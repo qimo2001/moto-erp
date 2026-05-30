@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS모터스포츠 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -469,7 +469,7 @@ function toSnake(obj){
     customerEstimate:'customer_estimate',totalAmount:'total_amount',approvedAt:'approved_at',
     receivedAt:'received_at',workDate:'work_date',dueDate:'due_date',
     createdAt:'created_at_time',lastVisit:'last_visit',minStock:'min_stock',
-    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',driverScope:'driver_scope',designatedDrivers:'designated_drivers'
+    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data'
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -490,13 +490,13 @@ function fromSnake(obj){
     insurance_paid:'insurancePaid',insurance_paid_amount:'insurancePaidAmount',
     customer_estimate:'customerEstimate',total_amount:'totalAmount',approved_at:'approvedAt',
     received_at:'receivedAt',work_date:'workDate',due_date:'dueDate',
-    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',
+    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
     const ck=map[k]||k;
     // JSONB 필드 파싱
-    if((ck==='items'||ck==='photos'||ck==='outPhotos'||ck==='inPhotos'||ck==='designatedDrivers'||ck==='allowed_menus'||ck==='can_add'||ck==='can_edit'||ck==='can_delete')&&typeof v==='string'){
+    if((ck==='items'||ck==='photos'||ck==='outPhotos'||ck==='inPhotos'||ck==='designatedDrivers'||ck==='idCardData'||ck==='allowed_menus'||ck==='can_add'||ck==='can_edit'||ck==='can_delete')&&typeof v==='string'){
       try{ r[ck]=JSON.parse(v); }catch{ r[ck]=v||[]; }
     } else {
       r[ck]= (v===null||v===undefined) ? (
@@ -1610,7 +1610,7 @@ function openCustDetail(id){
 function openRentModal(){
   window._ps={};
   OM(`${mhdr('대여 접수 + 즉시 출고')}${reqNote()}
-  <div class="fr">${fi('rn-name','고객명','이름',null,'',true)}${fi('rn-phone','연락처','010-0000-0000',null,'',true)}</div>
+  <div class="fr">${idCardSection()}${fi('rn-name','고객명','이름',null,'',true)}${fi('rn-phone','연락처','010-0000-0000',null,'',true)}</div>
   ${fi('rn-agency','배달대행사 (없으면 빈칸)','예: 쿠팡이츠, 배민커넥트')}
   <div class="fg"><label class="fl">렌트 차량 <span class="req">★</span></label><select class="fi" id="rn-v">${S.rentVehicles.filter(v=>v.status==='가용').map(v=>`<option value="${v.id}">${v.plateNo} | ${v.model} | ${v.dailyRate.toLocaleString()}원/일 | ${v.mileage.toLocaleString()}km</option>`).join('')}</select></div>
   <div class="fr">${fi('rn-start','대여일','','date','2025-05-28',true)}<div class="fg"><label class="fl">반납일</label><input class="fi" type="date" id="rn-end" value="2025-05-31"><label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="rn-open" onchange="document.getElementById('rn-end').disabled=this.checked;if(this.checked)document.getElementById('rn-end').value=''"> <span style="color:var(--tx2)">반납일 미정</span></label></div></div>
@@ -1625,6 +1625,7 @@ function openRentModal(){
 }
 async function saveRent(){
   const customer=document.getElementById('rn-name').value;
+  const idCardData=window._idCardData||{};
   const phone=document.getElementById('rn-phone').value;
   const km=parseInt(document.getElementById('rn-km').value)||0;
   if(!customer){alert('고객명을 입력하세요.');return;}
@@ -2474,6 +2475,128 @@ async function saveMechanicsToDB(){
     }
     console.log('담당자 저장 완료:', S.mechanics);
   }catch(e){console.warn('mechanics 저장 실패:',e);}
+}
+
+
+// ── 신분증 OCR 섹션 ──
+function idCardSection(){
+  return `<div style="border:2px dashed var(--bd2);border-radius:12px;padding:14px;margin-bottom:14px;background:var(--bg3)">
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+      🪪 신분증 / 면허증 스캔
+      <span style="font-size:11px;font-weight:400;color:var(--tx2)">사진 촬영 후 자동 입력</span>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1px solid var(--bd);border-radius:10px;cursor:pointer;background:#fff;font-size:13px;font-weight:600;color:var(--tx);-webkit-tap-highlight-color:transparent">
+        <span style="font-size:20px">📷</span> 카메라 촬영
+        <input type="file" accept="image/*" capture="environment" style="display:none" onchange="scanIdCard(this)">
+      </label>
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1px solid var(--bd);border-radius:10px;cursor:pointer;background:#fff;font-size:13px;font-weight:600;color:var(--tx);-webkit-tap-highlight-color:transparent">
+        <span style="font-size:20px">🖼️</span> 갤러리 선택
+        <input type="file" accept="image/*" style="display:none" onchange="scanIdCard(this)">
+      </label>
+    </div>
+    <div id="id-scan-status" style="display:none;padding:10px;border-radius:8px;font-size:13px;text-align:center"></div>
+    <div id="id-scan-preview" style="display:none;margin-top:8px">
+      <img id="id-scan-img" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;border:1px solid var(--bd)">
+    </div>
+    <div id="id-scan-result" style="display:none;margin-top:10px;padding:10px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;font-size:12px">
+      <div style="font-weight:700;margin-bottom:6px;color:#2e7d32">✅ 인식 완료 — 아래 정보가 자동 입력되었습니다</div>
+      <div id="id-scan-info" style="color:#1b5e20"></div>
+    </div>
+  </div>`;
+}
+
+async function scanIdCard(input){
+  if(!input.files||!input.files[0]) return;
+  const file=input.files[0];
+  const statusEl=document.getElementById('id-scan-status');
+  const previewEl=document.getElementById('id-scan-preview');
+  const imgEl=document.getElementById('id-scan-img');
+  const resultEl=document.getElementById('id-scan-result');
+  const infoEl=document.getElementById('id-scan-info');
+
+  // 미리보기
+  const reader=new FileReader();
+  reader.onload=e=>{
+    if(imgEl) imgEl.src=e.target.result;
+    if(previewEl) previewEl.style.display='block';
+  };
+  reader.readAsDataURL(file);
+
+  // 상태 표시
+  if(statusEl){
+    statusEl.style.display='block';
+    statusEl.style.background='#e3f2fd';
+    statusEl.style.color='#1565c0';
+    statusEl.textContent='🔍 신분증 정보 인식 중...';
+  }
+
+  try{
+    // 이미지를 base64로 변환
+    const base64=await new Promise(resolve=>{
+      const r=new FileReader();
+      r.onload=e=>resolve(e.target.result.split(',')[1]);
+      r.readAsDataURL(file);
+    });
+
+    // Claude Vision API 호출
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:500,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image',source:{type:'base64',media_type:file.type||'image/jpeg',data:base64}},
+            {type:'text',text:`이 신분증/운전면허증 이미지에서 다음 정보를 추출해 JSON으로만 응답하세요. 없는 항목은 빈 문자열로:
+{"name":"이름","licenseNo":"면허번호(숫자만, 없으면 빈칸)","rrn":"주민등록번호(000000-0000000형식)","address":"주소","birthDate":"생년월일(YYYY-MM-DD)","issueDate":"발급일(YYYY-MM-DD)"}
+JSON 외 다른 텍스트 없이 JSON만 응답하세요.`}
+          ]
+        }]
+      })
+    });
+
+    const data=await res.json();
+    const raw=data.content?.[0]?.text||'{}';
+    let info={};
+    try{ info=JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    catch{ info={}; }
+
+    // 결과를 폼에 자동 입력
+    let filled=[];
+    if(info.name&&document.getElementById('rn-name')){
+      document.getElementById('rn-name').value=info.name;
+      filled.push('이름: '+info.name);
+    }
+    // 추가 필드가 있으면 hidden input으로 저장
+    window._idCardData=info;
+
+    // 결과 표시
+    if(resultEl) resultEl.style.display='block';
+    if(infoEl){
+      infoEl.innerHTML=[
+        info.name?`<div>이름: <strong>${info.name}</strong></div>`:'',
+        info.birthDate?`<div>생년월일: <strong>${info.birthDate}</strong></div>`:'',
+        info.licenseNo?`<div>면허번호: <strong>${info.licenseNo}</strong></div>`:'',
+        info.rrn?`<div>주민번호: <strong>${info.rrn.slice(0,6)}-*******</strong></div>`:'',
+        info.address?`<div>주소: <strong>${info.address}</strong></div>`:'',
+      ].filter(Boolean).join('');
+    }
+    if(statusEl){
+      statusEl.style.background='#e8f5e9';
+      statusEl.style.color='#2e7d32';
+      statusEl.textContent='✅ 인식 완료! 정보를 확인해 주세요.';
+    }
+  }catch(e){
+    console.error('OCR 오류:',e);
+    if(statusEl){
+      statusEl.style.background='#ffebee';
+      statusEl.style.color='#c62828';
+      statusEl.textContent='⚠ 인식 실패. 직접 입력해 주세요.';
+    }
+  }
 }
 
 function topAction(){
