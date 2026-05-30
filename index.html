@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS모터스포츠 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1659,20 +1659,38 @@ function openRentEditModal(id){
   const r=S.rentals.find(x=>x.id===id);if(!r)return;
   const vOpts=S.rentVehicles.map(v=>'<option value="'+v.id+'"'+(v.id===r.vehicleId?' selected':'')+'>'+v.plateNo+' | '+v.model+'</option>').join('');
   const outPhotoHtml=pPhoto('re-out-p',['전면','후면','좌측','우측','계기판'],'re-out',r.outPhotos||[]);
+  const icd=r.idCardData||{};
+  const openChecked=r.endDate==='미정'?'checked':'';
+  const endVal=r.endDate==='미정'?'':r.endDate||'';
+  const photoDiv=r.idCardPhoto?
+    '<div class="fg"><label class="fl">신분증 사진</label>'+
+    '<div style="width:100%;height:80px;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid #1565c0" data-url="'+r.idCardPhoto+'" onclick="openPhotoViewer(this.dataset.url)">'+
+    '<img src="'+r.idCardPhoto+'" style="width:100%;height:100%;object-fit:cover"></div></div>':'';
   OM(mhdr('렌트 정보 수정')+
     '<div class="fr">'+fi('re-customer','고객명','',null,r.customer)+fi('re-phone','연락처','',null,r.phone)+'</div>'+
     fi('re-agency','배달대행사','개인',null,r.deliveryAgency||'개인')+
     '<div class="fg"><label class="fl">차량 변경</label><select class="fi" id="re-vehicle">'+vOpts+'</select></div>'+
-    '<div class="fr">'+fi('re-start','대여일','','date',r.startDate)+fi('re-end','반납일','','date',r&&r.endDate==='미정'?'':r.endDate||'')+'</div>'+
-    '<div class="fg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="re-open" '+(r.endDate==='미정'?'checked':'')+' onchange="document.getElementById(\'re-end\').disabled=this.checked"> 반납일 미정</label></div>'+
+    '<div class="fr">'+fi('re-start','대여일','','date',r.startDate)+fi('re-end','반납일','','date',endVal)+'</div>'+
+    '<div class="fg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">'+
+    '<input type="checkbox" id="re-open" '+openChecked+' onchange="document.getElementById(\'re-end\').disabled=this.checked"> 반납일 미정</label></div>'+
     '<div class="fr">'+fi('re-rate','일일 요금 (원)','','number',r.dailyRate)+fi('re-dep','보증금 (원)','','number',r.deposit)+'</div>'+
     fi('re-outkm','출고 키로수 (km)','','number',r.outMileage)+
     '<div class="fg"><label class="fl">출고 사진</label>'+outPhotoHtml+'</div>'+
-    '<div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveRentEdit(\'+id+\')">수정완료</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
+    '<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px">'+
+    '<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#1565c0">🪪 신분증 / 면허 정보</div>'+
+    '<div class="fr">'+fi('re-id-name','이름','',null,icd.name||'')+fi('re-id-birth','생년월일','',null,icd.birthDate||'')+'</div>'+
+    fi('re-id-rrn','주민등록번호','000000-0000000',null,icd.rrn||'')+
+    fi('re-id-license','면허번호','00-00-000000-00',null,icd.licenseNo||'')+
+    fi('re-id-addr','주소','',null,icd.address||'')+
+    photoDiv+
+    '</div>'+
+    '<div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveRentEdit(\''+id+'\')">수정완료</button>'+
+    '<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
   );
 }
 async function saveRentEdit(id){
   const r=S.rentals.find(x=>x.id===id);if(!r)return;
+  const icd=r.idCardData||{};
   const openEnd=document.getElementById('re-open').checked;
   const newVehicleId=document.getElementById('re-vehicle')?.value||r.vehicleId;
   const newOutPhotos=collectPhotoUrls('re-out-p',5);
@@ -1707,6 +1725,16 @@ async function saveRentEdit(id){
     const newV=S.rentVehicles.find(x=>x.id===newVehicleId);
     if(newV){newV.status='대여중';await dbUpdate('rent_vehicles',newV.id,{status:'대여중'});}
   }
+  // 신분증 정보 업데이트
+  const updatedIdCard={
+    name:document.getElementById('re-id-name')?.value||icd.name||'',
+    birthDate:document.getElementById('re-id-birth')?.value||icd.birthDate||'',
+    rrn:document.getElementById('re-id-rrn')?.value||icd.rrn||'',
+    licenseNo:document.getElementById('re-id-license')?.value||icd.licenseNo||'',
+    address:document.getElementById('re-id-addr')?.value||icd.address||''
+  };
+  updates.id_card_data=updatedIdCard;
+  r.idCardData=updatedIdCard;
   await dbUpdate('rentals',id,updates);
   CM();ren();
 }
