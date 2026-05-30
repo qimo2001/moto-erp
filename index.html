@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS모터스포츠 통합 ERP</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -409,7 +409,14 @@ async function dbInsert(table,row){
       headers: _sbHeaders({'Prefer':'return=minimal'}),
       body: JSON.stringify(row)
     });
-    if(!res.ok){ const e=await res.text(); console.error('insert',table,e); return false; }
+    if(!res.ok){
+      const e=await res.text();
+      console.error('❌ insert error ['+table+']:', e);
+      console.error('row sent:', JSON.stringify(row));
+      alert('저장 실패: '+e);
+      return false;
+    }
+    console.log('✅ insert ok ['+table+']');
     return true;
   }catch(e){ console.error('insert',table,e.message); return false; }
 }
@@ -511,7 +518,7 @@ async function loadAllFromDB(){
     const [cust,sls,rv,rnt,ml,rep,acc,vs,ps,po,wt] = results.map(r=>r.status==='fulfilled'?r.value:null);
     if(cust!==null){ S.customers=rowsFromSnake(cust||[]); console.log('고객',(cust||[]).length); }
     if(sls!==null){ S.sales=rowsFromSnake(sls||[]); console.log('판매',(sls||[]).length); }
-    if(rv!==null){ S.rentVehicles=rowsFromSnake(rv||[]); console.log('렌트차량',(rv||[]).length); }
+    if(rv!==null){ S.rentVehicles=rowsFromSnake(rv||[]); console.log('렌트차량',(rv||[]).length, rv&&rv[0]?Object.keys(rv[0]):[]);}
     if(rnt!==null){ S.rentals=rowsFromSnake(rnt||[]); console.log('렌트',(rnt||[]).length); }
     if(ml!==null){ S.maintLogs=rowsFromSnake(ml||[]); console.log('정비',(ml||[]).length); }
     if(rep!==null){ S.repairs=rowsFromSnake(rep||[]); console.log('수리',(rep||[]).length); }
