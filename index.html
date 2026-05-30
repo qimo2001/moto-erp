@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS모터스포츠 통합 ERP</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -437,7 +437,7 @@ async function dbInsert(table,row){
     return true;
   }catch(e){ console.error('insert',table,e.message); return false; }
 }
-async function dbUpdate(table,id,row,oldData){
+async function dbUpdate(table,id,row){
   try{
     const cleanRow={};
     for(const[k,v] of Object.entries(row)){
@@ -449,34 +449,7 @@ async function dbUpdate(table,id,row,oldData){
       body: JSON.stringify(cleanRow)
     });
     if(!res.ok){const e=await res.text(); console.error('❌ update ['+table+']:', e); return false;}
-    if(table!=='audit_logs'){
-      // 변경 내역 비교
-      let diffStr='';
-      if(oldData){
-        const LABEL={
-          model:'모델',plateNo:'차량번호',customer:'고객명',phone:'연락처',
-          status:'상태',dailyRate:'일일요금',deposit:'보증금',mileage:'주행거리',
-          endDate:'반납일',startDate:'대여일',cost:'비용',memo:'메모',
-          name:'이름',address:'주소',licenseNo:'면허번호',rrn:'주민번호',
-          insurer:'보험사',minAge:'최소연령',insuranceType:'보험종류',
-          insuranceEnd:'보험만기',mechanic:'담당자',price:'금액',
-          stock:'재고',payType:'결제방식',driverScope:'운전자범위'
-        };
-        const diffs=[];
-        for(const[k,v] of Object.entries(row)){
-          const ok=oldData[k];
-          // 배열/객체는 JSON 비교
-          const oldStr=Array.isArray(ok)||typeof ok==='object'?JSON.stringify(ok):String(ok??'');
-          const newStr=Array.isArray(v)||typeof v==='object'?JSON.stringify(v):String(v??'');
-          if(oldStr!==newStr && k!=='updated_at' && k!=='created_at'){
-            const label=LABEL[k]||k;
-            diffs.push(`${label}: "${oldStr}"→"${newStr}"`);
-          }
-        }
-        diffStr=diffs.slice(0,5).join(' | ');
-      }
-      addAuditLog('update',table,id,(TABLE_LABELS[table]||table)+' 수정'+(diffStr?' ['+diffStr+']':''));
-    }
+    if(table!=='audit_logs') addAuditLog('update',table,id,(TABLE_LABELS[table]||table)+' 수정');
     return true;
   }catch(e){console.error('update',table,e.message);return false;}
 }
@@ -718,9 +691,13 @@ const S={
   auditLogs:[],
   _auditQ:'',
   _auditPage:1,
+  _auditDate:'',
+  _auditAction:'all',
   auditLogs:[],
   _auditQ:'',
   _auditPage:1,
+  _auditDate:'',
+  _auditAction:'all',
   aiMessages:[{role:'ai',text:'안녕하세요! DS모터스포츠 ERP AI 어시스턴트입니다. 무엇이든 물어보세요 😊'}],
 };
 
@@ -1814,8 +1791,7 @@ async function saveRentEdit(id){
   };
   updates.id_card_data=updatedIdCard;
   r.idCardData=updatedIdCard;
-  const _oldRent=S.rentals.find(x=>x.id===id)||{};
-  await dbUpdate('rentals',id,updates,_oldRent);
+  await dbUpdate('rentals',id,updates);
   CM();ren();
 }
 
@@ -1973,8 +1949,7 @@ async function saveRVehicle(editId){
   };
   if(editId){
     const v=S.rentVehicles.find(x=>x.id===editId);if(v)Object.assign(v,obj);
-    const _oldRV=S.rentVehicles.find(x=>x.id===editId)||{};
-    await dbUpdate('rent_vehicles',editId,toSnake(obj),_oldRV);
+      await dbUpdate('rent_vehicles',editId,toSnake(obj));
   }else{
     const newV={id:newId(S.rentVehicles,'RV'),status:'가용',...obj};
     S.rentVehicles.push(newV);
@@ -2033,8 +2008,7 @@ async function saveMaint(editId){
   const obj={vehicleId:vid,date,mileage:km,items:fItems,cost:parseInt(document.getElementById('mt-cost').value)||0,memo:document.getElementById('mt-memo').value,mechanic:getMechanicValue('mt-mec'),driverName:dn,driverType:dt==='delivery'?'배달대행':'개인',agencyName:ag,driverPhone:dp,photos:photoUrls};
   if(editId){
     const l=S.maintLogs.find(x=>x.id===editId);if(l)Object.assign(l,obj);
-    const _oldMaint=S.maintLogs.find(x=>x.id===editId)||{};
-    await dbUpdate('maint_logs',editId,toSnake(obj),_oldMaint);
+      await dbUpdate('maint_logs',editId,toSnake(obj));
   }else{
     deductParts(fItems);
     const newLog={id:newId(S.maintLogs,'MN'),...obj};
@@ -2077,8 +2051,7 @@ async function saveRepair(editId){
   const obj={date:new Date().toISOString().slice(0,10),customer:document.getElementById('rp-cust').value,phone:document.getElementById('rp-phone').value,plateNo:plate,model:document.getElementById('rp-model').value,mileage:km,items:fItems,cost:parseInt(document.getElementById('rp-cost').value)||0,payType,status:editId?S.repairs.find(x=>x.id===editId).status:'대기',mechanic:getMechanicValue('rp-mec'),memo:document.getElementById('rp-memo').value,photos:repairPhotoUrls};
   if(editId){
     const r=S.repairs.find(x=>x.id===editId);if(r)Object.assign(r,obj);
-    const _oldRepair=S.repairs.find(x=>x.id===editId)||{};
-    await dbUpdate('repairs',editId,toSnake(obj),_oldRepair);
+      await dbUpdate('repairs',editId,toSnake(obj));
   }else{
     deductParts(fItems);
     const newRep={id:newId(S.repairs,'R'),...obj};
@@ -3037,34 +3010,62 @@ const TABLE_LABELS={
 };
 
 function pgAuditLog(){
-  let data=[...S.auditLogs];
+  const today=new Date().toISOString().slice(0,10);
+  const filterDate=S._auditDate||today;
+  const filterAction=S._auditAction||'all';
   const q=S._auditQ||'';
+
+  let data=[...S.auditLogs];
+
+  // 날짜 필터
+  if(filterDate) data=data.filter(l=>(l.created_at||'').startsWith(filterDate));
+  // 액션 탭 필터
+  if(filterAction!=='all') data=data.filter(l=>l.action===filterAction);
+  // 검색
   if(q) data=data.filter(l=>[l.user_name,l.user_email,l.action,l.target_table,l.detail].some(v=>(v||'').includes(q)));
-  const {items,total,cur}=paginate(data,S._auditPage);
-  const actionColors={insert:'#2e7d32',update:'#1565c0',delete:'#c62828',login:'#6a1b9a',return:'#00695c',rent:'#e65100',approve:'#f57f17'};
+
+  data=data.sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+
+  const PAGE_SIZE_AUDIT=20;
+  const total=Math.ceil(data.length/PAGE_SIZE_AUDIT)||1;
+  const cur=Math.max(1,Math.min(S._auditPage||1,total));
+  const items=data.slice((cur-1)*PAGE_SIZE_AUDIT,cur*PAGE_SIZE_AUDIT);
+
+  const ACTION_TABS=['all','login','insert','update','delete'];
+  const ACTION_NAMES={all:'전체',login:'로그인',insert:'등록',update:'수정',delete:'삭제'};
+  const ACTION_COLORS={insert:'#2e7d32',update:'#1565c0',delete:'#c62828',login:'#6a1b9a',logout:'#555'};
+
+  const tabHtml=ACTION_TABS.map(a=>`<button onclick="S._auditAction='${a}';S._auditPage=1;ren()" style="padding:6px 14px;border:none;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;background:${filterAction===a?'#D32F2F':'var(--bg3)'};color:${filterAction===a?'#fff':'var(--tx2)'};white-space:nowrap">${ACTION_NAMES[a]}</button>`).join('');
+
   return`
   <div class="sh"><span class="st">작업 로그 <span style="font-size:13px;font-weight:400;color:var(--tx3)">${data.length}건</span></span></div>
-  ${searchBar('사용자/메뉴/내용 검색','_auditQ','','','')}
-  ${items.length===0?`<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:12px">📋</div><div>로그가 없습니다</div></div>`:''}
-  <div style="display:flex;flex-direction:column;gap:6px">
-  ${items.map(l=>{
-    const color=actionColors[l.action]||'#555';
-    const actLabel=ACTION_LABELS[l.action]||l.action;
-    const tblLabel=TABLE_LABELS[l.target_table]||l.target_table;
-    return`<div style="background:var(--bg2);border-radius:8px;padding:10px 12px;border-left:3px solid ${color};display:flex;align-items:flex-start;gap:10px">
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">
-          <span style="font-size:13px;font-weight:700">${l.user_name||l.user_email}</span>
-          <span style="background:${color};color:#fff;padding:1px 7px;border-radius:8px;font-size:11px;font-weight:700">${actLabel}</span>
-          <span style="background:var(--bg3);padding:1px 7px;border-radius:8px;font-size:11px;color:var(--tx2)">${tblLabel}</span>
-        </div>
-        ${l.detail?`<div style="font-size:12px;color:var(--tx2)">${l.detail}</div>`:''}
-      </div>
-      <div style="font-size:11px;color:var(--tx3);white-space:nowrap;flex-shrink:0">${l.created_at||''}</div>
-    </div>`;
-  }).join('')}
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <input type="date" class="fi" value="${filterDate}" onchange="S._auditDate=this.value;S._auditPage=1;ren()" style="width:160px;height:36px;margin-bottom:0">
+    <button onclick="S._auditDate='';S._auditPage=1;ren()" class="bs" style="height:36px;padding:0 12px;font-size:12px">전체 날짜</button>
+    <input class="fi" placeholder="검색..." value="${q}" onkeydown="if(event.key==='Enter'){S._auditQ=this.value;S._auditPage=1;ren()}" style="flex:1;min-width:120px;height:36px;margin-bottom:0">
   </div>
-  ${paginationHTML(total,cur,'_auditPage')}`;
+  <div style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">${tabHtml}</div>
+  ${items.length===0?`<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:12px">📋</div><div>로그가 없습니다</div></div>`:''}
+  <div class="card" style="padding:0;overflow:hidden">
+    ${items.map((l,idx)=>{
+      const color=ACTION_COLORS[l.action]||'#555';
+      const actionLabel={insert:'등록',update:'수정',delete:'삭제',login:'로그인',logout:'로그아웃',approve:'결재',return:'반납',rent:'대여'}[l.action]||l.action;
+      const tableLabel={sales:'판매',customers:'고객',rentals:'렌트',rent_vehicles:'렌트차량',maint_logs:'렌트정비',repairs:'수리',accidents:'사고수리',vehicle_stock:'차량재고',parts_stock:'부품재고',purchase_orders:'발주',work_tasks:'작업일보',id_cards:'신분증',erp_users:'사용자',audit_logs:'로그'}[l.target_table]||l.target_table;
+      return`<div style="padding:12px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:flex-start;gap:10px;${idx%2===1?'background:var(--bg3)':''}">
+        <div style="min-width:46px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:800;text-align:center;background:${color}22;color:${color}">${actionLabel}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;margin-bottom:2px">${l.user_name||l.user_email||'-'} <span style="font-size:11px;font-weight:400;color:var(--tx2)">${l.user_email||''}</span></div>
+          <div style="font-size:12px;color:var(--tx2)">${tableLabel?'['+tableLabel+'] ':''} ${l.detail||''}</div>
+        </div>
+        <div style="font-size:11px;color:var(--tx3);white-space:nowrap;flex-shrink:0">${(l.created_at||'').slice(11,19)}</div>
+      </div>`;
+    }).join('')}
+  </div>
+  ${total>1?`<div style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:14px">
+    <button onclick="S._auditPage=Math.max(1,S._auditPage-1);ren()" class="bs" style="height:32px;padding:0 14px" ${cur<=1?'disabled':''}>이전</button>
+    <span style="font-size:13px;color:var(--tx2)">${cur} / ${total}</span>
+    <button onclick="S._auditPage=Math.min(${total},S._auditPage+1);ren()" class="bs" style="height:32px;padding:0 14px" ${cur>=total?'disabled':''}>다음</button>
+  </div>`:''}`;
 }
 
 function topAction(){
