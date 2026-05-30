@@ -469,7 +469,7 @@ function toSnake(obj){
     customerEstimate:'customer_estimate',totalAmount:'total_amount',approvedAt:'approved_at',
     receivedAt:'received_at',workDate:'work_date',dueDate:'due_date',
     createdAt:'created_at_time',lastVisit:'last_visit',minStock:'min_stock',
-    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',insuranceStart:'insurance_start',insuranceEnd:'insurance_end',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo'
+    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',insuranceStart:'insurance_start',insuranceEnd:'insurance_end',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo',licenseNo:'license_no',birthDate:'birth_date',rentCount:'rent_count',createdAt:'created_at',updatedAt:'updated_at',photo:'photo'
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -490,7 +490,7 @@ function fromSnake(obj){
     insurance_paid:'insurancePaid',insurance_paid_amount:'insurancePaidAmount',
     customer_estimate:'customerEstimate',total_amount:'totalAmount',approved_at:'approvedAt',
     received_at:'receivedAt',work_date:'workDate',due_date:'dueDate',
-    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',id_card_photo:'idCardPhoto',insurance_start:'insuranceStart',insurance_end:'insuranceEnd',
+    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',id_card_photo:'idCardPhoto',insurance_start:'insuranceStart',insurance_end:'insuranceEnd',license_no:'licenseNo',birth_date:'birthDate',rent_count:'rentCount',
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -540,6 +540,8 @@ async function loadAllFromDB(){
     if(ps!==null){ S.partsStock=rowsFromSnake(ps||[]); console.log('부품',(ps||[]).length); }
     if(po!==null){ S.purchaseOrders=rowsFromSnake(po||[]); console.log('발주',(po||[]).length); }
     if(wt!==null){ S.workTasks=rowsFromSnake(wt||[]); console.log('작업',(wt||[]).length); }
+    const idc=await dbLoad('id_cards');
+    if(idc!==null){ S.idCards=rowsFromSnake(idc||[]); console.log('신분증',(idc||[]).length); }
     // 담당자 + 사용자 권한 로드
     const _ud = await dbLoad('erp_users');
     if(_ud){
@@ -671,10 +673,13 @@ const S={
   // 기타
   _erpUsers:[],
   mechanics:['이기술','박수리'],
+  idCards:[],
+  _idCardQ:'',
+  _idCardPage:1,
   aiMessages:[{role:'ai',text:'안녕하세요! DS모터스포츠 ERP AI 어시스턴트입니다. 무엇이든 물어보세요 😊'}],
 };
 
-const TITLES={dashboard:'대시보드',worklog:'작업일보',settings:'시스템 설정',sales:'판매 관리',customers:'고객 관리',rent:'렌트 관리',rvehicles:'렌트 차량',rcalendar:'렌트 일정',rbilling:'요금/결제',rmaint:'렌트 차량 정비',repair:'일반 수리',accident:'사고 수리',unpaid:'미수금',ivehicle:'차량 재고',iparts:'부품 재고',purchase:'발주/입고',finance:'매출 분석',ai:'AI 어시스턴트'};
+const TITLES={dashboard:'대시보드',worklog:'작업일보',settings:'시스템 설정',sales:'판매 관리',customers:'고객 관리',rent:'렌트 관리',rvehicles:'렌트 차량',rcalendar:'렌트 일정',rbilling:'요금/결제',rmaint:'렌트 차량 정비',repair:'일반 수리',accident:'사고 수리',unpaid:'미수금',ivehicle:'차량 재고',iparts:'부품 재고',purchase:'발주/입고',finance:'매출 분석',ai:'AI 어시스턴트',idcards:'신분증 관리'};
 
 function go(page){
   S.page=page;
@@ -726,7 +731,7 @@ function updBadges(){
 
 function ren(){
   const c=document.getElementById('content');
-  const pages={dashboard:pgDashboard,worklog:pgWorklog,settings:pgSettings,sales:pgSales,customers:pgCustomers,rent:pgRent,rvehicles:pgRVehicles,rcalendar:pgRCalendar,rbilling:pgRBilling,rmaint:pgRMaint,repair:pgRepair,accident:pgAccident,unpaid:pgUnpaid,ivehicle:pgIVehicle,iparts:pgIParts,purchase:pgPurchase,finance:pgFinance,ai:pgAI};
+  const pages={dashboard:pgDashboard,worklog:pgWorklog,settings:pgSettings,sales:pgSales,customers:pgCustomers,rent:pgRent,rvehicles:pgRVehicles,rcalendar:pgRCalendar,rbilling:pgRBilling,rmaint:pgRMaint,repair:pgRepair,accident:pgAccident,unpaid:pgUnpaid,ivehicle:pgIVehicle,iparts:pgIParts,purchase:pgPurchase,finance:pgFinance,ai:pgAI,idcards:pgIdCards};
   c.innerHTML=(pages[S.page]||(() => ''))();
   if(S.page==='ai'){const el=document.getElementById('aim');if(el)el.scrollTop=el.scrollHeight;}
 }
@@ -1678,6 +1683,7 @@ async function saveRent(){
   const newRental={id:newId(S.rentals,'RT'),customer,phone,vehicleId:vid,model:v?v.model:'',plateNo:v?v.plateNo:'',startDate,endDate,days,dailyRate,deposit,totalFee:openEnd?0:days*dailyRate,status:'대여중',paid:false,payType:'',outMileage:km,inMileage:null,deliveryAgency:document.getElementById('rn-agency').value.trim()||'개인',outPhotos:outPhotoUrls,inPhotos:[],idCardData:idCardData,idCardPhoto:idCardPhoto};
   S.rentals.unshift(newRental);
   await dbInsert('rentals',toSnake(newRental));
+  saveIdCardFromRental(newRental);
   if(v){v.status='대여중';v.mileage=km;await dbUpdate('rent_vehicles',v.id,{status:'대여중',mileage:km});}
   CM();ren();
 }
@@ -2710,6 +2716,118 @@ async function scanIdCard(input){
   }
 }
 
+
+// ── 신분증 관리 ──
+function pgIdCards(){
+  let data=[...S.idCards];
+  const q=S._idCardQ||'';
+  if(q) data=data.filter(c=>[c.name,c.rrn,c.licenseNo,c.address,c.phone].some(v=>(v||'').includes(q)));
+  data=data.sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+  const {items,total,cur}=paginate(data,S._idCardPage);
+  return`
+  <div class="sh"><span class="st">신분증 관리 <span style="font-size:13px;font-weight:400;color:var(--tx3)">${data.length}건</span></span>
+    <button class="bp" onclick="openAddIdCardModal()"><i class="ti ti-plus"></i> 직접 등록</button>
+  </div>
+  ${searchBar('이름/주민번호/면허번호 검색','_idCardQ','','','')}
+  ${items.length===0?`<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:12px">🪪</div><div>등록된 신분증 정보가 없습니다</div></div>`:''}
+  ${items.map(c=>`<div class="irow" style="cursor:default">
+    <div style="width:44px;height:44px;border-radius:8px;overflow:hidden;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      ${c.photo?`<img src="${c.photo}" style="width:100%;height:100%;object-fit:cover" onclick="openPhotoViewer('${c.photo}')">`:
+      `<span style="font-size:22px">🪪</span>`}
+    </div>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+        <span style="font-size:15px;font-weight:800">${c.name||'-'}</span>
+        ${c.licenseNo?badge('bb','면허: '+c.licenseNo):''}
+        ${c.rentCount>0?badge('bpu','렌트 '+c.rentCount+'회'):''}
+      </div>
+      ${c.rrn?`<div style="font-size:12px;color:var(--tx2);font-family:monospace">주민번호: ${c.rrn.slice(0,6)}-*******</div>`:''}
+      ${c.address?`<div style="font-size:12px;color:var(--tx2)">📍 ${c.address}</div>`:''}
+      ${c.phone?`<div style="font-size:12px;color:var(--tx2)">📞 ${c.phone}</div>`:''}
+      <div style="font-size:11px;color:var(--tx3);margin-top:3px">등록: ${c.createdAt||'-'}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <button class="bsm" onclick="openEditIdCardModal('${c.id}')">수정</button>
+      <button class="bsm" style="color:#c62828" onclick="delIdCard('${c.id}')">삭제</button>
+    </div>
+  </div>`).join('')}
+  ${pgBar(total,cur,'_idCardPage')}`;
+}
+
+function openAddIdCardModal(editId){
+  const c=editId?S.idCards.find(x=>x.id===editId):null;
+  OM(mhdr(c?'신분증 수정':'신분증 직접 등록')+
+    '<div class="fr">'+fi('idc-name','이름','',null,c?c.name||'':'')+fi('idc-phone','연락처','010-0000-0000',null,c?c.phone||'':'')+'</div>'+
+    fi('idc-rrn','주민등록번호','000000-0000000',null,c?c.rrn||'':'')+
+    fi('idc-license','면허번호','00-00-000000-00',null,c?c.licenseNo||'':'')+
+    fi('idc-addr','주소','',null,c?c.address||'':'')+
+    fi('idc-birth','생년월일','',null,c?c.birthDate||'':'')+
+    '<div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveIdCard(\''+( editId||'')+'\')"><i class="ti ti-check"></i> '+(c?'수정완료':'등록하기')+'</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
+  );
+}
+function openEditIdCardModal(id){ openAddIdCardModal(id); }
+
+async function saveIdCard(editId){
+  const name=document.getElementById('idc-name').value.trim();
+  if(!name){alert('이름을 입력하세요.');return;}
+  const obj={
+    name,
+    phone:document.getElementById('idc-phone').value,
+    rrn:document.getElementById('idc-rrn').value,
+    licenseNo:document.getElementById('idc-license').value,
+    address:document.getElementById('idc-addr').value,
+    birthDate:document.getElementById('idc-birth').value,
+    updatedAt:new Date().toISOString().slice(0,10)
+  };
+  if(editId){
+    const c=S.idCards.find(x=>x.id===editId);if(c)Object.assign(c,obj);
+    await dbUpdate('id_cards',editId,toSnake(obj));
+  }else{
+    const newC={id:newId(S.idCards,'IDC'),createdAt:new Date().toISOString().slice(0,10),photo:'',rentCount:0,...obj};
+    S.idCards.unshift(newC);
+    await dbInsert('id_cards',toSnake(newC));
+  }
+  CM();ren();
+}
+
+async function delIdCard(id){
+  if(!confirm('신분증 정보를 삭제하시겠습니까?'))return;
+  await dbDelete('id_cards',id);
+  S.idCards=S.idCards.filter(x=>x.id!==id);
+  ren();
+}
+
+// 대여 접수 후 신분증 DB에 자동 저장
+async function saveIdCardFromRental(rental){
+  if(!rental.idCardData||!rental.idCardData.name) return;
+  const icd=rental.idCardData;
+  // 이미 같은 주민번호로 등록된 경우 업데이트
+  const existing=S.idCards.find(c=>c.rrn&&icd.rrn&&c.rrn===icd.rrn);
+  if(existing){
+    existing.rentCount=(existing.rentCount||0)+1;
+    existing.photo=rental.idCardPhoto||existing.photo;
+    existing.phone=rental.phone||existing.phone;
+    existing.updatedAt=new Date().toISOString().slice(0,10);
+    await dbUpdate('id_cards',existing.id,toSnake({rentCount:existing.rentCount,photo:existing.photo,phone:existing.phone,updatedAt:existing.updatedAt}));
+  }else{
+    const newC={
+      id:newId(S.idCards,'IDC'),
+      name:icd.name||'',
+      rrn:icd.rrn||'',
+      licenseNo:icd.licenseNo||'',
+      address:icd.address||'',
+      birthDate:icd.birthDate||'',
+      phone:rental.phone||'',
+      photo:rental.idCardPhoto||'',
+      rentCount:1,
+      createdAt:new Date().toISOString().slice(0,10),
+      updatedAt:new Date().toISOString().slice(0,10)
+    };
+    S.idCards.unshift(newC);
+    await dbInsert('id_cards',toSnake(newC));
+  }
+}
+
 function topAction(){
   const m={
     dashboard:openRentModal,worklog:openAddWorkModal,
@@ -2719,7 +2837,8 @@ function topAction(){
     rmaint:openMaintModal,repair:openRepairModal,
     accident:openAccidentModal,unpaid:()=>{},
     ivehicle:openIVehicleModal,iparts:openIPartsModal,
-    purchase:openPOModal,finance:()=>{},ai:()=>{},settings:openAddUserModal
+    purchase:openPOModal,finance:()=>{},ai:()=>{},settings:openAddUserModal,
+    idcards:openAddIdCardModal
   };
   (m[S.page]||openRentModal)();
 }
@@ -2749,7 +2868,7 @@ function pgSettings(){
     {id:'rbilling',label:'요금/결제'},{id:'rmaint',label:'렌트 차량 정비'},
     {id:'repair',label:'일반 수리'},{id:'accident',label:'사고 수리'},{id:'unpaid',label:'미수금'},
     {id:'ivehicle',label:'차량 재고'},{id:'iparts',label:'부품 재고'},{id:'purchase',label:'발주/입고'},
-    {id:'worklog',label:'작업일보'},{id:'finance',label:'매출 분석'},{id:'ai',label:'AI 어시스턴트'}
+    {id:'worklog',label:'작업일보'},{id:'idcards',label:'신분증 관리'},{id:'finance',label:'매출 분석'},{id:'ai',label:'AI 어시스턴트'}
   ];
   return`
   <div class="sgrid" style="margin-bottom:20px">
@@ -2811,7 +2930,7 @@ function openAddUserModal(editId){
     {id:'rbilling',label:'요금/결제'},{id:'rmaint',label:'렌트 차량 정비'},
     {id:'repair',label:'일반 수리'},{id:'accident',label:'사고 수리'},{id:'unpaid',label:'미수금'},
     {id:'ivehicle',label:'차량 재고'},{id:'iparts',label:'부품 재고'},{id:'purchase',label:'발주/입고'},
-    {id:'worklog',label:'작업일보'},{id:'finance',label:'매출 분석'},{id:'ai',label:'AI 어시스턴트'}
+    {id:'worklog',label:'작업일보'},{id:'idcards',label:'신분증 관리'},{id:'finance',label:'매출 분석'},{id:'ai',label:'AI 어시스턴트'}
   ];
   const perms=['can_add','can_edit','can_delete'];
   const permLabels={can_add:'추가',can_edit:'수정',can_delete:'삭제'};
