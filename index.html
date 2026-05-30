@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS모터스포츠 통합 ERP</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -2559,7 +2559,19 @@ function applyIdCardToForm(){
   const rrn=document.getElementById('id-rrn')?.value||'';
   const addr=document.getElementById('id-addr')?.value||'';
   const license=document.getElementById('id-license')?.value||'';
-  const birth=document.getElementById('id-birth')?.value||'';
+  const rrnVal=document.getElementById('id-rrn')?.value||'';
+  let birth=document.getElementById('id-birth')?.value||'';
+  // 생년월일 비어있으면 주민번호 앞 6자리로 자동 계산
+  if(!birth && rrnVal){
+    const rc=rrnVal.replace(/[^0-9]/g,'');
+    if(rc.length>=7){
+      const gd=parseInt(rc[6]);
+      const yyyy=(gd<=2?'19':'20')+rc.slice(0,2);
+      birth=yyyy+'-'+rc.slice(2,4)+'-'+rc.slice(4,6);
+      const el=document.getElementById('id-birth');
+      if(el) el.value=birth;
+    }
+  }
   if(name && document.getElementById('rn-name')) document.getElementById('rn-name').value=name;
   window._idCardData={name,rrn,address:addr,licenseNo:license,birthDate:birth};
   // 시각적 피드백
@@ -2621,7 +2633,21 @@ async function scanIdCard(input){
     if(document.getElementById('id-rrn')) document.getElementById('id-rrn').value=info.rrn||'';
     if(document.getElementById('id-addr')) document.getElementById('id-addr').value=info.address||'';
     if(document.getElementById('id-license')) document.getElementById('id-license').value=info.licenseNo||'';
-    if(document.getElementById('id-birth')) document.getElementById('id-birth').value=info.birthDate||'';
+    // 생년월일: birthDate 없으면 주민번호 앞 6자리로 자동 계산
+    let birthVal=info.birthDate||'';
+    if(!birthVal && info.rrn){
+      const rrnClean=info.rrn.replace(/[^0-9]/g,'');
+      if(rrnClean.length>=7){
+        const yy=rrnClean.slice(0,2);
+        const mm=rrnClean.slice(2,4);
+        const dd=rrnClean.slice(4,6);
+        const genderDigit=parseInt(rrnClean[6]);
+        // 1,2 = 1900년대, 3,4 = 2000년대
+        const yyyy=(genderDigit<=2?'19':'20')+yy;
+        birthVal=yyyy+'-'+mm+'-'+dd;
+      }
+    }
+    if(document.getElementById('id-birth')) document.getElementById('id-birth').value=birthVal;
     // 이름은 바로 고객명에도 입력
     if(info.name && document.getElementById('rn-name')) document.getElementById('rn-name').value=info.name;
 
