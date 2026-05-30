@@ -606,83 +606,26 @@ const PAGE_SIZE=15;
 // ── STATE ──
 const S={
   page:'dashboard',
-  sales:[
-    {id:'S001',date:'2025-05-27',customer:'김민수',phone:'010-1234-5678',type:'차량판매',model:'혼다 CB500F',qty:1,price:7200000,payType:'카드',status:'완료',memo:''},
-    {id:'S002',date:'2025-05-26',customer:'이지연',phone:'010-2345-6789',type:'부품판매',model:'엔진 오일 10W-40',qty:5,price:40000,payType:'외상',status:'완료',memo:''},
-    {id:'S003',date:'2025-05-25',customer:'박상훈',phone:'010-3456-7890',type:'차량판매',model:'BMW G310R',qty:1,price:6500000,payType:'현금',status:'완료',memo:''},
-    {id:'S004',date:'2025-05-24',customer:'최예진',phone:'010-4567-8901',type:'부품판매',model:'브레이크 패드',qty:2,price:90000,payType:'카드',status:'완료',memo:''},
-  ],
-  customers:[
-    {id:'C001',name:'김민수',phone:'010-1234-5678',email:'kim@email.com',type:'일반',company:'',grade:'VIP',visits:5,lastVisit:'2025-05-27',memo:'단골'},
-    {id:'C002',name:'이지연',phone:'010-2345-6789',email:'lee@email.com',type:'일반',company:'',grade:'일반',visits:1,lastVisit:'2025-05-26',memo:''},
-    {id:'C003',name:'박상훈',phone:'010-3456-7890',email:'park@email.com',type:'업체',company:'DS모터스',grade:'VIP',visits:8,lastVisit:'2025-05-25',memo:'법인거래'},
-    {id:'C004',name:'쿠팡이츠',phone:'1688-0000',email:'',type:'업체',company:'쿠팡이츠',grade:'VIP',visits:20,lastVisit:'2025-05-27',memo:'배달대행 계약업체'},
-  ],
-  rentals:[
-    {id:'RT001',customer:'홍길동',phone:'010-1111-2222',vehicleId:'RV001',model:'혼다 PCX125',plateNo:'12가3456',startDate:'2025-05-27',endDate:'2025-05-30',days:3,dailyRate:50000,deposit:200000,totalFee:150000,status:'대여중',paid:false,payType:'',outMileage:12500,inMileage:'',deliveryAgency:'쿠팡이츠'},
-    {id:'RT002',customer:'이수진',phone:'010-3333-4444',vehicleId:'RV002',model:'야마하 NMAX',plateNo:'34나5678',startDate:'2025-05-25',endDate:'2025-05-27',days:2,dailyRate:55000,deposit:200000,totalFee:110000,status:'반납완료',paid:true,payType:'카드',outMileage:8200,inMileage:8412,deliveryAgency:'개인'},
-    {id:'RT003',customer:'박준혁',phone:'010-5555-6666',vehicleId:'RV004',model:'혼다 PCX125',plateNo:'90마3456',startDate:'2025-05-28',endDate:'미정',days:0,dailyRate:50000,deposit:200000,totalFee:0,status:'대여중',paid:false,payType:'',outMileage:3400,inMileage:'',deliveryAgency:'배민커넥트'},
-  ],
-  rentVehicles:[
-    {id:'RV001',model:'혼다 PCX125',plateNo:'12가3456',year:2024,color:'화이트',dailyRate:50000,status:'대여중',mileage:12500,insuranceType:'종합보험',minAge:'만 21세 이상',insurer:'현대해상',deposit:200000},
-    {id:'RV002',model:'야마하 NMAX',plateNo:'34나5678',year:2024,color:'블루',dailyRate:55000,status:'가용',mileage:8412,insuranceType:'책임보험',minAge:'만 26세 이상',insurer:'DB손보',deposit:200000},
-    {id:'RV003',model:'스즈키 버그만',plateNo:'78라9012',year:2023,color:'실버',dailyRate:60000,status:'정비중',mileage:22100,insuranceType:'종합보험',minAge:'만 30세 이상',insurer:'KB손보',deposit:300000},
-    {id:'RV004',model:'혼다 PCX125',plateNo:'90마3456',year:2025,color:'블랙',dailyRate:50000,status:'대여중',mileage:3400,insuranceType:'종합보험',minAge:'만 21세 이상',insurer:'삼성화재',deposit:200000},
-    {id:'RV005',model:'킴코 아지레',plateNo:'11바7890',year:2024,color:'레드',dailyRate:45000,status:'가용',mileage:15600,insuranceType:'책임보험',minAge:'전 연령',insurer:'롯데손보',deposit:150000},
-  ],
-  maintLogs:[
-    {id:'MN001',vehicleId:'RV001',date:'2025-04-15',mileage:11200,items:[{name:'엔진 오일 교환',src:'매장재고',partId:'P001'},{name:'오일 필터 교환',src:'매장재고',partId:'P006'}],cost:45000,memo:'정기점검',mechanic:'이기술',driverName:'홍길동',driverType:'배달대행',agencyName:'쿠팡이츠',driverPhone:'010-1111-2222'},
-    {id:'MN002',vehicleId:'RV002',date:'2025-03-20',mileage:7800,items:[{name:'타이어 교체(전)',src:'매장재고',partId:'P002'}],cost:180000,memo:'마모 심해',mechanic:'박수리',driverName:'이수진',driverType:'개인',agencyName:'',driverPhone:'010-3333-4444'},
-  ],
-  repairs:[
-    {id:'R001',date:'2025-05-27',customer:'김민수',phone:'010-1234-5678',plateNo:'123가4567',model:'혼다 CB500F',mileage:25400,items:[{name:'엔진 오일 교환',src:'매장재고',partId:'P001'}],cost:55000,payType:'현금',status:'완료',mechanic:'이기술',memo:''},
-    {id:'R002',date:'2025-05-27',customer:'이지연',phone:'010-2345-6789',plateNo:'234나5678',model:'야마하 MT-07',mileage:18200,items:[{name:'타이어 교체(후)',src:'매장재고',partId:'P003'},{name:'브레이크 패드(후)',src:'고객지참',partId:''}],cost:220000,payType:'외상',status:'작업중',mechanic:'박수리',memo:''},
-  ],
-  accidents:[
-    {id:'AC001',accidentDate:'2025-05-20',plateNo:'123가4567',model:'혼다 CB500F',driverName:'김민수',driverPhone:'010-1234-5678',opponentInsurance:'삼성화재',faultRatio:'30:70',receiptNo:'2025-INS-00123',manager:'이담당',estimatedCost:850000,status:'수리중',memo:'전방 범퍼 손상',insurancePaid:false,insurancePaidAmount:0,uninsured:false,customerEstimate:0},
-    {id:'AC002',accidentDate:'2025-05-15',plateNo:'456라7890',model:'야마하 NMAX',driverName:'박준혁',driverPhone:'010-5555-6666',opponentInsurance:'현대해상',faultRatio:'50:50',receiptNo:'2025-INS-00098',manager:'김담당',estimatedCost:320000,status:'입고',memo:'측면 스크래치',insurancePaid:false,insurancePaidAmount:0,uninsured:true,customerEstimate:150000},
-  ],
-  vehicleStock:[
-    {id:'VS001',model:'혼다 CB500F',vin:'ML8JC2100MFG12345',year:2025,color:'매트블랙',price:7200000,status:'재고',memo:''},
-    {id:'VS002',model:'야마하 MT-07',vin:'VK021J000MA012345',year:2025,color:'시아닌 블루',price:9800000,status:'재고',memo:''},
-    {id:'VS003',model:'BMW G310R',vin:'WB10J1106MZ012345',year:2024,color:'레이싱 레드',price:6500000,status:'판매완료',memo:''},
-    {id:'VS004',model:'가와사키 Z400',vin:'JKBZXJA17MA012345',year:2025,color:'메탈릭 그레이',price:6800000,status:'재고',memo:''},
-  ],
-  partsStock:[
-    {id:'P001',name:'엔진 오일 (10W-40)',maker:'카스트롤',compatible:'혼다 전 차종',location:'A-1 선반',stock:48,unit:'L',minStock:10,price:8000},
-    {id:'P002',name:'타이어 전방 (120/70-17)',maker:'미쉐린',compatible:'CB500F, MT-07',location:'B-2 타이어랙',stock:4,unit:'개',minStock:4,price:180000},
-    {id:'P003',name:'타이어 후방 (160/60-17)',maker:'미쉐린',compatible:'CB500F, MT-07',location:'B-3 타이어랙',stock:3,unit:'개',minStock:4,price:210000},
-    {id:'P004',name:'브레이크 패드 전방',maker:'RK 엑셀',compatible:'범용',location:'A-3 선반',stock:12,unit:'셋트',minStock:5,price:45000},
-    {id:'P005',name:'에어 필터',maker:'K&N',compatible:'혼다 CB500F',location:'A-2 선반',stock:8,unit:'개',minStock:5,price:28000},
-    {id:'P006',name:'오일 필터',maker:'혼다 순정',compatible:'혼다 전 차종',location:'A-1 선반',stock:20,unit:'개',minStock:8,price:12000},
-    {id:'P007',name:'스파크 플러그',maker:'NGK',compatible:'범용',location:'A-4 선반',stock:35,unit:'개',minStock:10,price:7000},
-    {id:'P008',name:'배터리 (12V)',maker:'유아사',compatible:'범용',location:'C-1 배터리랙',stock:6,unit:'개',minStock:3,price:85000},
-    {id:'P009',name:'구동 벨트',maker:'야마하 순정',compatible:'야마하 NMAX',location:'D-2 선반',stock:3,unit:'개',minStock:3,price:65000},
-    {id:'P010',name:'체인 (O링)',maker:'DID',compatible:'BMW G310R',location:'D-1 선반',stock:5,unit:'개',minStock:3,price:95000},
-  ],
-  purchaseOrders:[
-    {id:'PO001',date:'2025-05-25',supplier:'미쉐린코리아',items:[{partId:'P002',partName:'타이어 전방',qty:6,unitPrice:180000},{partId:'P003',partName:'타이어 후방',qty:4,unitPrice:210000}],totalAmount:1920000,status:'결재대기',approver:'김사장',approvedAt:'',receivedAt:'',memo:''},
-    {id:'PO002',date:'2025-05-20',supplier:'카스트롤',items:[{partId:'P001',partName:'엔진 오일',qty:100,unitPrice:8000}],totalAmount:800000,status:'입고완료',approver:'김사장',approvedAt:'2025-05-21',receivedAt:'2025-05-23',memo:''},
-  ],
-  workTasks:[
-    {id:'WT001',title:'혼다 PCX125 엔진오일 교환',category:'렌트정비',assignee:'이기술',plateNo:'12가3456',customer:'홍길동',priority:'보통',status:'진행중',progress:60,workDate:'2025-05-28',dueDate:'2025-05-28',memo:'정기점검 포함',createdAt:'08:30'},
-    {id:'WT002',title:'야마하 MT-07 타이어 교체',category:'일반수리',assignee:'박수리',plateNo:'234나5678',customer:'이지연',priority:'긴급',status:'대기',progress:0,workDate:'2025-05-28',dueDate:'2025-05-28',memo:'전후 모두 교체',createdAt:'09:00'},
-    {id:'WT003',title:'BMW G310R 사고수리',category:'사고수리',assignee:'이기술',plateNo:'123가4567',customer:'김민수',priority:'보통',status:'대기',progress:0,workDate:'2025-05-28',dueDate:'2025-05-29',memo:'전방 범퍼 손상',createdAt:'09:30'},
-    {id:'WT004',title:'혼다 NMAX 브레이크 점검',category:'일반수리',assignee:'박수리',plateNo:'345다6789',customer:'박상훈',priority:'낮음',status:'완료',progress:100,workDate:'2025-05-28',dueDate:'2025-05-28',memo:'',createdAt:'07:30'},
-    {id:'WT005',title:'PCX 정기점검',category:'렌트정비',assignee:'이기술',plateNo:'11바7890',customer:'배민커넥트',priority:'보통',status:'완료',progress:100,workDate:'2025-05-27',dueDate:'2025-05-27',memo:'',createdAt:'10:00'},
-    {id:'WT006',title:'스즈키 버그만 타이어',category:'렌트정비',assignee:'박수리',plateNo:'78라9012',customer:'개인',priority:'보통',status:'완료',progress:100,workDate:'2025-05-27',dueDate:'2025-05-27',memo:'',createdAt:'13:00'},
-    {id:'WT007',title:'CB500F 브레이크 오일',category:'일반수리',assignee:'이기술',plateNo:'123가4567',customer:'김민수',priority:'낮음',status:'완료',progress:100,workDate:'2025-05-26',dueDate:'2025-05-26',memo:'',createdAt:'09:00'},
-  ],
-  _workDate:'2025-05-28',
+  sales:[],
+  customers:[],
+  rentVehicles:[],
+  rentals:[],
+  maintLogs:[],
+  repairs:[],
+  accidents:[],
+  vehicleStock:[],
+  partsStock:[],
+  purchaseOrders:[],
+  workTasks:[],
+  _workDate:new Date().toISOString().slice(0,10),
   _erpUsers:[],
   mechanics:['이기술','박수리'],
-  aiMessages:[{role:'ai',text:'안녕하세요! DS MOTORSPORT 통합 ERP AI입니다.\n판매, 렌트, 수리, 재고 등 무엇이든 물어보세요! 🏍️'}],
-  // pagination / search state
-  _salesQ:'',_salesType:'전체',_salesPage:1,
-  _custQ:'',_custType:'전체',_custPage:1,
-  _rentQ:'',_repairQ:'',_accQ:'',
-  _ivQ:'',_ipQ:'',_ipPage:1,
-  _rmV:'all',_rmPage:1,
+  _rvQ:'',
+  _rmV:'all',
+  _rmPeriod:'monthly',
+  _rmViewDate:new Date().toISOString().slice(0,10),
+  _rmQ:'',
+  aiMessages:[{role:'ai',text:'안녕하세요! DS모터스포츠 ERP AI 어시스턴트입니다. 무엇이든 물어보세요 😊'}],
 };
 
 const TITLES={dashboard:'대시보드',worklog:'작업일보',settings:'시스템 설정',sales:'판매 관리',customers:'고객 관리',rent:'렌트 관리',rvehicles:'렌트 차량',rcalendar:'렌트 일정',rbilling:'요금/결제',rmaint:'렌트 차량 정비',repair:'일반 수리',accident:'사고 수리',unpaid:'미수금',ivehicle:'차량 재고',iparts:'부품 재고',purchase:'발주/입고',finance:'매출 분석',ai:'AI 어시스턴트'};
@@ -1588,7 +1531,7 @@ function openRentEditModal(id){
     '<div class="fr">'+fi('re-customer','고객명','',null,r.customer)+fi('re-phone','연락처','',null,r.phone)+'</div>'+
     fi('re-agency','배달대행사','개인',null,r.deliveryAgency||'개인')+
     '<div class="fg"><label class="fl">차량 변경</label><select class="fi" id="re-vehicle">'+vOpts+'</select></div>'+
-    '<div class="fr">'+fi('re-start','대여일','','date',r.startDate)+fi('re-end','반납일','','date',r.endDate==='미정'?'':r.endDate)+'</div>'+
+    '<div class="fr">'+fi('re-start','대여일','','date',r.startDate)+fi('re-end','반납일','','date',r&&r.endDate==='미정'?'':r.endDate||'')+'</div>'+
     '<div class="fg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="re-open" '+(r.endDate==='미정'?'checked':'')+' onchange="document.getElementById(\'re-end\').disabled=this.checked"> 반납일 미정</label></div>'+
     '<div class="fr">'+fi('re-rate','일일 요금 (원)','','number',r.dailyRate)+fi('re-dep','보증금 (원)','','number',r.deposit)+'</div>'+
     fi('re-outkm','출고 키로수 (km)','','number',r.outMileage)+
@@ -1800,7 +1743,7 @@ function openMaintModal(preVehicleId,editLogId){
   window._mItems=log&&log.items?JSON.parse(JSON.stringify(log.items)):[];
   window._driverType='';
   OM(`${mhdr(log?'정비 수정':'렌트 차량 정비 등록')}${reqNote()}
-  <div class="fr"><div class="fg"><label class="fl">차량 선택 <span class="req">★</span></label><select class="fi" id="mt-v">${S.rentVehicles.map(v=>`<option value="${v.id}" ${(preVehicleId||log?.vehicleId)===v.id?'selected':''}>${v.plateNo} | ${v.model}</option>`).join('')}</select></div>${fi('mt-date','정비일','','date',log?log.date:'2025-05-28',true)}</div>
+  <div class="fr"><div class="fg"><label class="fl">차량 선택 <span class="req">★</span></label><select class="fi" id="mt-v">${S.rentVehicles.map(v=>`<option value="${v.id}" ${(preVehicleId||log?.vehicleId)===v.id?'selected':''}>${v.plateNo} | ${v.model}</option>`).join('')}</select></div>${fi('mt-date','정비일','','date',log?log.date:new Date().toISOString().slice(0,10),true)}</div>
   ${fi('mt-km','정비 시 현재 키로수 (km)','필수 입력','number',log?log.mileage:'',true)}
   <div style="border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:14px">
     <div style="font-size:13px;font-weight:700;margin-bottom:10px">운전자 정보 <span class="req">★</span></div>
@@ -1884,7 +1827,7 @@ async function saveRepair(editId){
   const newRepairPhotos=collectPhotoUrls('rpp',5);
   const existRep=editId?S.repairs.find(x=>x.id===editId):null;
   const repairPhotoUrls=newRepairPhotos.length>0?newRepairPhotos:(existRep?existRep.photos||[]:[]);
-  const obj={date:'2025-05-28',customer:document.getElementById('rp-cust').value,phone:document.getElementById('rp-phone').value,plateNo:plate,model:document.getElementById('rp-model').value,mileage:km,items:fItems,cost:parseInt(document.getElementById('rp-cost').value)||0,payType,status:editId?S.repairs.find(x=>x.id===editId).status:'대기',mechanic:getMechanicValue('rp-mec'),memo:document.getElementById('rp-memo').value,photos:repairPhotoUrls};
+  const obj={date:new Date().toISOString().slice(0,10),customer:document.getElementById('rp-cust').value,phone:document.getElementById('rp-phone').value,plateNo:plate,model:document.getElementById('rp-model').value,mileage:km,items:fItems,cost:parseInt(document.getElementById('rp-cost').value)||0,payType,status:editId?S.repairs.find(x=>x.id===editId).status:'대기',mechanic:getMechanicValue('rp-mec'),memo:document.getElementById('rp-memo').value,photos:repairPhotoUrls};
   if(editId){
     const r=S.repairs.find(x=>x.id===editId);if(r)Object.assign(r,obj);
     await dbUpdate('repairs',editId,toSnake(obj));
@@ -1903,7 +1846,7 @@ function openAccidentModal(editId){
   window._accStatus=a?a.status:'입고';
   window._uninsured=a?a.uninsured||false:false;
   OM(`${mhdr(a?'사고 수리 수정':'사고 수리 접수')}${reqNote()}
-  <div class="fr">${fi('ac-date','사고 일자','','date',a?a.accidentDate:'2025-05-28',true)}${fi('ac-plate','차량번호 <span class="req">★</span>','123가4567',null,a?a.plateNo:'')}</div>
+  <div class="fr">${fi('ac-date','사고 일자','','date',a?a.accidentDate:new Date().toISOString().slice(0,10),true)}${fi('ac-plate','차량번호 <span class="req">★</span>','123가4567',null,a?a.plateNo:'')}</div>
   <div class="fr">${fi('ac-model','차량 모델 <span class="req">★</span>','혼다 CB500F',null,a?a.model:'')}${fi('ac-driver','운전자 이름 <span class="req">★</span>','',null,a?a.driverName:'')}</div>
   <div class="fr">${fi('ac-phone','운전자 연락처 <span class="req">★</span>','',null,a?a.driverPhone:'')}${fi('ac-ins','상대 보험사 <span class="req">★</span>','삼성화재',null,a?a.opponentInsurance:'')}</div>
   <div class="fr">${fi('ac-fault','과실 비율','30:70',null,a?a.faultRatio:'')}${fi('ac-rec','보험 접수번호','2025-INS-00123',null,a?a.receiptNo:'')}</div>
@@ -1983,7 +1926,7 @@ async function saveInsurancePay(id){
 
 // ── 작업일보 페이지 ──
 function pgWorklog(){
-  const selDate=S._workDate||'2025-05-28';
+  const selDate=S._workDate||new Date().toISOString().slice(0,10);
   const tasks=S.workTasks.filter(t=>t.workDate===selDate);
   const allDates=[...new Set(S.workTasks.map(t=>t.workDate))].sort((a,b)=>b.localeCompare(a));
   const waiting=tasks.filter(t=>t.status==='대기');
@@ -2068,7 +2011,7 @@ function pgWorklog(){
 function openDatePickModal(){
   OM(`${mhdr('날짜 선택')}
   <div class="fg"><label class="fl">조회할 날짜</label>
-    <input class="fi" type="date" id="dp-date" value="${S._workDate||'2025-05-28'}">
+    <input class="fi" type="date" id="dp-date" value="${S._workDate||new Date().toISOString().slice(0,10)}">
   </div>
   <div style="display:flex;gap:8px">
     <button class="bp" style="flex:1" onclick="S._workDate=document.getElementById('dp-date').value;CM();ren()">조회하기</button>
@@ -2082,7 +2025,7 @@ function openAddWorkModal(editId){
   <div class="fr">${fi('wt-title','작업 제목 ★','예: 엔진오일 교환',null,t?t.title:'',true)}${fsel('wt-cat','작업 분류',['일반수리','렌트정비','사고수리','기타'],t?t.category:'일반수리')}</div>
   <div class="fr">${fi('wt-assignee','담당 기술자','이기술',null,t?t.assignee:'이기술')}${fsel('wt-priority','우선순위',['긴급','보통','낮음'],t?t.priority:'보통')}</div>
   <div class="fr">${fi('wt-plate','차량번호','123가4567',null,t?t.plateNo:'')}${fi('wt-customer','고객명','',null,t?t.customer:'')}</div>
-  <div class="fr">${fi('wt-wdate','작업 날짜','','date',t?t.workDate:(S._workDate||'2025-05-28'))}${fi('wt-due','완료 목표일','','date',t?t.dueDate:'2025-05-28')}</div>
+  <div class="fr">${fi('wt-wdate','작업 날짜','','date',t?t.workDate:(S._workDate||new Date().toISOString().slice(0,10)))}${fi('wt-due','완료 목표일','','date',t?t.dueDate:new Date().toISOString().slice(0,10))}</div>
   ${fsel('wt-status','현재 상태',['대기','진행중','완료'],t?t.status:'대기')}
   ${fi('wt-memo','메모','특이사항',null,t?t.memo:'')}
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveWorkTask('${editId||''}')"><i class="ti ti-check"></i> ${t?'수정완료':'등록하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
@@ -2093,7 +2036,7 @@ async function saveWorkTask(editId){
   if(!title){alert('작업 제목을 입력하세요.');return;}
   const now=new Date();
   const timeStr=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  const obj={title,category:document.getElementById('wt-cat').value,assignee:document.getElementById('wt-assignee').value,priority:document.getElementById('wt-priority').value,plateNo:document.getElementById('wt-plate').value,customer:document.getElementById('wt-customer').value,dueDate:document.getElementById('wt-due').value,workDate:document.getElementById('wt-wdate')?.value||S._workDate||'2025-05-28',status:document.getElementById('wt-status').value,memo:document.getElementById('wt-memo').value};
+  const obj={title,category:document.getElementById('wt-cat').value,assignee:document.getElementById('wt-assignee').value,priority:document.getElementById('wt-priority').value,plateNo:document.getElementById('wt-plate').value,customer:document.getElementById('wt-customer').value,dueDate:document.getElementById('wt-due').value,workDate:document.getElementById('wt-wdate')?.value||S._workDate||new Date().toISOString().slice(0,10),status:document.getElementById('wt-status').value,memo:document.getElementById('wt-memo').value};
   if(editId){
     const t=S.workTasks.find(x=>x.id===editId);if(t)Object.assign(t,obj);
     await dbUpdate('work_tasks',editId,toSnake(obj));
@@ -2228,7 +2171,7 @@ function openPOModal(editId){
   const po=editId?S.purchaseOrders.find(x=>x.id===editId):null;
   window._poN=1;
   OM(`${mhdr(po?'발주서 수정':'발주서 작성')}
-  <div class="fr">${fi('po-date','발주일','','date',po?po.date:'2025-05-28')}${fi('po-sup','공급업체명 ★','업체명',null,po?po.supplier:'')}</div>
+  <div class="fr">${fi('po-date','발주일','','date',po?po.date:new Date().toISOString().slice(0,10))}${fi('po-sup','공급업체명 ★','업체명',null,po?po.supplier:'')}</div>
   ${fi('po-app','결재자','김사장',null,po?po.approver:'김사장')}
   <div class="fg"><label class="fl">발주 부품</label>
     <div id="po-items">
@@ -2283,15 +2226,15 @@ async function savePO(editId){
 }
 async function approvePO(id){
   const po=S.purchaseOrders.find(x=>x.id===id);
-  if(po){po.status='결재완료';po.approvedAt='2025-05-28';
-  await dbUpdate('purchase_orders',id,{status:'결재완료',approved_at:'2025-05-28'});}ren();
+  if(po){po.status='결재완료';po.approvedAt=new Date().toISOString().slice(0,10);
+  await dbUpdate('purchase_orders',id,{status:'결재완료',approved_at:new Date().toISOString().slice(0,10)});}ren();
 }
 async function receivePO(id){
   const po=S.purchaseOrders.find(x=>x.id===id);if(!po)return;
-  po.status='입고완료';po.receivedAt='2025-05-28';
+  po.status='입고완료';po.receivedAt=new Date().toISOString().slice(0,10);
   const ups=[];
   po.items.forEach(item=>{const p=S.partsStock.find(x=>x.id===item.partId);if(p){p.stock+=item.qty;ups.push(dbUpdate('parts_stock',p.id,{stock:p.stock}));}});
-  await Promise.all([dbUpdate('purchase_orders',id,{status:'입고완료',received_at:'2025-05-28'}),...ups]);
+  await Promise.all([dbUpdate('purchase_orders',id,{status:'입고완료',received_at:new Date().toISOString().slice(0,10)}),...ups]);
   alert('입고 완료! 부품 재고가 업데이트되었습니다.');ren();
 }
 
@@ -2356,10 +2299,12 @@ function getMechanicValue(id){
 function openAddMechanicModal(editIdx){
   const isEdit=editIdx!==undefined&&editIdx!==null;
   const cur=isEdit?S.mechanics[editIdx]:'';
+  const btnLabel=isEdit?'수정완료':'추가하기';
+  const idxStr=isEdit?String(editIdx):'null';
   OM(mhdr(isEdit?'담당자 수정':'담당자 추가')+
     fi('mec-name','기술자 이름 ★','이름 입력',null,cur,true)+
     '<div style="display:flex;gap:8px">'+
-    '<button class="bp" style="flex:1" onclick="saveMechanic('+(isEdit?editIdx:'null')+')'+'"><i class="ti ti-check"></i> '+(isEdit?'수정완료':'추가하기')+'</button>'+
+    '<button class="bp" style="flex:1" onclick="saveMechanic('+idxStr+')"><i class="ti ti-check"></i> '+btnLabel+'</button>'+
     '<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
   );
 }
