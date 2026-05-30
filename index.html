@@ -617,14 +617,30 @@ const S={
   partsStock:[],
   purchaseOrders:[],
   workTasks:[],
-  _workDate:new Date().toISOString().slice(0,10),
-  _erpUsers:[],
-  mechanics:['이기술','박수리'],
+  // 판매
+  _salesPage:1, _salesQ:'', _salesType:'전체',
+  // 고객
+  _custPage:1, _custQ:'', _custType:'전체',
+  // 렌트
+  _rentQ:'',
+  // 렌트 차량
   _rvQ:'',
-  _rmV:'all',
-  _rmPeriod:'monthly',
+  // 렌트 차량 정비
+  _rmV:'all', _rmPeriod:'monthly',
   _rmViewDate:new Date().toISOString().slice(0,10),
   _rmQ:'',
+  // 수리
+  _repairQ:'',
+  // 사고
+  _accQ:'',
+  // 재고
+  _ivQ:'',
+  _ipPage:1, _ipQ:'',
+  // 작업일보
+  _workDate:new Date().toISOString().slice(0,10),
+  // 기타
+  _erpUsers:[],
+  mechanics:['이기술','박수리'],
   aiMessages:[{role:'ai',text:'안녕하세요! DS모터스포츠 ERP AI 어시스턴트입니다. 무엇이든 물어보세요 😊'}],
 };
 
@@ -959,7 +975,7 @@ function pgRBilling(){
 function pgRMaint(){
   const sel=S._rmV||'all';
   const period=S._rmPeriod||'monthly';
-  const viewDate=S._rmViewDate||'2025-05-28';
+  const viewDate=S._rmViewDate||new Date().toISOString().slice(0,10);
   const searchQ=S._rmQ||'';
 
   // 날짜 범위 계산
@@ -1038,28 +1054,28 @@ function pgRMaint(){
   </div></div>`;}).join('')}</div>`;
 }
 function prevPeriod(){
-  const p=S._rmPeriod||'monthly';const d=S._rmViewDate||'2025-05-28';
+  const p=S._rmPeriod||'monthly';const d=S._rmViewDate||new Date().toISOString().slice(0,10);
   if(p==='daily'){const dt=new Date(d);dt.setDate(dt.getDate()-1);S._rmViewDate=dt.toISOString().slice(0,10);}
   else if(p==='weekly'){const dt=new Date(d);dt.setDate(dt.getDate()-7);S._rmViewDate=dt.toISOString().slice(0,10);}
   else{const ym=d.slice(0,7);const dt=new Date(ym+'-01');dt.setMonth(dt.getMonth()-1);S._rmViewDate=dt.toISOString().slice(0,7);}
   ren();
 }
 function nextPeriod(){
-  const p=S._rmPeriod||'monthly';const d=S._rmViewDate||'2025-05-28';
+  const p=S._rmPeriod||'monthly';const d=S._rmViewDate||new Date().toISOString().slice(0,10);
   if(p==='daily'){const dt=new Date(d);dt.setDate(dt.getDate()+1);S._rmViewDate=dt.toISOString().slice(0,10);}
   else if(p==='weekly'){const dt=new Date(d);dt.setDate(dt.getDate()+7);S._rmViewDate=dt.toISOString().slice(0,10);}
   else{const ym=d.slice(0,7);const dt=new Date(ym+'-01');dt.setMonth(dt.getMonth()+1);S._rmViewDate=dt.toISOString().slice(0,7);}
   ren();
 }
 function prevPeriod(){
-  const p=S._rmPeriod||'monthly';const d=S._rmViewDate||'2025-05-28';
+  const p=S._rmPeriod||'monthly';const d=S._rmViewDate||new Date().toISOString().slice(0,10);
   if(p==='daily'){const dt=new Date(d);dt.setDate(dt.getDate()-1);S._rmViewDate=dt.toISOString().slice(0,10);}
   else if(p==='weekly'){const dt=new Date(d);dt.setDate(dt.getDate()-7);S._rmViewDate=dt.toISOString().slice(0,10);}
   else{const dt=new Date(d+'-01');dt.setMonth(dt.getMonth()-1);S._rmViewDate=dt.toISOString().slice(0,7);}
   ren();
 }
 function nextPeriod(){
-  const p=S._rmPeriod||'monthly';const d=S._rmViewDate||'2025-05-28';
+  const p=S._rmPeriod||'monthly';const d=S._rmViewDate||new Date().toISOString().slice(0,10);
   if(p==='daily'){const dt=new Date(d);dt.setDate(dt.getDate()+1);S._rmViewDate=dt.toISOString().slice(0,10);}
   else if(p==='weekly'){const dt=new Date(d);dt.setDate(dt.getDate()+7);S._rmViewDate=dt.toISOString().slice(0,10);}
   else{const dt=new Date(d+'-01');dt.setMonth(dt.getMonth()+1);S._rmViewDate=dt.toISOString().slice(0,7);}
