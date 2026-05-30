@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS모터스포츠 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -404,16 +404,25 @@ async function dbLoad(table){
 }
 async function dbInsert(table,row){
   try{
+    // designated_drivers, allowed_menus 등 배열 필드는 JSON 직렬화
+    const cleanRow={};
+    for(const[k,v] of Object.entries(row)){
+      if(Array.isArray(v)){
+        cleanRow[k]=v; // Supabase가 배열을 jsonb로 자동 처리
+      } else {
+        cleanRow[k]=(v===undefined)?null:v;
+      }
+    }
     const res = await fetch(`${_SB_URL}/rest/v1/${table}`,{
       method:'POST',
       headers: _sbHeaders({'Prefer':'return=minimal'}),
-      body: JSON.stringify(row)
+      body: JSON.stringify(cleanRow)
     });
     if(!res.ok){
       const e=await res.text();
-      console.error('❌ insert error ['+table+']:', e);
-      console.error('row sent:', JSON.stringify(row));
-      alert('저장 실패: '+e);
+      console.error('❌ insert ['+table+']:', e);
+      console.error('payload:', JSON.stringify(cleanRow,null,2));
+      alert('저장 실패 ('+table+'): '+e.slice(0,200));
       return false;
     }
     console.log('✅ insert ok ['+table+']');
@@ -422,14 +431,18 @@ async function dbInsert(table,row){
 }
 async function dbUpdate(table,id,row){
   try{
+    const cleanRow={};
+    for(const[k,v] of Object.entries(row)){
+      cleanRow[k]=(v===undefined)?null:v;
+    }
     const res = await fetch(`${_SB_URL}/rest/v1/${table}?id=eq.${id}`,{
       method:'PATCH',
       headers: _sbHeaders({'Prefer':'return=minimal'}),
-      body: JSON.stringify(row)
+      body: JSON.stringify(cleanRow)
     });
-    if(!res.ok){ const e=await res.text(); console.error('update',table,e); return false; }
+    if(!res.ok){const e=await res.text(); console.error('❌ update ['+table+']:', e); return false;}
     return true;
-  }catch(e){ console.error('update',table,e.message); return false; }
+  }catch(e){console.error('update',table,e.message);return false;}
 }
 async function dbDelete(table,id){
   try{
@@ -726,7 +739,15 @@ function plateBadge(p){return`<span class="plate-sm">${p}</span>`;}
 
 function fmtDate(d){return d||'-';}
 function fmtMoney(n){return(n||0).toLocaleString()+'원';}
-function newId(arr,prefix){return prefix+String(arr.length+1).padStart(3,'0');}
+function newId(arr,prefix){
+  // 타임스탬프 + 랜덤으로 충돌 불가한 ID 생성
+  const ts=Date.now().toString(36).toUpperCase();
+  const rnd=Math.random().toString(36).slice(2,6).toUpperCase();
+  const id=prefix+ts+rnd;
+  // 혹시 배열에 이미 있으면 재시도
+  if(arr&&arr.some(x=>x.id===id)) return newId(arr,prefix);
+  return id;
+}
 
 // ── SEARCH BAR HTML ──
 function searchBar(ph,bindKey,filterKey,filterOpts,filterBind){
