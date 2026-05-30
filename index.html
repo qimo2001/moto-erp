@@ -636,7 +636,7 @@ const S={
   // 렌트 차량
   _rvQ:'',
   // 렌트 차량 정비
-  _rmV:'all', _rmPeriod:'monthly',
+  _rmV:'all', _rmPeriod:'all',
   _rmViewDate:new Date().toISOString().slice(0,10),
   _rmQ:'',
   // 수리
@@ -984,7 +984,7 @@ function pgRBilling(){
 // ── 렌트 정비 ──
 function pgRMaint(){
   const sel=S._rmV||'all';
-  const period=S._rmPeriod||'monthly';
+  const period=S._rmPeriod||'all';
   const viewDate=S._rmViewDate||new Date().toISOString().slice(0,10);
   const searchQ=S._rmQ||'';
 
@@ -998,17 +998,18 @@ function pgRMaint(){
     const sun=new Date(mon);sun.setDate(mon.getDate()+6);
     dateFrom=mon.toISOString().slice(0,10);
     dateTo=sun.toISOString().slice(0,10);
-  }else{
+  }else if(period==='monthly'){
     const ym=viewDate.slice(0,7);
     dateFrom=ym+'-01';
     dateTo=ym+'-31';
   }
+  // period==='all' 이면 dateFrom,dateTo 비어있어서 필터 안함
 
   let logs=S.maintLogs;
   // 차량 필터
   if(sel!=='all') logs=logs.filter(m=>m.vehicleId===sel);
-  // 기간 필터
-  logs=logs.filter(l=>l.date>=dateFrom&&l.date<=dateTo);
+  // 기간 필터 (전체면 스킵)
+  if(dateFrom&&dateTo) logs=logs.filter(l=>l.date>=dateFrom&&l.date<=dateTo);
   // 검색 필터
   if(searchQ) logs=logs.filter(l=>[l.driverName,l.driverPhone,l.agencyName].some(v=>(v||'').includes(searchQ))||(S.rentVehicles.find(v=>v.id===l.vehicleId)||{}).plateNo?.includes(searchQ));
   logs=logs.sort((a,b)=>b.date.localeCompare(a.date));
