@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS모터스포츠 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -469,7 +469,7 @@ function toSnake(obj){
     customerEstimate:'customer_estimate',totalAmount:'total_amount',approvedAt:'approved_at',
     receivedAt:'received_at',workDate:'work_date',dueDate:'due_date',
     createdAt:'created_at_time',lastVisit:'last_visit',minStock:'min_stock',
-    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo'
+    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',insuranceStart:'insurance_start',insuranceEnd:'insurance_end',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo'
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -490,7 +490,7 @@ function fromSnake(obj){
     insurance_paid:'insurancePaid',insurance_paid_amount:'insurancePaidAmount',
     customer_estimate:'customerEstimate',total_amount:'totalAmount',approved_at:'approvedAt',
     received_at:'receivedAt',work_date:'workDate',due_date:'dueDate',
-    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',id_card_photo:'idCardPhoto',
+    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',id_card_photo:'idCardPhoto',insurance_start:'insuranceStart',insurance_end:'insuranceEnd',
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -777,8 +777,34 @@ function paginationHTML(total,cur,stateKey){
 
 // ── DASHBOARD ──
 function pgDashboard(){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const insAlerts=S.rentVehicles.filter(v=>{
+    if(!v.insuranceEnd) return false;
+    const end=new Date(v.insuranceEnd);
+    const diff=Math.ceil((end-today)/(1000*60*60*24));
+    return diff<=7;
+  }).sort((a,b)=>{
+    const da=Math.ceil((new Date(a.insuranceEnd)-today)/(1000*60*60*24));
+    const db=Math.ceil((new Date(b.insuranceEnd)-today)/(1000*60*60*24));
+    return da-db;
+  });
   const unpaid=S.repairs.filter(r=>r.payType==='외상').reduce((a,b)=>a+b.cost,0)+S.sales.filter(s=>s.payType==='외상').reduce((a,b)=>a+b.price,0);
   return`
+  ${insAlerts.length>0?`<div class="card" style="margin-bottom:16px;border-left:4px solid #e65100">
+    <div class="sh" style="margin-bottom:10px"><span class="st" style="color:#e65100">🚨 보험 만기 임박 (${insAlerts.length}대)</span>
+      <button onclick="go('rvehicles')" class="bs" style="height:28px;font-size:12px">차량 목록 →</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${insAlerts.map(v=>{
+        const diff=Math.ceil((new Date(v.insuranceEnd)-today)/(1000*60*60*24));
+        const color=diff<0?'#c62828':diff<=7?'#e65100':'#f57c00';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg3);border-radius:8px;border-left:3px solid '+color+'">'+
+          '<div><span class="plate-sm">'+v.plateNo+'</span><span style="font-size:12px;color:var(--tx2);margin-left:8px">'+v.model+'</span><span style="font-size:11px;color:var(--tx2);margin-left:6px">'+(v.insurer||'')+'</span></div>'+
+          '<div style="text-align:right">'+insBadge(v.insuranceEnd)+'<div style="font-size:11px;color:var(--tx2);margin-top:2px">'+v.insuranceEnd+'</div></div>'+
+          '</div>';
+      }).join('')}
+    </div>
+  </div>`:''}
   <div class="sgrid">
     <div class="sc"><div class="sl">렌트 대기중</div><div class="sv" style="color:#2e7d32">${S.rentVehicles.filter(v=>v.status==='가용').length}<small style="font-size:16px">대</small></div></div>
     <div class="sc"><div class="sl">렌트 대여중</div><div class="sv" style="color:#1565c0">${S.rentals.filter(r=>r.status==='대여중').length}<small style="font-size:16px">대</small></div></div>
@@ -973,6 +999,7 @@ function pgRVehicles(){
           ${badge(v.insuranceType==='종합보험'?'bb':'ba',v.insuranceType||'책임보험')}
           ${badge('bt',v.minAge||'전 연령')}
           ${v.driverScope==='지정운전자'?badge('bpu','👤 지정운전자'):''}
+          ${v.insuranceEnd?insBadge(v.insuranceEnd):''}
           <span style="font-size:11px;color:var(--tx3)">${v.year}년 • ${v.color} • ${v.mileage.toLocaleString()}km</span>
         </div>
         ${v.insured?`<div style="font-size:11px;color:var(--tx2);margin-top:3px">🛡 피보험자: <strong>${v.insured}</strong></div>`:''}
@@ -1771,6 +1798,7 @@ function openRVehicleDetail(id){
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:13px">
     <div style="background:var(--bg3);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:700">차량 정보</div><div class="plate">${v.plateNo}</div><div style="font-weight:700">${v.model}</div><div style="color:var(--tx2)">${v.year}년 • ${v.color} • ${v.mileage.toLocaleString()}km</div></div>
     <div style="background:var(--bg3);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:700">보험 정보</div><div style="font-weight:700">${v.insurer||'-'}</div>
+      ${v.insuranceEnd?`<div style="font-size:12px;color:var(--tx2);margin-top:2px">기간: ${v.insuranceStart||'?'} ~ ${v.insuranceEnd} ${insBadge(v.insuranceEnd)}</div>`:''}   
       ${v.insured?`<div style="font-size:12px;color:var(--tx2);margin-top:2px">피보험자: <strong>${v.insured}</strong></div>`:''}
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">
         ${badge(v.insuranceType==='종합보험'?'bb':'ba',v.insuranceType||'책임보험')}
@@ -1840,6 +1868,7 @@ function openAddRVehicleModal(editId){
         '<div class="fr">',fi('drv2-birth','생년월일','','date',d1.birth),fi('drv2-platform','플랫폼','쿠팡이츠',null,d1.platform),'</div>',
       '</div>',
     '</div>',
+    '<div class="fr">',fi('rv-ins-start','보험 시작일','','date',v?v.insuranceStart||'':''),fi('rv-ins-end','보험 만기일','','date',v?v.insuranceEnd||'':''),'</div>',
     '<div class="fr">',fsel('rv-age','최소 연령',AGES,v?v.minAge:'전 연령'),fi('rv-rate','일일 요금','50000','number',v?v.dailyRate:''),'</div>',
     '<div class="fr">',fi('rv-dep','보증금','200000','number',v?v.deposit:''),fi('rv-km','현재 주행거리(km)','','number',v?v.mileage:''),'</div>',
     '<div style="display:flex;gap:8px">',
@@ -1881,6 +1910,8 @@ async function saveRVehicle(editId){
     insured:document.getElementById('rv-insured')?.value||'',
     insuranceType:window._rvInsType||'종합보험',
     driverScope,designatedDrivers,
+    insuranceStart:document.getElementById('rv-ins-start')?.value||'',
+    insuranceEnd:document.getElementById('rv-ins-end')?.value||'',
     minAge:document.getElementById('rv-age').value,
     dailyRate:parseInt(document.getElementById('rv-rate').value)||0,
     deposit:parseInt(document.getElementById('rv-dep').value)||0,
@@ -2419,6 +2450,18 @@ function delPO(id){ deleteRecord('purchase_orders',id,'purchaseOrders','발주�
 function delWorkTask(id){ deleteRecord('work_tasks',id,'workTasks','작업을 삭제하시겠습니까?'); }
 
 
+
+// ── 보험 만기 뱃지 ──
+function insBadge(insuranceEnd){
+  if(!insuranceEnd) return '';
+  const today=new Date(); today.setHours(0,0,0,0);
+  const end=new Date(insuranceEnd);
+  const diff=Math.ceil((end-today)/(1000*60*60*24));
+  if(diff<0) return '<span style="background:#c62828;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">⚠ 보험만기 '+Math.abs(diff)+'일 초과</span>';
+  if(diff<=7) return '<span style="background:#e65100;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">🚨 만기 D-'+diff+'</span>';
+  if(diff<=15) return '<span style="background:#f57c00;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">⚡ 만기 D-'+diff+'</span>';
+  return '';
+}
 // ── 담당자 선택 헬퍼 ──
 function getMechanicField(id, currentVal){
   const mechs = S.mechanics || [];
