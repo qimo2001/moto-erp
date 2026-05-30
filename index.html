@@ -509,15 +509,15 @@ async function loadAllFromDB(){
       dbLoad('work_tasks')
     ]);
     const [cust,sls,rv,rnt,ml,rep,acc,vs,ps,po,wt] = results.map(r=>r.status==='fulfilled'?r.value:null);
-    if(cust&&cust.length){ S.customers=rowsFromSnake(cust); console.log('고객',cust.length); }
-    if(sls&&sls.length){ S.sales=rowsFromSnake(sls); console.log('판매',sls.length); }
-    if(rv&&rv.length){ S.rentVehicles=rowsFromSnake(rv); console.log('렌트차량',rv.length); }
-    if(rnt&&rnt.length){ S.rentals=rowsFromSnake(rnt); console.log('렌트',rnt.length); }
-    if(ml&&ml.length){ S.maintLogs=rowsFromSnake(ml); console.log('정비',ml.length); }
-    if(rep&&rep.length){ S.repairs=rowsFromSnake(rep); console.log('수리',rep.length); }
-    if(acc&&acc.length){ S.accidents=rowsFromSnake(acc); console.log('사고',acc.length); }
-    if(vs&&vs.length){ S.vehicleStock=rowsFromSnake(vs); console.log('차량재고',vs.length); }
-    if(ps&&ps.length){ S.partsStock=rowsFromSnake(ps); console.log('부품',ps.length); }
+    if(cust!==null){ S.customers=rowsFromSnake(cust||[]); console.log('고객',(cust||[]).length); }
+    if(sls!==null){ S.sales=rowsFromSnake(sls||[]); console.log('판매',(sls||[]).length); }
+    if(rv!==null){ S.rentVehicles=rowsFromSnake(rv||[]); console.log('렌트차량',(rv||[]).length); }
+    if(rnt!==null){ S.rentals=rowsFromSnake(rnt||[]); console.log('렌트',(rnt||[]).length); }
+    if(ml!==null){ S.maintLogs=rowsFromSnake(ml||[]); console.log('정비',(ml||[]).length); }
+    if(rep!==null){ S.repairs=rowsFromSnake(rep||[]); console.log('수리',(rep||[]).length); }
+    if(acc!==null){ S.accidents=rowsFromSnake(acc||[]); console.log('사고',(acc||[]).length); }
+    if(vs!==null){ S.vehicleStock=rowsFromSnake(vs||[]); console.log('차량재고',(vs||[]).length); }
+    if(ps!==null){ S.partsStock=rowsFromSnake(ps||[]); console.log('부품',(ps||[]).length); }
     if(po&&po.length){ S.purchaseOrders=rowsFromSnake(po); console.log('발주',po.length); }
     if(wt&&wt.length){ S.workTasks=rowsFromSnake(wt); console.log('작업',wt.length); }
     _dbReady=true;
@@ -1582,20 +1582,57 @@ async function saveRent(){
 
 function openRentEditModal(id){
   const r=S.rentals.find(x=>x.id===id);if(!r)return;
-  OM(`${mhdr('렌트 정보 수정')}
-  <div class="fr">${fi('re-customer','고객명','',null,r.customer)}${fi('re-phone','연락처','',null,r.phone)}</div>
-  ${fi('re-agency','배달대행사','',null,r.deliveryAgency)}
-  <div class="fr">${fi('re-end','반납일','','date',r.endDate==='미정'?'':r.endDate)}<div class="fg"><label class="fl">반납일 미정</label><input type="checkbox" ${r.endDate==='미정'?'checked':''} id="re-open" onchange="document.getElementById('re-end').disabled=this.checked"></div></div>
-  <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveRentEdit('${id}')">수정 완료</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
+  const vOpts=S.rentVehicles.map(v=>'<option value="'+v.id+'"'+(v.id===r.vehicleId?' selected':'')+'>'+v.plateNo+' | '+v.model+'</option>').join('');
+  const outPhotoHtml=pPhoto('re-out-p',['전면','후면','좌측','우측','계기판'],'re-out',r.outPhotos||[]);
+  OM(mhdr('렌트 정보 수정')+
+    '<div class="fr">'+fi('re-customer','고객명','',null,r.customer)+fi('re-phone','연락처','',null,r.phone)+'</div>'+
+    fi('re-agency','배달대행사','개인',null,r.deliveryAgency||'개인')+
+    '<div class="fg"><label class="fl">차량 변경</label><select class="fi" id="re-vehicle">'+vOpts+'</select></div>'+
+    '<div class="fr">'+fi('re-start','대여일','','date',r.startDate)+fi('re-end','반납일','','date',r.endDate==='미정'?'':r.endDate)+'</div>'+
+    '<div class="fg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="re-open" '+(r.endDate==='미정'?'checked':'')+' onchange="document.getElementById(\'re-end\').disabled=this.checked"> 반납일 미정</label></div>'+
+    '<div class="fr">'+fi('re-rate','일일 요금 (원)','','number',r.dailyRate)+fi('re-dep','보증금 (원)','','number',r.deposit)+'</div>'+
+    fi('re-outkm','출고 키로수 (km)','','number',r.outMileage)+
+    '<div class="fg"><label class="fl">출고 사진</label>'+outPhotoHtml+'</div>'+
+    '<div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveRentEdit(\'+id+\')">수정완료</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
+  );
 }
 async function saveRentEdit(id){
   const r=S.rentals.find(x=>x.id===id);if(!r)return;
-  r.customer=document.getElementById('re-customer').value;
-  r.phone=document.getElementById('re-phone').value;
-  r.deliveryAgency=document.getElementById('re-agency').value||'개인';
   const openEnd=document.getElementById('re-open').checked;
-  r.endDate=openEnd?'미정':document.getElementById('re-end').value;
-  await dbUpdate('rentals',id,{customer:r.customer,phone:r.phone,delivery_agency:r.deliveryAgency,end_date:r.endDate});
+  const newVehicleId=document.getElementById('re-vehicle')?.value||r.vehicleId;
+  const newOutPhotos=collectPhotoUrls('re-out-p',5);
+  const outPhotos=newOutPhotos.length>0?newOutPhotos:(r.outPhotos||[]);
+  const updates={
+    customer:document.getElementById('re-customer').value,
+    phone:document.getElementById('re-phone').value,
+    delivery_agency:document.getElementById('re-agency').value||'개인',
+    vehicle_id:newVehicleId,
+    start_date:document.getElementById('re-start')?.value||r.startDate,
+    end_date:openEnd?'미정':document.getElementById('re-end').value,
+    daily_rate:parseInt(document.getElementById('re-rate')?.value)||r.dailyRate,
+    deposit:parseInt(document.getElementById('re-dep')?.value)||r.deposit,
+    out_mileage:parseInt(document.getElementById('re-outkm')?.value)||r.outMileage,
+    out_photos:outPhotos
+  };
+  Object.assign(r,{
+    customer:updates.customer,phone:updates.phone,
+    deliveryAgency:updates.delivery_agency,
+    vehicleId:newVehicleId,
+    startDate:updates.start_date,
+    endDate:updates.end_date,
+    dailyRate:updates.daily_rate,
+    deposit:updates.deposit,
+    outMileage:updates.out_mileage,
+    outPhotos:outPhotos
+  });
+  // 차량이 바뀌면 이전 차량 가용으로 전환
+  if(newVehicleId!==r.vehicleId){
+    const oldV=S.rentVehicles.find(x=>x.id===r.vehicleId);
+    if(oldV){oldV.status='가용';await dbUpdate('rent_vehicles',oldV.id,{status:'가용'});}
+    const newV=S.rentVehicles.find(x=>x.id===newVehicleId);
+    if(newV){newV.status='대여중';await dbUpdate('rent_vehicles',newV.id,{status:'대여중'});}
+  }
+  await dbUpdate('rentals',id,updates);
   CM();ren();
 }
 
