@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS 통합 ERP2</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1038,7 +1038,11 @@ function pgRent(){
 
 // ── 렌트 차량 ──
 function pgRVehicles(){
-  let data=S.rentVehicles;
+  let data=[...S.rentVehicles];
+  const rvSt=S._rvStatus||'all';
+  if(rvSt!=='all') data=data.filter(v=>v.status===rvSt);
+  const q=S._rvQ||'';
+  if(q) data=data.filter(v=>[v.plateNo,v.model,v.color,v.insurer].some(x=>(x||'').includes(q)));
   return`
   <div style="display:flex;gap:8px;margin-bottom:16px">
     <div class="sbar" style="flex:1;margin-bottom:0"><i class="ti ti-search"></i><input id="rvq" placeholder="차량번호, 모델명, 색상 검색..." value="${S._rvQ||''}" onkeydown="if(event.key==='Enter'){S._rvQ=this.value;ren();}"></div>
@@ -1048,7 +1052,7 @@ function pgRVehicles(){
   <div class="sh"><span class="st">렌트 차량 목록</span><div style="display:flex;gap:6px"><button onclick="S._rvStatus='all';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._rvStatus||'all')==='all'?'var(--primary)':' var(--bg3)'};color:${(S._rvStatus||'all')==='all'?'#fff':'var(--tx)'}" >전체</button><button onclick="S._rvStatus='가용';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._rvStatus||'all')==='가용'?'#2e7d32':'var(--bg3)'};color:${(S._rvStatus||'all')==='가용'?'#fff':'var(--tx)'}" >가용</button><button onclick="S._rvStatus='대여중';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._rvStatus||'all')==='대여중'?'#1565c0':'var(--bg3)'};color:${(S._rvStatus||'all')==='대여중'?'#fff':'var(--tx)'}" >대여중</button><button class="bs" style="height:32px;padding:0 10px;font-size:12px" onclick="syncVehicleStatus()">🔄 상태동기화</button><button class="bp" onclick="openAddRVehicleModal()"><i class="ti ti-plus"></i> 차량 추가</button></div></div>
   <div class="card">
     ${data.filter(v=>!S._rvQ||[v.plateNo,v.model,v.color].some(x=>(x||'').includes(S._rvQ))).map(v=>`
-    <div class="irow">
+    <div class="irow" onclick="openRVehicleDetail('${v.id}')">
       <div style="width:44px;height:44px;background:var(--pl);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🛵</div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -3536,7 +3540,7 @@ function pgLease(){
       if(diff<0) daysLeft=`<span style="background:#c62828;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">⚠ 만기 ${Math.abs(diff)}일 초과</span>`;
       else if(diff<=30) daysLeft=`<span style="background:#e65100;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">⚡ 만기 D-${diff}</span>`;
     }
-    return`<div class="irow">
+    return`<div class="irow" onclick="event.target.closest('button')||openLVehicleDetail('${v.id}')">
       <div style="width:44px;height:44px;background:var(--pl);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🚗</div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
@@ -3964,6 +3968,51 @@ function pgLBilling(){
     </div>`).join('')}
   </div>
   ${paginationHTML(total,cur,'_lbillingPage')}`;
+}
+
+function openLVehicleDetail(id){
+  const v=S.leaseVehicles.find(x=>x.id===id);if(!v)return;
+  const activeLease=S.leases.find(l=>l.vehicleId===id&&l.status==='리스중');
+  const logs=S.leaseMaintLogs.filter(m=>m.vehicleId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  OM(`${mhdr(v.plateNo+' 상세')}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+    <div style="background:var(--bg3);border-radius:8px;padding:10px">
+      <div style="font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:700">차량 정보</div>
+      <div style="font-weight:700">${v.model}</div>
+      <div style="font-size:12px;color:var(--tx2)">${v.year||''}년 · ${v.color||''}</div>
+      <div style="font-size:12px;color:var(--tx2)">${v.mileage?v.mileage.toLocaleString()+'km':'-'}</div>
+      ${v.owner?`<div style="font-size:12px;color:var(--tx2)">소유: ${v.owner}</div>`:''}
+      ${v.minAge?badge('bt',v.minAge):''}
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:10px">
+      <div style="font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:700">보험 정보</div>
+      <div style="font-weight:700">${v.insurer||'-'}</div>
+      ${v.insured?`<div style="font-size:12px;color:var(--tx2)">피보험자: ${v.insured}</div>`:''}
+      ${badge(v.insuranceType==='종합보험'?'bb':'ba',v.insuranceType||'책임보험')}
+      ${v.insuranceEnd?`<div style="margin-top:4px">${insBadge(v.insuranceEnd)}</div><div style="font-size:11px;color:var(--tx2)">${v.insuranceStart||'?'} ~ ${v.insuranceEnd}</div>`:''}
+    </div>
+  </div>
+  ${activeLease?`<div style="background:#e3f2fd;border-radius:8px;padding:10px;margin-bottom:14px">
+    <div style="font-size:11px;color:#1565c0;font-weight:700;margin-bottom:4px">현재 리스 계약</div>
+    <div style="font-size:13px;font-weight:700">${activeLease.customer} <span style="font-size:12px;font-weight:400">${activeLease.phone}</span></div>
+    <div style="font-size:12px;color:var(--tx2)">${activeLease.startDate} ~ ${activeLease.endDate}</div>
+    <div style="font-size:12px;color:var(--tx2)">월 ${activeLease.monthlyFee?fmtMoney(activeLease.monthlyFee):'-'} ${activeLease.includeMaint?badge('bg','정비포함'):badge('ba','정비미포함')}</div>
+  </div>`:''}
+  <div style="font-size:13px;font-weight:700;margin-bottom:8px">정비 이력 (${logs.length}건)</div>
+  <div style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+    ${logs.length===0?'<div style="text-align:center;padding:16px;color:var(--tx3)">정비 이력 없음</div>':
+    logs.slice(0,5).map(log=>`<div style="border:1px solid var(--bd);border-radius:8px;padding:8px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:12px;font-weight:700">${log.date}</span>
+        <span style="font-size:12px;color:var(--tx2)">${log.cost?fmtMoney(log.cost):''}</span>
+      </div>
+      <div style="font-size:11px;color:var(--tx2)">${(log.items||[]).map(i=>i.name).join(', ')||'-'}</div>
+    </div>`).join('')}
+  </div>
+  <div style="display:flex;gap:8px;margin-top:14px">
+    <button class="bp" style="flex:1" onclick="CM();openLVehicleModal('${id}')">수정</button>
+    <button onclick="CM()" class="bs" style="flex:1">닫기</button>
+  </div>`);
 }
 function topAction(){
   const m={
