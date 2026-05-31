@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP v2</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -3822,3 +3822,11 @@ function openLVehicleDetail(id){
   h+='<button onclick="CM()" class="bs" style="flex:1">닫기</button></div>';
   OM(h);
 }
+
+// ── 전역 함수 window 노출 (Vite 번들링 대응) ──
+window.signInWithGoogle = signInWithGoogle;
+window.go = go;
+window.CM = CM;
+window.OM = OM;
+window.ren = ren;
+
