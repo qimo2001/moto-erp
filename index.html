@@ -3523,7 +3523,8 @@ function pgLMaint(){
   const sel=S._lmV||'all';
   const period=S._lmPeriod||'all';
   const viewDate=S._lmViewDate||new Date().toISOString().slice(0,10);
-  const q=S._lmQ||'';
+  const searchQ=S._lmQ||'';
+
   let dateFrom='',dateTo='';
   if(period==='daily'){dateFrom=viewDate;dateTo=viewDate;}
   else if(period==='weekly'){
@@ -3534,49 +3535,78 @@ function pgLMaint(){
   }else if(period==='monthly'){
     const ym=viewDate.slice(0,7);dateFrom=ym+'-01';dateTo=ym+'-31';
   }
+
   let logs=[...S.leaseMaintLogs];
   if(sel!=='all') logs=logs.filter(m=>m.vehicleId===sel);
   if(dateFrom&&dateTo) logs=logs.filter(l=>l.date>=dateFrom&&l.date<=dateTo);
-  if(q) logs=logs.filter(l=>[l.customer,l.phone].some(v=>(v||'').includes(q))||(S.leaseVehicles.find(v=>v.id===l.vehicleId)||{}).plateNo?.includes(q));
+  if(searchQ) logs=logs.filter(l=>(S.leaseVehicles.find(v=>v.id===l.vehicleId)||{}).plateNo?.includes(searchQ)||
+    (l.mechanic||'').includes(searchQ));
   logs=logs.sort((a,b)=>b.date.localeCompare(a.date));
 
-  const vOpts='<option value="all">전체 차량</option>'+S.leaseVehicles.map(v=>`<option value="${v.id}" ${sel===v.id?'selected':''}>${v.plateNo} | ${v.model}</option>`).join('');
-  const periodBtns=['all','daily','weekly','monthly'].map(p=>`<button onclick="S._lmPeriod='${p}';ren()" style="flex-shrink:0;padding:6px 14px;border:none;border-right:1px solid var(--bd2);background:${period===p?'#D32F2F':'transparent'};color:${period===p?'#fff':'var(--tx2)'};cursor:pointer;font-size:12px;font-weight:600">${p==='all'?'전체':p==='daily'?'일별':p==='weekly'?'주간별':'월별'}</button>`).join('');
+  const totalCost=logs.reduce((a,b)=>a+(b.cost||0),0);
+  const periodLabel=period==='daily'?viewDate:period==='weekly'?`${dateFrom} ~ ${dateTo}`:viewDate.slice(0,7);
 
-  return`
-  <div class="sh"><span class="st">리스 차량 정비 <span style="font-size:13px;font-weight:400;color:var(--tx3)">${logs.length}건</span></span>
-    <button class="bp" onclick="openLMaintModal()"><i class="ti ti-plus"></i> 정비 등록</button>
-  </div>
-  <div class="card" style="padding:10px;margin-bottom:12px">
-    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-      <select class="fi" style="height:36px;margin-bottom:0;flex:1;min-width:120px" onchange="S._lmV=this.value;ren()">${vOpts}</select>
-      <input class="fi" placeholder="고객명/차량번호 검색" value="${q}" onkeydown="if(event.key==='Enter'){S._lmQ=this.value;ren()}" style="height:36px;margin-bottom:0;flex:1;min-width:120px">
+  // 날짜 이동
+  function shiftDate(base,p,dir){
+    const d=new Date(base);
+    if(p==='daily') d.setDate(d.getDate()+dir);
+    else if(p==='weekly') d.setDate(d.getDate()+dir*7);
+    else if(p==='monthly') d.setMonth(d.getMonth()+dir);
+    return d.toISOString().slice(0,10);
+  }
+
+  // 차량 탭
+  const vHtml=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+    <button onclick="S._lmV='all';ren()" style="padding:6px 14px;border:1px solid ${sel==='all'?'#D32F2F':'var(--bd2)'};border-radius:6px;background:${sel==='all'?'#D32F2F':'transparent'};color:${sel==='all'?'#fff':'var(--tx2)'};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">전체</button>
+    ${S.leaseVehicles.map(v=>`<button onclick="S._lmV='${v.id}';ren()" style="padding:6px 10px;border:1px solid ${sel===v.id?'#D32F2F':'var(--bd2)'};border-radius:6px;background:${sel===v.id?'#D32F2F':'transparent'};color:${sel===v.id?'#fff':'var(--tx2)'};font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap">
+      <span class="plate-sm">${v.plateNo}</span><span style="font-size:11px">${v.model}</span>
+      ${S.leases.some(l=>l.vehicleId===v.id&&l.status==='리스중')?'<span style="width:6px;height:6px;background:#1565c0;border-radius:50%;display:inline-block"></span>':''}
+    </button>`).join('')}
+  </div>`;
+
+  // 기간 컨트롤
+  const ctrlHtml=`
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+    <div style="display:flex;border:1px solid var(--bd2);border-radius:8px;overflow:hidden">
+      ${['daily','weekly','monthly'].map(p=>`<button onclick="S._lmPeriod='${p}';ren()" style="padding:6px 14px;border:none;border-right:1px solid var(--bd2);background:${period===p?'#D32F2F':'transparent'};color:${period===p?'#fff':'var(--tx2)'};cursor:pointer;font-size:12px;font-weight:600">${p==='daily'?'일별':p==='weekly'?'주간별':'월별'}</button>`).join('')}
+      <button onclick="S._lmPeriod='all';ren()" style="padding:6px 14px;border:none;background:${period==='all'?'#D32F2F':'transparent'};color:${period==='all'?'#fff':'var(--tx2)'};cursor:pointer;font-size:12px;font-weight:600">전체</button>
     </div>
-    <div style="display:flex;border:1px solid var(--bd2);border-radius:8px;overflow:hidden">${periodBtns}</div>
-  </div>
-  ${logs.length===0?`<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:12px">🔧</div><div>정비 이력이 없습니다</div></div>`:''}
-  ${logs.map(log=>{
-    const v=S.leaseVehicles.find(x=>x.id===log.vehicleId)||{};
+    ${period!=='all'?`<button onclick="S._lmViewDate='${shiftDate(viewDate,period,-1)}';ren()" style="padding:5px 10px;border:1px solid var(--bd2);border-radius:6px;background:transparent;cursor:pointer">◀</button>
+    <input type="date" value="${viewDate}" onchange="S._lmViewDate=this.value;ren()" style="border:1px solid var(--bd2);border-radius:6px;padding:5px;font-size:12px;background:var(--bg2);color:var(--tx)">
+    <button onclick="S._lmViewDate='${shiftDate(viewDate,period,1)}';ren()" style="padding:5px 10px;border:1px solid var(--bd2);border-radius:6px;background:transparent;cursor:pointer">▶</button>`:''}
+    <span style="font-size:13px;color:var(--tx2)">${logs.length}건 · ${totalCost>0?fmtMoney(totalCost):'0원'}</span>
+    <div class="sbar" style="flex:1;min-width:120px;margin-bottom:0"><i class="ti ti-search"></i><input placeholder="차량번호, 담당자 검색" value="${searchQ}" onkeydown="if(event.key==='Enter'){S._lmQ=this.value;ren()}"></div>
+  </div>`;
+
+  return`<div class="sh"><span class="st">리스 차량 정비</span><button class="bp" onclick="openLMaintModal()"><i class="ti ti-plus"></i> 정비 등록</button></div>
+  ${vHtml}${ctrlHtml}
+  <div class="card">${logs.length===0?
+    `<div style="text-align:center;padding:30px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:8px">📋</div><div style="font-size:14px;font-weight:600">${periodLabel} 정비 이력 없음</div></div>`:
+  logs.map(log=>{
+    const v=S.leaseVehicles.find(x=>x.id===log.vehicleId);
     const lease=S.leases.find(l=>l.vehicleId===log.vehicleId&&l.status==='리스중')||{};
-    return`<div class="irow" onclick="if(!event.target.closest('button'))openLVehicleDetail('${v.id}')">
-      <div style="width:44px;height:44px;background:var(--pl);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔧</div>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
-          <span class="plate">${v.plateNo||'-'}</span>
-          <span style="font-size:13px;font-weight:600;color:var(--tx2)">${v.model||'-'}</span>
-          <span style="font-size:12px;color:var(--tx3)">${log.date}</span>
-        </div>
-        ${lease.customer?`<div style="font-size:12px;color:var(--tx2)">👤 ${lease.customer}</div>`:''}
-        <div style="font-size:12px;color:var(--tx2)">${(log.items||[]).map(i=>i.name).join(', ')||'정비 항목 없음'}</div>
-        ${log.cost?`<div style="font-size:12px;color:var(--tx2)">💰 ${fmtMoney(log.cost)}</div>`:''}
-        ${log.mechanic?`<div style="font-size:11px;color:var(--tx3)">담당: ${log.mechanic}</div>`:''}
+    return`<div class="tl"><div class="td"></div><div style="flex:1">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+      <span style="font-weight:700">${log.date}</span>
+      <span class="plate-sm">${v?v.plateNo:''}</span>
+      <span style="font-size:12px;color:var(--tx2)">${v?v.model:''}</span>
+      ${lease.customer?`<span style="font-size:11px;color:var(--tx2)">👤 ${lease.customer}</span>`:''}
+      <span style="font-size:12px;color:var(--tx2)">${log.mileage?log.mileage.toLocaleString()+'km':''}</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">
+      ${(log.items||[]).map(item=>`<span style="display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600;background:var(--pl);color:var(--primary)">${item.name}${item.type==='agency'?'<i class="ti ti-motorbike" style="font-size:11px"></i>':item.type==='dealer'?'<i class="ti ti-building-store" style="font-size:11px"></i>':''}</span>`).join('')}
+    </div>
+    ${log.mechanic?`<span style="font-size:12px;color:var(--tx2)">담당: ${log.mechanic}</span>`:''}
+    ${log.photos&&log.photos.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${log.photos.map(url=>`<div onclick="openPhotoViewer('${url}')" style="width:56px;height:42px;border-radius:6px;overflow:hidden;cursor:pointer;flex-shrink:0"><img src="${url}" style="width:100%;height:100%;object-fit:cover"></div>`).join('')}</div>`:''}
+  </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:60px">
+      <span style="font-size:13px;font-weight:700;color:${log.cost?'var(--primary)':'var(--tx3)'}">${log.cost?fmtMoney(log.cost):'0원'}</span>
+      <div style="display:flex;gap:4px;margin-top:4px">
+        <button class="bsm" onclick="openLMaintModal('${log.id}')">수정</button>
+        <button class="bsm" style="color:#c62828" onclick="delLMaint('${log.id}')">삭제</button>
       </div>
-      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-        <button class="bsm" onclick="event.stopPropagation();openLMaintModal('${log.id}')">수정</button>
-        <button class="bsm" style="color:#c62828" onclick="event.stopPropagation();delLMaint('${log.id}')">삭제</button>
-      </div>
-    </div>`;
-  }).join('')}`;
+    </div></div>`;
+  }).join('')}</div>`;
 }
 
 function openLMaintModal(editId){
