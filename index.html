@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS 통합 ERP V2</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1753,7 +1753,8 @@ async function saveRent(){
 }
 
 function openRentEditModal(id){
-  const r=S.rentals.find(x=>x.id===id);if(!r)return;
+  try{
+  const r=S.rentals.find(x=>x.id===id);if(!r){alert("대여 정보를 찾을 수 없습니다.");return;}
   const vOpts=S.rentVehicles.map(v=>'<option value="'+v.id+'"'+(v.id===r.vehicleId?' selected':'')+'>'+v.plateNo+' | '+v.model+'</option>').join('');
   const outPhotoHtml=pPhoto('re-out-p',['전면','후면','좌측','우측','계기판'],'re-out',r.outPhotos||[]);
   const icd=r.idCardData||{};
@@ -1784,6 +1785,7 @@ function openRentEditModal(id){
     '</div>'+
     '<div style="display:flex;gap:8px">'+saveBtn+'<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
   );
+  }catch(e){console.error("openRentEditModal error:",e);alert("수정 창 오류: "+e.message);}
 }
 async function saveRentEdit(id){
   const r=S.rentals.find(x=>x.id===id);if(!r)return;
