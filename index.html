@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS 통합 ERP V2</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -97,7 +97,7 @@ tr:hover td{background:var(--bg3)}
 .sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
 .st{font-size:16px;font-weight:800;color:var(--tx)}
 /* MODAL */
-.mo{display:none;position:fixed;inset:0;background:rgba(255,0,0,0.8);z-index:99998;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;backdrop-filter:blur(3px)}
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:99998;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;backdrop-filter:blur(3px)}
 .mo.open{display:flex}
 .md{background:var(--bg2);border-radius:16px;padding:22px;width:100%;max-width:600px;margin:auto;border:1px solid var(--bd)}
 .mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--bd)}
@@ -276,12 +276,12 @@ tr:hover td{background:var(--bg3)}
   </div>
 </nav>
 <!-- 모바일 더보기 메뉴 -->
-<div id="mob-drawer" style="display:none;position:fixed;bottom:var(--nh);left:0;right:0;background:#1B2436;border-top:2px solid #D32F2F;z-index:300;max-height:75vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 -8px 30px rgba(0,0,0,0.7)">
+<div id="mob-drawer" style="display:none;position:fixed;bottom:var(--nh);left:0;right:0;background:#1B2436;border-top:2px solid #D32F2F;z-index:299;max-height:75vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 -8px 30px rgba(0,0,0,0.7)">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;border-bottom:0.5px solid rgba(255,255,255,0.1)"><span style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:.5px">전체 메뉴</span><button onclick="closeMobMenu()" style="background:rgba(255,255,255,0.1);border:none;border-radius:6px;padding:4px 10px;color:rgba(255,255,255,0.6);font-size:12px;cursor:pointer">✕ 닫기</button></div>
   <div onclick="go('sales');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-receipt" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">판매 관리</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">판매 관련</div></div></div><div onclick="go('customers');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-users" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">고객 관리</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">고객 정보</div></div></div><div onclick="go('rent');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-calendar-event" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">렌트 관리</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">대여 현황</div></div></div><div onclick="go('rvehicles');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-motorbike" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">렌트 차량</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">차량 목록</div></div></div><div onclick="go('rcalendar');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-calendar" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">렌트 일정</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">일정 확인</div></div></div><div onclick="go('rbilling');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-cash" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">요금/결제</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">결제 현황</div></div></div><div onclick="go('rmaint');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-tool" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">렌트 차량 정비</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">정비 이력</div></div></div><div onclick="go('repair');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-tools" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">일반 수리</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">수리 접수</div></div></div><div onclick="go('accident');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-car-crash" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">사고 수리</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">사고 처리</div></div></div><div onclick="go('unpaid');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-alert-circle" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">미수금</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">미결제 현황</div></div></div><div onclick="go('worklog');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-clipboard-list" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">작업일보</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">오늘 작업</div></div></div><div onclick="go('ivehicle');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-motorbike" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">차량 재고</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">재고 현황</div></div></div><div onclick="go('iparts');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-package" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">부품 재고</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">부품 현황</div></div></div><div onclick="go('purchase');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-file-invoice" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">발주/입고</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">발주 관리</div></div></div><div onclick="go('finance');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-chart-bar" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">매출 분석</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">매출 현황</div></div></div><div onclick="go('ai');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-robot" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">AI 어시스턴트</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">AI 상담</div></div></div>
 <div onclick="go('idcards');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-id" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">신분증 관리</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">신분증 목록</div></div></div>
 <div onclick="go('auditlog');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-clipboard-list" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">작업 로그</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">변경 이력</div></div></div>
-<div id="mob-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:250;-webkit-tap-highlight-color:transparent" onclick="closeMobMenu()"></div>
+<div id="mob-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:295;-webkit-tap-highlight-color:transparent" onclick="closeMobMenu()"></div>
 <div class="mo" id="modal" onclick="handleMO(event)"><div class="md" id="mc"></div></div>
 <script>
 // ── Firebase 초기화 ──
@@ -736,8 +736,16 @@ function toggleMobMenu(){
   }else{
     const overlay=document.getElementById('mob-overlay');
     const btn=document.getElementById('mob-more');
-    if(drawer){drawer.style.display='block';drawer.scrollTop=0;}
-    if(overlay){overlay.style.display='block';}
+    // body에 append해서 containing block 문제 해결
+    if(drawer){
+      if(drawer.parentElement!==document.body) document.body.appendChild(drawer);
+      drawer.style.display='block';
+      drawer.scrollTop=0;
+    }
+    if(overlay){
+      if(overlay.parentElement!==document.body) document.body.appendChild(overlay);
+      overlay.style.display='block';
+    }
     if(btn){
       btn.style.color='#D32F2F';
       const sp=btn.querySelector('span');
@@ -1609,7 +1617,6 @@ function deductParts(items){items.forEach(i=>{if(i.src==='매장재고'&&i.partI
 
 // ── 판매 모달 ──
 function openSaleModal(editId){
-  console.log('openSaleModal called:',editId);
   const s=editId?S.sales.find(x=>x.id===editId):null;
   window._ps={};
   OM(`${mhdr((s?'판매 수정':'판매 등록'))}
@@ -1765,17 +1772,12 @@ async function saveRent(){
 }
 
 function openRentEditModal(id){
-  console.log('openRentEditModal called with id:',id);
   try{
   const r=S.rentals.find(x=>x.id===id);
-  console.log('r found:',!!r);
   if(!r){alert("대여 정보를 찾을 수 없습니다.");return;}
   const vOpts=S.rentVehicles.map(v=>'<option value="'+v.id+'"'+(v.id===r.vehicleId?' selected':'')+'>'+v.plateNo+' | '+v.model+'</option>').join('');
-  console.log('vOpts ok, calling pPhoto...');
   const outPhotoHtml=pPhoto('re-out-p',['전면','후면','좌측','우측','계기판'],'re-out',r.outPhotos||[]);
-  console.log('pPhoto ok, building icd...');
   const icd=r.idCardData||{};
-  console.log('icd ok, building saveBtn...');
   const openChecked=r.endDate==='미정'?'checked':'';
   const endVal=r.endDate==='미정'?'':r.endDate||'';
   const photoDiv=r.idCardPhoto?
@@ -1783,7 +1785,6 @@ function openRentEditModal(id){
     '<div style="width:100%;height:80px;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid #1565c0" data-url="'+r.idCardPhoto+'" onclick="openPhotoViewer(this.dataset.url)">'+
     '<img src="'+r.idCardPhoto+'" style="width:100%;height:100%;object-fit:cover"></div></div>':'';
   const saveBtn='<button class="bp" style="flex:1" onclick="saveRentEdit(\''+id+'\')">수정완료</button>';
-  console.log('calling OM...');
   OM(mhdr('렌트 정보 수정')+
     '<div class="fr">'+fi('re-customer','고객명','',null,r.customer)+fi('re-phone','연락처','',null,r.phone)+'</div>'+
     fi('re-agency','배달대행사','개인',null,r.deliveryAgency||'개인')+
@@ -3366,13 +3367,5 @@ function showDBError(msg){
 // DB init is triggered by Firebase onAuthStateChanged after login
 </script>
 
-<script>
-// 클릭 디버그 - 배포 후 제거
-document.addEventListener('click', function(e) {
-  const el = e.target;
-  const info = el.tagName + (el.id ? '#'+el.id : '') + (el.className ? '.'+String(el.className).split(' ')[0] : '');
-  console.log('CLICK:', info, '| z-stack:', getComputedStyle(el).zIndex);
-}, true); // capture phase
-</script>
 </body>
 </html>
