@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP V5</title>
+<title>DS 통합 ERP V6</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1377,7 +1377,15 @@ function pgFinance(){
 function pgAI(){return`<div class="card" style="display:flex;flex-direction:column;min-height:500px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--bd)"><span style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700"><i class="ti ti-robot" style="color:#D32F2F;font-size:18px"></i> DS 통합 ERP AI</span><span style="font-size:11px;background:var(--pl);color:#D32F2F;padding:3px 10px;border-radius:6px;font-weight:700">Claude 기반</span></div><div id="aim" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;min-height:300px;padding:4px 0">${S.aiMessages.map(m=>m.role==='ai'?`<div style="display:flex;gap:8px;align-items:flex-start"><div class="aav">DS</div><div class="ab">${m.text.replace(/\n/g,'<br>')}</div></div>`:`<div style="display:flex;gap:8px;align-items:flex-start;flex-direction:row-reverse"><div class="ub">${m.text}</div></div>`).join('')}</div><div style="border-top:1px solid var(--bd);padding-top:12px;margin-top:12px;display:flex;gap:8px"><input id="aiin" placeholder="질문 입력..." style="flex:1;padding:9px 14px;border:1px solid var(--bd2);border-radius:20px;font-size:13px;background:var(--bg2);color:var(--tx)" onkeydown="if(event.key==='Enter')sendAI()"><button onclick="sendAI()" style="width:38px;height:38px;border-radius:50%;background:#D32F2F;border:none;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center"><i class="ti ti-send"></i></button></div></div>`;}
 
 // ── MODAL HELPERS ──
-function OM(html){document.getElementById('mc').innerHTML=html;document.getElementById('modal').classList.add('open');}
+function OM(html){
+  try{
+    document.getElementById('mc').innerHTML=html;
+    document.getElementById('modal').classList.add('open');
+  }catch(e){
+    console.error('OM error:',e);
+    alert('모달 오류: '+e.message);
+  }
+}
 function CM(){document.getElementById('modal').classList.remove('open');}
 function handleMO(e){
   // 드래그로 인한 실수 닫힘 방지: mousedown이 modal에서 시작했을 때만 닫기
@@ -1595,6 +1603,7 @@ function deductParts(items){items.forEach(i=>{if(i.src==='매장재고'&&i.partI
 
 // ── 판매 모달 ──
 function openSaleModal(editId){
+  console.log('openSaleModal called:',editId);
   const s=editId?S.sales.find(x=>x.id===editId):null;
   window._ps={};
   OM(`${mhdr((s?'판매 수정':'판매 등록'))}
@@ -1750,6 +1759,7 @@ async function saveRent(){
 }
 
 function openRentEditModal(id){
+  console.log('openRentEditModal called with id:',id);
   try{
   const r=S.rentals.find(x=>x.id===id);if(!r){alert("대여 정보를 찾을 수 없습니다.");return;}
   const vOpts=S.rentVehicles.map(v=>'<option value="'+v.id+'"'+(v.id===r.vehicleId?' selected':'')+'>'+v.plateNo+' | '+v.model+'</option>').join('');
