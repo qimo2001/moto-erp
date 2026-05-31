@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP v2</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1379,25 +1379,20 @@ function pgAI(){return`<div class="card" style="display:flex;flex-direction:colu
 // ── MODAL HELPERS ──
 function OM(html){
   try{
+    // 모달을 body 직접 하위로 이동 (containing block 문제 방지)
+    let modal=document.getElementById('modal');
+    if(modal.parentElement !== document.body){
+      document.body.appendChild(modal);
+    }
     const mc=document.getElementById('mc');
-    const modal=document.getElementById('modal');
     mc.innerHTML=html;
-    modal.classList.add('open');
-    modal.style.display='flex';  // force display
-    modal.style.zIndex='99998';
-    const r=modal.getBoundingClientRect();
-    console.log('OM done, display=',getComputedStyle(modal).display,
-      'rect=',r.top,r.left,r.width,r.height,
-      'visible=',r.width>0&&r.height>0,
-      'zIndex=',getComputedStyle(modal).zIndex,
-      'visibility=',getComputedStyle(modal).visibility,
-      'opacity=',getComputedStyle(modal).opacity);
+    modal.style.cssText='display:flex;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:99998;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;backdrop-filter:blur(3px)';
   }catch(e){
     console.error('OM error:',e);
     alert('모달 오류: '+e.message);
   }
 }
-function CM(){const m=document.getElementById('modal');m.classList.remove('open');m.style.display='';}
+function CM(){const m=document.getElementById('modal');m.style.display='none';}
 function handleMO(e){
   // 드래그로 인한 실수 닫힘 방지: mousedown이 modal에서 시작했을 때만 닫기
   if(e.target.id==='modal' && window._modalMousedownTarget===e.target) CM();
