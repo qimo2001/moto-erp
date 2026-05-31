@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP V6</title>
+<title>DS 통합 ERP V7</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1761,10 +1761,15 @@ async function saveRent(){
 function openRentEditModal(id){
   console.log('openRentEditModal called with id:',id);
   try{
-  const r=S.rentals.find(x=>x.id===id);if(!r){alert("대여 정보를 찾을 수 없습니다.");return;}
+  const r=S.rentals.find(x=>x.id===id);
+  console.log('r found:',!!r);
+  if(!r){alert("대여 정보를 찾을 수 없습니다.");return;}
   const vOpts=S.rentVehicles.map(v=>'<option value="'+v.id+'"'+(v.id===r.vehicleId?' selected':'')+'>'+v.plateNo+' | '+v.model+'</option>').join('');
+  console.log('vOpts ok, calling pPhoto...');
   const outPhotoHtml=pPhoto('re-out-p',['전면','후면','좌측','우측','계기판'],'re-out',r.outPhotos||[]);
+  console.log('pPhoto ok, building icd...');
   const icd=r.idCardData||{};
+  console.log('icd ok, building saveBtn...');
   const openChecked=r.endDate==='미정'?'checked':'';
   const endVal=r.endDate==='미정'?'':r.endDate||'';
   const photoDiv=r.idCardPhoto?
@@ -1772,6 +1777,7 @@ function openRentEditModal(id){
     '<div style="width:100%;height:80px;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid #1565c0" data-url="'+r.idCardPhoto+'" onclick="openPhotoViewer(this.dataset.url)">'+
     '<img src="'+r.idCardPhoto+'" style="width:100%;height:100%;object-fit:cover"></div></div>':'';
   const saveBtn='<button class="bp" style="flex:1" onclick="saveRentEdit(\''+id+'\')">수정완료</button>';
+  console.log('calling OM...');
   OM(mhdr('렌트 정보 수정')+
     '<div class="fr">'+fi('re-customer','고객명','',null,r.customer)+fi('re-phone','연락처','',null,r.phone)+'</div>'+
     fi('re-agency','배달대행사','개인',null,r.deliveryAgency||'개인')+
