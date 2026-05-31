@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS모터스포츠 통합 ERP</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1337,7 +1337,46 @@ function pgPurchase(){
   </div></div>`;
 }
 
-function pgFinance(){return`<div class="sgrid"><div class="sc"><div class="sl">차량 판매</div><div class="sv">7,100<small style="font-size:12px">만</small></div></div><div class="sc"><div class="sl">렌트 매출</div><div class="sv" style="color:#1565c0">${(S.rentals.filter(r=>r.paid).reduce((a,b)=>a+b.totalFee,0)/10000).toFixed(0)}<small style="font-size:12px">만</small></div></div><div class="sc"><div class="sl">수리 매출</div><div class="sv" style="color:#2e7d32">${(S.repairs.filter(r=>r.payType!=='외상').reduce((a,b)=>a+b.cost,0)/10000).toFixed(0)}<small style="font-size:12px">만</small></div></div><div class="sc"><div class="sl">미수금</div><div class="sv" style="color:#c62828">${(S.repairs.filter(r=>r.payType==='외상').reduce((a,b)=>a+b.cost,0)/10000).toFixed(0)}<small style="font-size:12px">만</small></div></div></div>`;}
+function pgFinance(){
+  const today=new Date();
+  const thisMonth=today.toISOString().slice(0,7);
+  const thisYear=today.getFullYear().toString();
+  
+  // 전체 매출
+  const salesRev=S.sales.filter(s=>s.status==='완료').reduce((a,b)=>a+(b.price||0)*(b.qty||1),0);
+  const rentRev=S.rentals.filter(r=>r.paid).reduce((a,b)=>a+(b.totalFee||0),0);
+  const repairRev=S.repairs.filter(r=>r.payType&&r.payType!=='외상').reduce((a,b)=>a+(b.cost||0),0);
+  const unpaid=S.repairs.filter(r=>r.payType==='외상').reduce((a,b)=>a+(b.cost||0),0)
+             +S.sales.filter(s=>s.payType==='외상').reduce((a,b)=>a+(b.price||0)*(b.qty||1),0);
+  
+  // 이번달 매출
+  const mSales=S.sales.filter(s=>s.status==='완료'&&(s.date||'').startsWith(thisMonth)).reduce((a,b)=>a+(b.price||0)*(b.qty||1),0);
+  const mRent=S.rentals.filter(r=>r.paid&&(r.startDate||'').startsWith(thisMonth)).reduce((a,b)=>a+(b.totalFee||0),0);
+  const mRepair=S.repairs.filter(r=>r.payType&&r.payType!=='외상'&&(r.date||'').startsWith(thisMonth)).reduce((a,b)=>a+(b.cost||0),0);
+
+  // 판매 유형별
+  const vehicleSales=S.sales.filter(s=>s.type==='차량판매'&&s.status==='완료').reduce((a,b)=>a+(b.price||0)*(b.qty||1),0);
+  const partsSales=S.sales.filter(s=>s.type==='부품판매'&&s.status==='완료').reduce((a,b)=>a+(b.price||0)*(b.qty||1),0);
+
+  const fmt=v=>v>=10000?(v/10000).toFixed(1)+'만':(v||0).toLocaleString()+'원';
+  
+  return`<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:8px">📊 전체 누적 매출</div>
+  <div class="sgrid">
+    <div class="sc"><div class="sl">차량 판매</div><div class="sv">${fmt(vehicleSales)}</div></div>
+    <div class="sc"><div class="sl">부품 판매</div><div class="sv">${fmt(partsSales)}</div></div>
+    <div class="sc"><div class="sl">렌트 매출</div><div class="sv" style="color:#1565c0">${fmt(rentRev)}</div></div>
+    <div class="sc"><div class="sl">수리 매출</div><div class="sv" style="color:#2e7d32">${fmt(repairRev)}</div></div>
+    <div class="sc"><div class="sl">미수금</div><div class="sv" style="color:#c62828">${fmt(unpaid)}</div></div>
+    <div class="sc"><div class="sl">총 매출</div><div class="sv" style="color:#D32F2F">${fmt(salesRev+rentRev+repairRev)}</div></div>
+  </div></div>
+  <div><div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:8px">📅 이번달 매출 (${thisMonth})</div>
+  <div class="sgrid">
+    <div class="sc"><div class="sl">판매</div><div class="sv">${fmt(mSales)}</div></div>
+    <div class="sc"><div class="sl">렌트</div><div class="sv" style="color:#1565c0">${fmt(mRent)}</div></div>
+    <div class="sc"><div class="sl">수리</div><div class="sv" style="color:#2e7d32">${fmt(mRepair)}</div></div>
+    <div class="sc"><div class="sl">이번달 합계</div><div class="sv" style="color:#D32F2F">${fmt(mSales+mRent+mRepair)}</div></div>
+  </div></div>`;
+}
 function pgAI(){return`<div class="card" style="display:flex;flex-direction:column;min-height:500px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--bd)"><span style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700"><i class="ti ti-robot" style="color:#D32F2F;font-size:18px"></i> DS 통합 ERP AI</span><span style="font-size:11px;background:var(--pl);color:#D32F2F;padding:3px 10px;border-radius:6px;font-weight:700">Claude 기반</span></div><div id="aim" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;min-height:300px;padding:4px 0">${S.aiMessages.map(m=>m.role==='ai'?`<div style="display:flex;gap:8px;align-items:flex-start"><div class="aav">DS</div><div class="ab">${m.text.replace(/\n/g,'<br>')}</div></div>`:`<div style="display:flex;gap:8px;align-items:flex-start;flex-direction:row-reverse"><div class="ub">${m.text}</div></div>`).join('')}</div><div style="border-top:1px solid var(--bd);padding-top:12px;margin-top:12px;display:flex;gap:8px"><input id="aiin" placeholder="질문 입력..." style="flex:1;padding:9px 14px;border:1px solid var(--bd2);border-radius:20px;font-size:13px;background:var(--bg2);color:var(--tx)" onkeydown="if(event.key==='Enter')sendAI()"><button onclick="sendAI()" style="width:38px;height:38px;border-radius:50%;background:#D32F2F;border:none;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center"><i class="ti ti-send"></i></button></div></div>`;}
 
 // ── MODAL HELPERS ──
@@ -1724,6 +1763,7 @@ function openRentEditModal(id){
     '<div class="fg"><label class="fl">신분증 사진</label>'+
     '<div style="width:100%;height:80px;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid #1565c0" data-url="'+r.idCardPhoto+'" onclick="openPhotoViewer(this.dataset.url)">'+
     '<img src="'+r.idCardPhoto+'" style="width:100%;height:100%;object-fit:cover"></div></div>':'';
+  const saveBtn='<button class="bp" style="flex:1" onclick="saveRentEdit(\''+id+'\')">수정완료</button>';
   OM(mhdr('렌트 정보 수정')+
     '<div class="fr">'+fi('re-customer','고객명','',null,r.customer)+fi('re-phone','연락처','',null,r.phone)+'</div>'+
     fi('re-agency','배달대행사','개인',null,r.deliveryAgency||'개인')+
@@ -1742,8 +1782,7 @@ function openRentEditModal(id){
     fi('re-id-addr','주소','',null,icd.address||'')+
     photoDiv+
     '</div>'+
-    '<div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveRentEdit(\''+id+'\')">수정완료</button>'+
-    '<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
+    '<div style="display:flex;gap:8px">'+saveBtn+'<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
   );
 }
 async function saveRentEdit(id){
