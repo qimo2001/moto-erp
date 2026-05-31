@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS 통합 ERP v2</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1385,7 +1385,13 @@ function OM(html){
     modal.classList.add('open');
     modal.style.display='flex';  // force display
     modal.style.zIndex='99998';
-    console.log('OM done, modal display=',modal.style.display,'computed=',getComputedStyle(modal).display);
+    const r=modal.getBoundingClientRect();
+    console.log('OM done, display=',getComputedStyle(modal).display,
+      'rect=',r.top,r.left,r.width,r.height,
+      'visible=',r.width>0&&r.height>0,
+      'zIndex=',getComputedStyle(modal).zIndex,
+      'visibility=',getComputedStyle(modal).visibility,
+      'opacity=',getComputedStyle(modal).opacity);
   }catch(e){
     console.error('OM error:',e);
     alert('모달 오류: '+e.message);
