@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS 통합 ERP V2</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -688,6 +688,7 @@ const S={
   _rentQ:'',
   // 렌트 차량
   _rvQ:'',
+  _rvStatus:'all',
   // 렌트 차량 정비
   _rmV:'all', _rmPeriod:'all',
   _rmViewDate:new Date().toISOString().slice(0,10),
@@ -713,6 +714,7 @@ const S={
   leaseMaintLogs:[],
   _leaseQ:'',
   _lvQ:'',
+  _lvStatus:'all',
   _lmV:'all',_lmPeriod:'all',
   _lbillingQ:'',_lbillingPage:1,
   _lmViewDate:new Date().toISOString().slice(0,10),
@@ -1043,7 +1045,7 @@ function pgRVehicles(){
     <button class="bp" style="height:38px;padding:0 14px" onclick="S._rvQ=document.getElementById('rvq').value;ren()">검색</button>
     <button class="bs" style="height:38px;padding:0 10px" onclick="S._rvQ='';ren()">초기화</button>
   </div>
-  <div class="sh"><span class="st">렌트 차량 목록</span><div style="display:flex;gap:6px"><button class="bs" style="height:32px;padding:0 10px;font-size:12px" onclick="syncVehicleStatus()">🔄 상태동기화</button><button class="bp" onclick="openAddRVehicleModal()"><i class="ti ti-plus"></i> 차량 추가</button></div></div>
+  <div class="sh"><span class="st">렌트 차량 목록</span><div style="display:flex;gap:6px"><button onclick="S._rvStatus='all';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._rvStatus||'all')==='all'?'var(--primary)':' var(--bg3)'};color:${(S._rvStatus||'all')==='all'?'#fff':'var(--tx)'}" >전체</button><button onclick="S._rvStatus='가용';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._rvStatus||'all')==='가용'?'#2e7d32':'var(--bg3)'};color:${(S._rvStatus||'all')==='가용'?'#fff':'var(--tx)'}" >가용</button><button onclick="S._rvStatus='대여중';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._rvStatus||'all')==='대여중'?'#1565c0':'var(--bg3)'};color:${(S._rvStatus||'all')==='대여중'?'#fff':'var(--tx)'}" >대여중</button><button class="bs" style="height:32px;padding:0 10px;font-size:12px" onclick="syncVehicleStatus()">🔄 상태동기화</button><button class="bp" onclick="openAddRVehicleModal()"><i class="ti ti-plus"></i> 차량 추가</button></div></div>
   <div class="card">
     ${data.filter(v=>!S._rvQ||[v.plateNo,v.model,v.color].some(x=>(x||'').includes(S._rvQ))).map(v=>`
     <div class="irow">
@@ -2038,6 +2040,7 @@ async function saveRVehicle(editId){
     if(d2.name)designatedDrivers.push(d2);
   }
   const obj={model,plateNo:plate,
+    minAge:document.getElementById('lv-age')?.value||'전 연령',
     year:parseInt(document.getElementById('rv-year').value)||2025,
     color:document.getElementById('rv-color').value,
     insurer:document.getElementById('rv-insurer')?.value||'',
@@ -3202,7 +3205,7 @@ function pgLVehicles(){
   let data=S.leaseVehicles;
   if(S._lvQ) data=data.filter(v=>[v.plateNo,v.model,v.lessee,v.lessor].some(x=>(x||'').includes(S._lvQ)));
   return`
-  <div class="sh"><span class="st">리스 차량 <span style="font-size:13px;font-weight:400;color:var(--tx3)">${data.length}대</span></span>
+  <div class="sh"><span class="st">리스 차량</span><div style="display:flex;gap:6px"><button onclick="S._lvStatus='all';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._lvStatus||'all')==='all'?'var(--primary)':'var(--bg3)'};color:${(S._lvStatus||'all')==='all'?'#fff':'var(--tx)'}">전체 <span style="font-size:10px">(${data.length})</span></button><button onclick="S._lvStatus='가용';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._lvStatus||'all')==='가용'?'#2e7d32':'var(--bg3)'};color:${(S._lvStatus||'all')==='가용'?'#fff':'var(--tx)'}">가용</button><button onclick="S._lvStatus='리스중';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._lvStatus||'all')==='리스중'?'#1565c0':'var(--bg3)'};color:${(S._lvStatus||'all')==='리스중'?'#fff':'var(--tx)'}">리스중</button><button class="bp" onclick="openLVehicleModal()"><i class="ti ti-plus"></i> 차량 추가</button></div>
     <button class="bp" onclick="openAddLVehicleModal()"><i class="ti ti-plus"></i> 차량 추가</button>
   </div>
   ${searchBar('차량번호, 모델, 리스사 검색...','_lvQ','','','')}
@@ -3290,33 +3293,6 @@ function openAddLVehicleModal(editId){
   );
 }
 
-async function saveLVehicle(editId){
-  const model=document.getElementById('lv-model').value;
-  const plate=document.getElementById('lv-plate').value;
-  if(!model||!plate){alert('차량 모델과 차량번호를 입력하세요.');return;}
-  const obj={
-    model,plateNo:plate,
-    year:parseInt(document.getElementById('lv-year').value)||new Date().getFullYear(),
-    color:document.getElementById('lv-color').value,
-    lessor:document.getElementById('lv-lessor').value,
-    lessee:document.getElementById('lv-lessee').value,
-    leaseStart:document.getElementById('lv-start').value,
-    leaseEnd:document.getElementById('lv-end').value,
-    monthlyFee:parseInt(document.getElementById('lv-fee').value)||0,
-    mileage:parseInt(document.getElementById('lv-km').value)||0,
-    memo:document.getElementById('lv-memo').value,
-    status:'운행중'
-  };
-  if(editId){
-    const v=S.leaseVehicles.find(x=>x.id===editId);if(v)Object.assign(v,obj);
-    await dbUpdate('lease_vehicles',editId,toSnake(obj));
-  }else{
-    const nv={id:newId(S.leaseVehicles,'LV'),...obj};
-    S.leaseVehicles.push(nv);
-    await dbInsert('lease_vehicles',toSnake(nv));
-  }
-  CM();ren();
-}
 
 async function delLVehicle(id){
   if(!confirm('리스 차량을 삭제하시겠습니까?'))return;
@@ -3587,13 +3563,13 @@ function openLeaseModal(editId){
   const r=editId?S.leases.find(x=>x.id===editId):null;
   window._lsIdCardPhotoUrl=r?r.idCardPhoto||'':'';
   window._lsIdCardData=r?r.idCardData||{}:{};
+  window._lsType=r?r.leaseType||'신차리스':'신차리스';
   const vOpts=S.leaseVehicles.map(v=>'<option value="'+v.id+'"'+(r&&v.id===r.vehicleId?' selected':'')+'>'+v.plateNo+' | '+v.model+'</option>').join('');
   const noV=!S.leaseVehicles.length?'<option value="">— 리스 차량 없음 (먼저 등록) —</option>':'';
-  const typeOpts=['운용리스','금융리스','장기렌탈','기타'].map(t=>'<option value="'+t+'"'+(r&&r.leaseType===t?' selected':'')+'>'+t+'</option>').join('');
+  const isUsed=window._lsType==='중고리스';
   const statusOpts=['리스중','만료','해지'].map(s=>'<option value="'+s+'"'+(r&&r.status===s?' selected':'')+'>'+s+'</option>').join('');
   const maintChk=(r&&r.includeMaint)?'checked':'';
   const saveBtn='<button class="bp" style="flex:1" onclick="saveLease(\''+( editId||'')+'\')"><i class="ti ti-check"></i> '+(r?'수정완료':'접수하기')+'</button>';
-  // 신분증 스캔 섹션 (idCardSection_ls)
   const scanSection='<div style="border:2px dashed #1565c0;border-radius:12px;padding:14px;margin-bottom:14px;background:#e3f2fd">'+
     '<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#1565c0">🪪 신분증 / 면허증 스캔</div>'+
     '<div style="display:flex;gap:8px;margin-bottom:10px">'+
@@ -3609,12 +3585,16 @@ function openLeaseModal(editId){
     '</div>';
   OM(mhdr(r?'리스 수정':'리스 접수')+
     scanSection+
-    '<div class="fr">'+fi('ls-id-name','고객명 (신분증)','',null,r?r.idCardData&&r.idCardData.name||'':'')+fi('ls-id-rrn','주민번호','000000-0000000',null,r?r.idCardData&&r.idCardData.rrn||'':'')+'</div>'+
+    '<div class="fr">'+fi('ls-id-rrn','주민번호','000000-0000000',null,r?r.idCardData&&r.idCardData.rrn||'':'')+'</div>'+
     '<div class="fr">'+fi('ls-id-license','면허번호','',null,r?r.idCardData&&r.idCardData.licenseNo||'':'')+fi('ls-id-addr','주소','',null,r?r.idCardData&&r.idCardData.address||'':'')+'</div>'+
     '<div class="fr">'+fi('ls-customer','고객명 ★','',null,r?r.customer||'':'')+fi('ls-phone','연락처','010-0000-0000',null,r?r.phone||'':'')+'</div>'+
+    fi('ls-agency','배달대행사 (없으면 빈칸)','예: 쿠팡이츠, 배민커넥트',null,r?r.deliveryAgency||'':'')+
     '<div class="fg"><label class="fl">리스 차량</label><select class="fi" id="ls-vehicle">'+noV+vOpts+'</select></div>'+
-    '<div class="fr"><div class="fg"><label class="fl">리스 유형</label><select class="fi" id="ls-type">'+typeOpts+'</select></div>'+
-    '<div class="fg"><label class="fl">정비 포함</label><label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 0"><input type="checkbox" id="ls-maint" '+maintChk+'> <span style="font-size:13px">정비 포함 상품</span></label></div></div>'+
+    '<div class="fg"><label class="fl">리스 유형</label>'+
+    '<div class="tg"><div class="tgb'+(window._lsType==='신차리스'?' on':'')+'" id="ls-new" onclick="selLsType(1)">🆕 신차리스</div>'+
+    '<div class="tgb'+(window._lsType==='중고리스'?' on':'')+'" id="ls-used" onclick="selLsType(0)">🔄 중고리스</div></div></div>'+
+    '<div id="ls-outkm-wrap" style="'+(isUsed?'':'display:none')+'">'+fi('ls-outkm','출고 시 키로수 (km)','','number',r?r.outMileage||'':'')+'</div>'+
+    '<div class="fr"><div class="fg"><label class="fl">정비 포함</label><label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 0"><input type="checkbox" id="ls-maint" '+maintChk+'> <span style="font-size:13px">정비 포함 상품</span></label></div></div>'+
     '<div class="fr">'+fi('ls-start','계약 시작일','','date',r?r.startDate||'':'')+fi('ls-end','계약 종료일','','date',r?r.endDate||'':'')+'</div>'+
     '<div class="fr">'+fi('ls-fee','월 리스료 (원)','','number',r?r.monthlyFee||'':'')+fi('ls-dep','보증금 (원)','','number',r?r.deposit||'':'')+'</div>'+
     '<div class="fr">'+fi('ls-lease-in','리스사 입금액 (원)','','number',r?r.leaseInAmount||'':'')+fi('ls-cust-bill','고객 청구액 (원)','','number',r?r.custBillAmount||'':'')+'</div>'+
@@ -3622,6 +3602,14 @@ function openLeaseModal(editId){
     fi('ls-memo','메모','',null,r?r.memo||'':'')+
     '<div style="display:flex;gap:8px">'+saveBtn+'<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
   );
+  window._lsType=r?r.leaseType||'신차리스':'신차리스';
+}
+function selLsType(isNew){
+  window._lsType=isNew?'신차리스':'중고리스';
+  document.getElementById('ls-new').className='tgb'+(isNew?' on':'');
+  document.getElementById('ls-used').className='tgb'+(isNew?'':' on');
+  const wrap=document.getElementById('ls-outkm-wrap');
+  if(wrap) wrap.style.display=isNew?'none':'block';
 }
 
 async function scanIdCardLease(input){
@@ -3648,7 +3636,7 @@ async function scanIdCardLease(input){
     const raw=(data.content?.[0]?.text||'{}').replace(/```json|```/g,'').trim();
     let info={};try{const m=raw.match(/\{[\s\S]*\}/);info=m?JSON.parse(m[0]):{};}catch(e){}
     // 자동 입력
-    if(info.name){document.getElementById('ls-id-name')&&(document.getElementById('ls-id-name').value=info.name);document.getElementById('ls-customer')&&(document.getElementById('ls-customer').value=info.name);}
+    if(info.name){document.getElementById('ls-customer')&&(document.getElementById('ls-customer').value=info.name);}
     if(info.rrn) document.getElementById('ls-id-rrn')&&(document.getElementById('ls-id-rrn').value=info.rrn);
     if(info.licenseNo) document.getElementById('ls-id-license')&&(document.getElementById('ls-id-license').value=info.licenseNo);
     if(info.address) document.getElementById('ls-id-addr')&&(document.getElementById('ls-id-addr').value=info.address);
@@ -3670,18 +3658,20 @@ async function saveLease(editId){
   const vid=document.getElementById('ls-vehicle')?.value||'';
   const v=S.leaseVehicles.find(x=>x.id===vid)||{};
   const lsIdCard=window._lsIdCardData||{};
-  const lsIdCardName=document.getElementById('ls-id-name')?.value||lsIdCard.name||'';
   const lsIdCardRrn=document.getElementById('ls-id-rrn')?.value||lsIdCard.rrn||'';
   const lsIdCardLicense=document.getElementById('ls-id-license')?.value||lsIdCard.licenseNo||'';
   const lsIdCardAddr=document.getElementById('ls-id-addr')?.value||lsIdCard.address||'';
-  const finalIdCard={name:lsIdCardName,rrn:lsIdCardRrn,licenseNo:lsIdCardLicense,address:lsIdCardAddr};
+  const customerName=document.getElementById('ls-customer')?.value.trim()||'';
+  const finalIdCard={name:customerName,rrn:lsIdCardRrn,licenseNo:lsIdCardLicense,address:lsIdCardAddr};
   const obj={
     customer,
     phone:document.getElementById('ls-phone').value,
     vehicleId:vid,
     plateNo:v.plateNo||'',
     model:v.model||'',
-    leaseType:document.getElementById('ls-type').value,
+    leaseType:window._lsType||'신차리스',
+    deliveryAgency:document.getElementById('ls-agency')?.value||'',
+    outMileage:parseInt(document.getElementById('ls-outkm')?.value)||0,
     includeMaint:document.getElementById('ls-maint')?.checked||false,
     startDate:document.getElementById('ls-start').value,
     endDate:document.getElementById('ls-end').value||'미정',
@@ -3717,12 +3707,14 @@ async function delLease(id){
 // ── 리스 차량 페이지 ──
 function pgLVehicles(){
   let data=[...S.leaseVehicles];
+  const lvSt=S._lvStatus||'all';
+  if(lvSt==='가용') data=data.filter(v=>!S.leases.some(l=>l.vehicleId===v.id&&l.status==='리스중'));
+  else if(lvSt==='리스중') data=data.filter(v=>S.leases.some(l=>l.vehicleId===v.id&&l.status==='리스중'));
   const q=S._lvQ||'';
   if(q) data=data.filter(v=>[v.plateNo,v.model,v.color,v.owner].some(x=>(x||'').includes(q)));
 
   return`
-  <div class="sh"><span class="st">리스 차량 <span style="font-size:13px;font-weight:400;color:var(--tx3)">${data.length}대</span></span>
-    <button class="bp" onclick="openLVehicleModal()"><i class="ti ti-plus"></i> 차량 추가</button>
+  <div class="sh"><span class="st">리스 차량</span><div style="display:flex;gap:6px"><button onclick="S._lvStatus='all';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._lvStatus||'all')==='all'?'var(--primary)':'var(--bg3)'};color:${(S._lvStatus||'all')==='all'?'#fff':'var(--tx)'}">전체 <span style="font-size:10px">(${data.length})</span></button><button onclick="S._lvStatus='가용';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._lvStatus||'all')==='가용'?'#2e7d32':'var(--bg3)'};color:${(S._lvStatus||'all')==='가용'?'#fff':'var(--tx)'}">가용</button><button onclick="S._lvStatus='리스중';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._lvStatus||'all')==='리스중'?'#1565c0':'var(--bg3)'};color:${(S._lvStatus||'all')==='리스중'?'#fff':'var(--tx)'}">리스중</button><button class="bp" onclick="openLVehicleModal()"><i class="ti ti-plus"></i> 차량 추가</button></div>
   </div>
   ${searchBar('차량번호, 모델명 검색...','_lvQ','','','')}
   ${data.length===0?`<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:12px">🚗</div><div>등록된 리스 차량이 없습니다</div></div>`:''}
@@ -3751,20 +3743,23 @@ function pgLVehicles(){
 
 function openLVehicleModal(editId){
   const v=editId?S.leaseVehicles.find(x=>x.id===editId):null;
-  const insComp=(!v||v.insuranceType==='종합보험')?' on':'';
-  const insLiab=(v&&v.insuranceType==='책임보험')?' on':'';
   window._lvInsType=v?v.insuranceType||'종합보험':'종합보험';
+  const insComp=window._lvInsType==='종합보험'?' on':'';
+  const insLiab=window._lvInsType==='책임보험'?' on':'';
+  const ageOpts=AGES.map(a=>'<option value="'+a+'"'+(v&&v.minAge===a?' selected':'')+'>'+a+'</option>').join('');
   const saveBtn='<button class="bp" style="flex:1" onclick="saveLVehicle(\''+( editId||'')+'\')"><i class="ti ti-check"></i> '+(v?'수정완료':'추가하기')+'</button>';
   OM(mhdr(v?'리스 차량 수정':'리스 차량 추가')+
-    '<div class="fr">'+fi('lv-model','차량 모델 ★','혼다 PCX125',null,v?v.model||'':'')+fi('lv-plate','차량번호 ★','12가3456',null,v?v.plateNo||'':'')+'</div>'+
+    '<div class="fr">'+fi('lv-model','차량 모델 ★','현대 아반떼',null,v?v.model||'':'')+fi('lv-plate','차량번호 ★','12가3456',null,v?v.plateNo||'':'')+'</div>'+
     '<div class="fr">'+fi('lv-year','연식','2024','number',v?v.year||'':'')+fi('lv-color','색상','화이트',null,v?v.color||'':'')+'</div>'+
     '<div class="fr">'+fi('lv-owner','소유자/법인','',null,v?v.owner||'':'')+fi('lv-km','현재 키로수','','number',v?v.mileage||'':'')+'</div>'+
     '<div class="fg"><label class="fl">보험 종류</label><div class="tg">'+
     '<div class="tgb'+insComp+'" id="lv-ins-comp" onclick="selLvIns(1)">🛡 종합보험</div>'+
     '<div class="tgb'+insLiab+'" id="lv-ins-liab" onclick="selLvIns(0)">📋 책임보험</div>'+
     '</div></div>'+
-    '<div class="fr">'+fi('lv-insurer','보험사','',null,v?v.insurer||'':'')+fi('lv-insured','피보험자','',null,v?v.insured||'':'')+'</div>'+
-    '<div class="fr">'+fi('lv-ins-start','보험 시작일','','date',v?v.insuranceStart||'':'')+fi('lv-ins-end','보험 만기일','','date',v?v.insuranceEnd||'':'')+'</div>'+
+    '<div class="fr"><div class="fg"><label class="fl">최소 연령</label><select class="fi" id="lv-age">'+ageOpts+'</select></div>'+
+    fi('lv-insured','피보험자','',null,v?v.insured||'':'')+'</div>'+
+    '<div class="fr">'+fi('lv-insurer','보험사','',null,v?v.insurer||'':'')+fi('lv-ins-end','보험 만기일','','date',v?v.insuranceEnd||'':'')+'</div>'+
+    '<div class="fr">'+fi('lv-ins-start','보험 시작일','','date',v?v.insuranceStart||'':'')+'</div>'+
     '<div style="display:flex;gap:8px">'+saveBtn+'<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
   );
 }
@@ -3778,7 +3773,9 @@ async function saveLVehicle(editId){
   const model=document.getElementById('lv-model').value.trim();
   const plate=document.getElementById('lv-plate').value.trim();
   if(!model||!plate){alert('차량 모델과 차량번호를 입력하세요.');return;}
-  const obj={model,plateNo:plate,
+  const obj={
+    model,plateNo:plate,
+    minAge:document.getElementById('lv-age')?.value||'전 연령',
     year:parseInt(document.getElementById('lv-year').value)||0,
     color:document.getElementById('lv-color').value,
     owner:document.getElementById('lv-owner').value,
@@ -3787,7 +3784,7 @@ async function saveLVehicle(editId){
     insurer:document.getElementById('lv-insurer').value,
     insured:document.getElementById('lv-insured').value,
     insuranceStart:document.getElementById('lv-ins-start').value,
-    insuranceEnd:document.getElementById('lv-ins-end').value,
+    insuranceEnd:document.getElementById('lv-ins-end').value
   };
   if(editId){
     const v=S.leaseVehicles.find(x=>x.id===editId);if(v)Object.assign(v,obj);
@@ -3799,7 +3796,6 @@ async function saveLVehicle(editId){
   }
   CM();ren();
 }
-
 async function delLVehicle(id){
   if(!confirm('리스 차량을 삭제하시겠습니까?'))return;
   await dbDelete('lease_vehicles',id);
