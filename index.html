@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP V7</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1379,8 +1379,11 @@ function pgAI(){return`<div class="card" style="display:flex;flex-direction:colu
 // ── MODAL HELPERS ──
 function OM(html){
   try{
+    console.log('OM: setting innerHTML, length=',html.length);
     document.getElementById('mc').innerHTML=html;
+    console.log('OM: innerHTML set, adding open class');
     document.getElementById('modal').classList.add('open');
+    console.log('OM: modal opened, classes=',document.getElementById('modal').className);
   }catch(e){
     console.error('OM error:',e);
     alert('모달 오류: '+e.message);
