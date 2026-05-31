@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS 통합 ERP v2</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -223,6 +223,14 @@ tr:hover td{background:var(--bg3)}
       <div class="ni" onclick="go('rbilling')"><i class="ti ti-cash"></i> 요금/결제</div>
       <div class="ni" onclick="go('rmaint')"><i class="ti ti-tool"></i> 렌트 차량 정비</div>
       <div class="ni" onclick="go('idcards')"><i class="ti ti-id"></i> 신분증 관리</div>
+      <div class="nl">리스</div>
+      <div class="ni" onclick="go('lease')"><i class="ti ti-file-invoice"></i> 리스 관리</div>
+      <div class="ni" onclick="go('lvehicles')"><i class="ti ti-list-details"></i> 리스 차량</div>
+      <div class="ni" onclick="go('lmaint')"><i class="ti ti-tool"></i> 리스 차량 정비</div>
+      <div class="nl">리스</div>
+      <div class="ni" onclick="go('lease')"><i class="ti ti-file-text"></i> 리스 관리</div>
+      <div class="ni" onclick="go('lvehicles')"><i class="ti ti-car"></i> 리스 차량</div>
+      <div class="ni" onclick="go('lmaint')"><i class="ti ti-tool"></i> 리스 차량 정비</div>
       <div class="nl">수리</div>
       <div class="ni" onclick="go('repair')"><i class="ti ti-settings"></i> 일반 수리</div>
       <div class="ni" onclick="go('accident')"><i class="ti ti-car-crash"></i> 사고 수리</div>
@@ -279,6 +287,7 @@ tr:hover td{background:var(--bg3)}
 <div id="mob-drawer" style="display:none;position:fixed;bottom:var(--nh);left:0;right:0;background:#1B2436;border-top:2px solid #D32F2F;z-index:299;max-height:75vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 -8px 30px rgba(0,0,0,0.7)">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;border-bottom:0.5px solid rgba(255,255,255,0.1)"><span style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:.5px">전체 메뉴</span><button onclick="closeMobMenu()" style="background:rgba(255,255,255,0.1);border:none;border-radius:6px;padding:4px 10px;color:rgba(255,255,255,0.6);font-size:12px;cursor:pointer">✕ 닫기</button></div>
   <div onclick="go('sales');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-receipt" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">판매 관리</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">판매 관련</div></div></div><div onclick="go('customers');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-users" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">고객 관리</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">고객 정보</div></div></div><div onclick="go('rent');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-calendar-event" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">렌트 관리</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">대여 현황</div></div></div><div onclick="go('rvehicles');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-motorbike" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">렌트 차량</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">차량 목록</div></div></div><div onclick="go('rcalendar');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-calendar" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">렌트 일정</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">일정 확인</div></div></div><div onclick="go('rbilling');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-cash" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">요금/결제</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">결제 현황</div></div></div><div onclick="go('rmaint');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-tool" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">렌트 차량 정비</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">정비 이력</div></div></div><div onclick="go('repair');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-tools" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">일반 수리</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">수리 접수</div></div></div><div onclick="go('accident');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-car-crash" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">사고 수리</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">사고 처리</div></div></div><div onclick="go('unpaid');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-alert-circle" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">미수금</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">미결제 현황</div></div></div><div onclick="go('worklog');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-clipboard-list" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">작업일보</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">오늘 작업</div></div></div><div onclick="go('ivehicle');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-motorbike" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">차량 재고</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">재고 현황</div></div></div><div onclick="go('iparts');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-package" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">부품 재고</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">부품 현황</div></div></div><div onclick="go('purchase');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-file-invoice" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">발주/입고</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">발주 관리</div></div></div><div onclick="go('finance');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-chart-bar" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">매출 분석</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">매출 현황</div></div></div><div onclick="go('ai');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-robot" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">AI 어시스턴트</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">AI 상담</div></div></div>
+<div onclick="go('lease');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-file-text" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">리스 관리</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">리스 계약</div></div></div><div onclick="go('lvehicles');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-car" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">리스 차량</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">차량 목록</div></div></div><div onclick="go('lmaint');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-tool" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">리스 차량 정비</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">정비 이력</div></div></div>
 <div onclick="go('idcards');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-id" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">신분증 관리</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">신분증 목록</div></div></div>
 <div onclick="go('auditlog');closeMobMenu()" style="display:flex;align-items:center;gap:14px;padding:13px 20px;color:rgba(255,255,255,0.8);cursor:pointer;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:13px;font-weight:500;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.background='rgba(211,47,47,0.12)'" ontouchend="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:rgba(211,47,47,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-clipboard-list" style="font-size:18px;color:#D32F2F"></i></div><div><div style="font-size:13px;font-weight:600">작업 로그</div><div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px">변경 이력</div></div></div>
 <div id="mob-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:295;-webkit-tap-highlight-color:transparent" onclick="closeMobMenu()"></div>
@@ -481,7 +490,7 @@ function toSnake(obj){
     customerEstimate:'customer_estimate',totalAmount:'total_amount',approvedAt:'approved_at',
     receivedAt:'received_at',workDate:'work_date',dueDate:'due_date',
     createdAt:'created_at_time',lastVisit:'last_visit',minStock:'min_stock',
-    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',insuranceStart:'insurance_start',insuranceEnd:'insurance_end',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo',licenseNo:'license_no',birthDate:'birth_date',rentCount:'rent_count',createdAt:'created_at',updatedAt:'updated_at',photo:'photo'
+    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',insuranceStart:'insurance_start',insuranceEnd:'insurance_end',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo',licenseNo:'license_no',birthDate:'birth_date',rentCount:'rent_count',createdAt:'created_at',updatedAt:'updated_at',photo:'photo'
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -502,7 +511,7 @@ function fromSnake(obj){
     insurance_paid:'insurancePaid',insurance_paid_amount:'insurancePaidAmount',
     customer_estimate:'customerEstimate',total_amount:'totalAmount',approved_at:'approvedAt',
     received_at:'receivedAt',work_date:'workDate',due_date:'dueDate',
-    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',id_card_photo:'idCardPhoto',insurance_start:'insuranceStart',insurance_end:'insuranceEnd',license_no:'licenseNo',birth_date:'birthDate',rent_count:'rentCount',
+    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',id_card_photo:'idCardPhoto',insurance_start:'insuranceStart',insurance_end:'insuranceEnd',lease_start:'leaseStart',lease_end:'leaseEnd',monthly_fee:'monthlyFee',vehicle_id:'vehicleId',plate_no:'plateNo',daily_rate:'dailyRate',lease_type:'leaseType',license_no:'licenseNo',birth_date:'birthDate',rent_count:'rentCount',
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -556,6 +565,13 @@ async function loadAllFromDB(){
     if(wt!==null){ S.workTasks=rowsFromSnake(wt||[]); console.log('작업',(wt||[]).length); }
     const idc=await dbLoad('id_cards');
     if(idc!==null){ S.idCards=rowsFromSnake(idc||[]); console.log('신분증',(idc||[]).length); }
+    const lvData=await dbLoad('lease_vehicles');
+    if(lvData!==null){ S.leaseVehicles=rowsFromSnake(lvData||[]); console.log('리스차량',(lvData||[]).length); }
+    const ls=await dbLoad('leases');
+    if(ls!==null){ S.leases=rowsFromSnake(ls||[]); console.log('리스',(ls||[]).length); }
+    const lm=await dbLoad('lease_maint');
+    if(lm!==null){ S.leaseMaintLogs=rowsFromSnake(lm||[]); console.log('리스정비',(lm||[]).length); }
+
     const alogs=await dbLoad('audit_logs');
     if(alogs!==null){ S.auditLogs=alogs||[]; console.log('로그',(alogs||[]).length); }
     // 담당자 + 사용자 권한 로드
@@ -692,6 +708,15 @@ const S={
   idCards:[],
   _idCardQ:'',
   _idCardPage:1,
+  // 리스
+  leases:[],
+  leaseVehicles:[],
+  leaseMaintLogs:[],
+  _leaseQ:'',
+  _lvQ:'',
+  _lmV:'all',_lmPeriod:'all',
+  _lmViewDate:new Date().toISOString().slice(0,10),
+  _lmQ:'',
   auditLogs:[],
   _auditQ:'',
   _auditPage:1,
@@ -700,7 +725,7 @@ const S={
   aiMessages:[{role:'ai',text:'안녕하세요! DS모터스포츠 ERP AI 어시스턴트입니다. 무엇이든 물어보세요 😊'}],
 };
 
-const TITLES={dashboard:'대시보드',worklog:'작업일보',settings:'시스템 설정',sales:'판매 관리',customers:'고객 관리',rent:'렌트 관리',rvehicles:'렌트 차량',rcalendar:'렌트 일정',rbilling:'요금/결제',rmaint:'렌트 차량 정비',repair:'일반 수리',accident:'사고 수리',unpaid:'미수금',ivehicle:'차량 재고',iparts:'부품 재고',purchase:'발주/입고',finance:'매출 분석',ai:'AI 어시스턴트',idcards:'신분증 관리',auditlog:'작업 로그'};
+const TITLES={dashboard:'대시보드',worklog:'작업일보',settings:'시스템 설정',sales:'판매 관리',customers:'고객 관리',rent:'렌트 관리',rvehicles:'렌트 차량',rcalendar:'렌트 일정',rbilling:'요금/결제',rmaint:'렌트 차량 정비',repair:'일반 수리',accident:'사고 수리',unpaid:'미수금',ivehicle:'차량 재고',iparts:'부품 재고',purchase:'발주/입고',finance:'매출 분석',ai:'AI 어시스턴트',idcards:'신분증 관리',auditlog:'작업 로그',lease:'리스 관리',lvehicles:'리스 차량',lmaint:'리스 차량 정비'};
 
 function go(page){
   S.page=page;
@@ -760,7 +785,7 @@ function updBadges(){
 
 function ren(){
   const c=document.getElementById('content');
-  const pages={dashboard:pgDashboard,worklog:pgWorklog,settings:pgSettings,sales:pgSales,customers:pgCustomers,rent:pgRent,rvehicles:pgRVehicles,rcalendar:pgRCalendar,rbilling:pgRBilling,rmaint:pgRMaint,repair:pgRepair,accident:pgAccident,unpaid:pgUnpaid,ivehicle:pgIVehicle,iparts:pgIParts,purchase:pgPurchase,finance:pgFinance,ai:pgAI,idcards:pgIdCards,auditlog:pgAuditLog};
+  const pages={dashboard:pgDashboard,worklog:pgWorklog,settings:pgSettings,sales:pgSales,customers:pgCustomers,rent:pgRent,rvehicles:pgRVehicles,rcalendar:pgRCalendar,rbilling:pgRBilling,rmaint:pgRMaint,repair:pgRepair,accident:pgAccident,unpaid:pgUnpaid,ivehicle:pgIVehicle,iparts:pgIParts,purchase:pgPurchase,finance:pgFinance,ai:pgAI,idcards:pgIdCards,auditlog:pgAuditLog,lease:pgLease,lvehicles:pgLVehicles,lmaint:pgLMaint};
   c.innerHTML=(pages[S.page]||(() => ''))();
   if(S.page==='ai'){const el=document.getElementById('aim');if(el)el.scrollTop=el.scrollHeight;}
 }
@@ -1559,7 +1584,7 @@ async function prevPhoto(input,id,folder){
 // ── 정비 항목 ──
 window._mItems=[];window._rItems=[];
 function mcHTML(pfx){
-  const key=pfx==='rent'?'_mItems':'_rItems';
+  const key=pfx==='rent'?'_mItems':pfx==='lm'?'_lmItems':'_rItems';
   const selected=window[key]||[];
   return`<div class="mc-grid">${MITEMS.map((item,i)=>{
     const isOn=selected.some(x=>x.name===item||(item==='기타(직접입력)'&&x.name&&x.name.endsWith('(기타)')));
@@ -1572,7 +1597,7 @@ function mcHTML(pfx){
   <div id="${pfx}-md"></div>`;
 }
 function togMI(pfx,idx,name){
-  const key=pfx==='rent'?'_mItems':'_rItems';
+  const key=pfx==='rent'?'_mItems':pfx==='lm'?'_lmItems':'_rItems';
   const arr=window[key];const el=document.getElementById(`${pfx}-mi-${idx}`);const icon=document.getElementById(`${pfx}-mi-icon-${idx}`);
   const ei=arr.findIndex(x=>x.name===name);
   if(ei===-1){arr.push({name,src:'매장재고',partId:'',customName:''});el.classList.add('on');icon.className='ti ti-circle-check';}
@@ -1581,7 +1606,7 @@ function togMI(pfx,idx,name){
   rendMD(pfx,arr);
 }
 function rendMD(pfx,arr){
-  const key=pfx==='rent'?'_mItems':'_rItems';
+  const key=pfx==='rent'?'_mItems':pfx==='lm'?'_lmItems':'_rItems';
   const c=document.getElementById(`${pfx}-md`);if(!c)return;
   c.innerHTML=arr.map((item,i)=>`<div style="border:1px solid var(--bd);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:13px">
     <div style="font-weight:700;margin-bottom:8px">${item.name==='기타(직접입력)'?'기타':item.name}</div>
@@ -1593,7 +1618,7 @@ function rendMD(pfx,arr){
     ${item.src==='매장재고'?`<select class="fi" onchange="window.${key}[${i}].partId=this.value" style="font-size:12px"><option value="">-- 부품 선택 --</option>${S.partsStock.map(p=>`<option value="${p.id}" ${p.id===item.partId?'selected':''}>${p.name} [재고:${p.stock}${p.unit}] ${p.location}</option>`).join('')}</select>`:''}
   </div>`).join('');
 }
-function setSrc(pfx,idx,src){const key=pfx==='rent'?'_mItems':'_rItems';window[key][idx].src=src;if(src==='고객지참')window[key][idx].partId='';rendMD(pfx,window[key]);}
+function setSrc(pfx,idx,src){const key=pfx==='rent'?'_mItems':pfx==='lm'?'_lmItems':'_rItems';window[key][idx].src=src;if(src==='고객지참')window[key][idx].partId='';rendMD(pfx,window[key]);}
 function collectPhotoUrls(pfx, count){
   const urls=[];
   // Scan all slots including dynamically added ones
@@ -3085,7 +3110,7 @@ const TABLE_LABELS={
   repairs:'수리',accidents:'사고수리',
   vehicle_stock:'차량재고',parts_stock:'부품재고',
   purchase_orders:'발주',work_tasks:'작업일보',
-  id_cards:'신분증',erp_users:'사용자',audit_logs:'로그'
+  id_cards:'신분증',erp_users:'사용자',audit_logs:'로그',leases:'리스',lease_vehicles:'리스차량',lease_maint:'리스정비'
 };
 
 function pgAuditLog(){
@@ -3129,7 +3154,7 @@ function pgAuditLog(){
     ${items.map((l,idx)=>{
       const color=ACTION_COLORS[l.action]||'#555';
       const actionLabel={insert:'등록',update:'수정',delete:'삭제',login:'로그인',logout:'로그아웃',approve:'결재',return:'반납',rent:'대여'}[l.action]||l.action;
-      const tableLabel={sales:'판매',customers:'고객',rentals:'렌트',rent_vehicles:'렌트차량',maint_logs:'렌트정비',repairs:'수리',accidents:'사고수리',vehicle_stock:'차량재고',parts_stock:'부품재고',purchase_orders:'발주',work_tasks:'작업일보',id_cards:'신분증',erp_users:'사용자',audit_logs:'로그'}[l.target_table]||l.target_table;
+      const tableLabel={sales:'판매',customers:'고객',rentals:'렌트',rent_vehicles:'렌트차량',maint_logs:'렌트정비',repairs:'수리',accidents:'사고수리',vehicle_stock:'차량재고',parts_stock:'부품재고',purchase_orders:'발주',work_tasks:'작업일보',id_cards:'신분증',erp_users:'사용자',audit_logs:'로그',leases:'리스',lease_vehicles:'리스차량',lease_maint:'리스정비'}[l.target_table]||l.target_table;
       return`<div style="padding:12px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:flex-start;gap:10px;${idx%2===1?'background:var(--bg3)':''}">
         <div style="min-width:46px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:800;text-align:center;background:${color}22;color:${color}">${actionLabel}</div>
         <div style="flex:1;min-width:0">
@@ -3167,6 +3192,657 @@ async function syncVehicleStatus(){
   if(fixed>0) alert(fixed+'대 차량 상태가 동기화됐습니다.');
   else alert('모든 차량 상태가 정상입니다.');
 }
+
+// ══════════════════════════════════════
+// ── 리스 관리 ──
+// ══════════════════════════════════════
+
+// 리스 차량 목록
+function pgLVehicles(){
+  let data=S.leaseVehicles;
+  if(S._lvQ) data=data.filter(v=>[v.plateNo,v.model,v.lessee,v.lessor].some(x=>(x||'').includes(S._lvQ)));
+  return`
+  <div class="sh"><span class="st">리스 차량 <span style="font-size:13px;font-weight:400;color:var(--tx3)">${data.length}대</span></span>
+    <button class="bp" onclick="openAddLVehicleModal()"><i class="ti ti-plus"></i> 차량 추가</button>
+  </div>
+  ${searchBar('차량번호, 모델, 리스사 검색...','_lvQ','','','')}
+  ${data.length===0?`<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:12px">🏍️</div><div>등록된 리스 차량이 없습니다</div></div>`:''}
+  ${data.map(v=>`<div class="irow" onclick="openLVehicleDetail('${v.id}')">
+    <div style="width:44px;height:44px;background:var(--pl);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏍️</div>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="plate">${v.plateNo}</span>
+        <span style="font-size:13px;font-weight:600">${v.model}</span>
+        ${statusBadge(v.status||'운행중')}
+      </div>
+      <div style="font-size:12px;color:var(--tx2);margin-top:4px">
+        리스사: <strong>${v.lessor||'-'}</strong> · 리스이: <strong>${v.lessee||'-'}</strong>
+      </div>
+      <div style="font-size:12px;color:var(--tx2)">
+        리스기간: ${v.leaseStart||'?'} ~ ${v.leaseEnd||'?'}
+        ${v.leaseEnd?` <span style="font-size:11px">${insBadge(v.leaseEnd)}</span>`:''}
+      </div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:2px">
+        월 리스료: ${v.monthlyFee?fmtMoney(v.monthlyFee):'미정'} · ${v.year||''}년 · ${v.color||''} · ${v.mileage?(v.mileage).toLocaleString()+'km':''}
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <button class="bsm" onclick="event.stopPropagation();openAddLVehicleModal('${v.id}')">수정</button>
+      <button class="bsm" style="color:#c62828" onclick="event.stopPropagation();delLVehicle('${v.id}')">삭제</button>
+    </div>
+  </div>`).join('')}`;
+}
+
+// 리스 차량 상세
+function openLVehicleDetail(id){
+  const v=S.leaseVehicles.find(x=>x.id===id);if(!v)return;
+  const logs=S.leaseMaintLogs.filter(m=>m.vehicleId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  OM(mhdr(v.plateNo+' '+v.model)+
+    `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="background:var(--bg3);border-radius:8px;padding:10px">
+        <div style="font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:700">차량 정보</div>
+        <div style="font-weight:700">${v.model}</div>
+        <div style="font-size:12px;color:var(--tx2)">${v.year||''}년 · ${v.color||''}</div>
+        <div style="font-size:12px;color:var(--tx2)">주행: ${v.mileage?(v.mileage).toLocaleString()+'km':'-'}</div>
+        ${statusBadge(v.status||'운행중')}
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px">
+        <div style="font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:700">리스 정보</div>
+        <div style="font-weight:700">${v.lessor||'-'}</div>
+        <div style="font-size:12px;color:var(--tx2)">리스이: ${v.lessee||'-'}</div>
+        <div style="font-size:12px;color:var(--tx2)">월 ${v.monthlyFee?fmtMoney(v.monthlyFee):'미정'}</div>
+        <div style="font-size:12px;color:var(--tx2)">${v.leaseStart||'?'} ~ ${v.leaseEnd||'?'}</div>
+        ${v.leaseEnd?insBadge(v.leaseEnd):''}
+      </div>
+    </div>
+    ${v.memo?`<div style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:14px;font-size:13px">${v.memo}</div>`:''}
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px">정비 이력 (${logs.length}건)</div>
+    <div style="max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:8px">
+      ${logs.length===0?'<div style="text-align:center;padding:20px;color:var(--tx3)">정비 이력 없음</div>':
+      logs.map(l=>`<div style="border:1px solid var(--bd);border-radius:8px;padding:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:13px;font-weight:700">${l.date}</span>
+          <span style="font-size:12px;color:var(--tx2)">${l.mechanic||''}</span>
+        </div>
+        <div style="font-size:12px;color:var(--tx2)">${(l.items||[]).map(i=>i.name).join(', ')}</div>
+        ${l.cost?`<div style="font-size:12px;font-weight:700;color:#D32F2F;margin-top:4px">${fmtMoney(l.cost)}</div>`:''}
+      </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="bp" style="flex:1" onclick="CM();openLMaintModal('${v.id}')"><i class="ti ti-plus"></i> 정비 등록</button>
+      <button onclick="CM()" class="bs" style="flex:1">닫기</button>
+    </div>`
+  );
+}
+
+// 리스 차량 추가/수정 모달
+function openAddLVehicleModal(editId){
+  const v=editId?S.leaseVehicles.find(x=>x.id===editId):null;
+  const lvIdStr=editId||'';const saveBtn='<button class="bp" style="flex:1" onclick="saveLVehicle(\''+lvIdStr+'\')"><i class="ti ti-check"></i> '+(v?'수정완료':'추가하기')+'</button>';
+  OM(mhdr(v?'리스 차량 수정':'리스 차량 추가')+
+    '<div class="fr">'+fi('lv-model','차량 모델 ★','혼다 PCX125',null,v?v.model:'')+fi('lv-plate','차량번호 ★','12가3456',null,v?v.plateNo:'')+'</div>'+
+    '<div class="fr">'+fi('lv-year','연식','2025','number',v?v.year:'')+fi('lv-color','색상','화이트',null,v?v.color:'')+'</div>'+
+    '<div class="fr">'+fi('lv-lessor','리스사','롯데오토리스',null,v?v.lessor:'')+fi('lv-lessee','리스이(사용자)','홍길동',null,v?v.lessee:'')+'</div>'+
+    '<div class="fr">'+fi('lv-start','리스 시작일','','date',v?v.leaseStart:'')+fi('lv-end','리스 만기일','','date',v?v.leaseEnd:'')+'</div>'+
+    '<div class="fr">'+fi('lv-fee','월 리스료 (원)','','number',v?v.monthlyFee:'')+fi('lv-km','현재 주행거리 (km)','','number',v?v.mileage:'')+'</div>'+
+    fi('lv-memo','메모','',null,v?v.memo||'':'')+
+    '<div style="display:flex;gap:8px">'+saveBtn+'<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
+  );
+}
+
+async function saveLVehicle(editId){
+  const model=document.getElementById('lv-model').value;
+  const plate=document.getElementById('lv-plate').value;
+  if(!model||!plate){alert('차량 모델과 차량번호를 입력하세요.');return;}
+  const obj={
+    model,plateNo:plate,
+    year:parseInt(document.getElementById('lv-year').value)||new Date().getFullYear(),
+    color:document.getElementById('lv-color').value,
+    lessor:document.getElementById('lv-lessor').value,
+    lessee:document.getElementById('lv-lessee').value,
+    leaseStart:document.getElementById('lv-start').value,
+    leaseEnd:document.getElementById('lv-end').value,
+    monthlyFee:parseInt(document.getElementById('lv-fee').value)||0,
+    mileage:parseInt(document.getElementById('lv-km').value)||0,
+    memo:document.getElementById('lv-memo').value,
+    status:'운행중'
+  };
+  if(editId){
+    const v=S.leaseVehicles.find(x=>x.id===editId);if(v)Object.assign(v,obj);
+    await dbUpdate('lease_vehicles',editId,toSnake(obj));
+  }else{
+    const nv={id:newId(S.leaseVehicles,'LV'),...obj};
+    S.leaseVehicles.push(nv);
+    await dbInsert('lease_vehicles',toSnake(nv));
+  }
+  CM();ren();
+}
+
+async function delLVehicle(id){
+  if(!confirm('리스 차량을 삭제하시겠습니까?'))return;
+  await dbDelete('lease_vehicles',id);
+  S.leaseVehicles=S.leaseVehicles.filter(x=>x.id!==id);ren();
+}
+
+// ── 리스 관리 (계약 현황) ──
+function pgLease(){
+  let data=S.leases;
+  if(S._leaseQ) data=data.filter(r=>[r.lessee,r.phone,r.plateNo,r.model].some(x=>(x||'').includes(S._leaseQ)));
+  data=data.sort((a,b)=>(b.startDate||'').localeCompare(a.startDate||''));
+  const active=data.filter(r=>r.status==='계약중').length;
+  const expired=data.filter(r=>r.status==='만료').length;
+  return`
+  <div class="sh"><span class="st">리스 관리</span>
+    <button class="bp" onclick="openAddLeaseModal()"><i class="ti ti-plus"></i> 계약 등록</button>
+  </div>
+  <div class="sgrid" style="margin-bottom:16px">
+    <div class="sc"><div class="sl">계약중</div><div class="sv" style="color:#1565c0">${active}</div></div>
+    <div class="sc"><div class="sl">만료</div><div class="sv" style="color:var(--tx3)">${expired}</div></div>
+    <div class="sc"><div class="sl">총 계약</div><div class="sv">${data.length}</div></div>
+    <div class="sc"><div class="sl">월 리스료 합계</div><div class="sv" style="color:#D32F2F;font-size:16px">${fmtMoney(S.leaseVehicles.reduce((a,b)=>a+(b.monthlyFee||0),0))}</div></div>
+  </div>
+  ${searchBar('리스이, 차량번호 검색...','_leaseQ','','','')}
+  ${data.length===0?`<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:12px">📋</div><div>등록된 리스 계약이 없습니다</div></div>`:''}
+  ${data.map(r=>{
+    const v=S.leaseVehicles.find(x=>x.id===r.vehicleId)||{};
+    return`<div class="irow">
+      <div style="width:44px;height:44px;background:var(--pl);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📋</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <span class="plate">${v.plateNo||r.plateNo||'-'}</span>
+          <span style="font-size:13px;font-weight:600">${v.model||r.model||'-'}</span>
+          ${statusBadge(r.status||'계약중')}
+        </div>
+        <div style="font-size:13px;font-weight:600">${r.lessee||'-'} <span style="font-size:12px;font-weight:400;color:var(--tx2)">${r.phone||''}</span></div>
+        <div style="font-size:12px;color:var(--tx2)">리스사: ${r.lessor||'-'} · 기간: ${r.startDate||'?'} ~ ${r.endDate||'?'}</div>
+        <div style="font-size:12px;color:var(--tx2)">월 ${fmtMoney(r.monthlyFee||0)} · 보증금 ${fmtMoney(r.deposit||0)}</div>
+        ${r.memo?`<div style="font-size:11px;color:var(--tx3)">${r.memo}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <button class="bsm" onclick="event.stopPropagation();openAddLeaseModal('${r.id}')">수정</button>
+        <button class="bsm" style="color:#c62828" onclick="event.stopPropagation();delLease('${r.id}')">삭제</button>
+      </div>
+    </div>`;
+  }).join('')}`;
+}
+
+function openAddLeaseModal(editId){
+  const r=editId?S.leases.find(x=>x.id===editId):null;
+  const vOpts=S.leaseVehicles.map(v=>'<option value="'+v.id+'"'+(r&&v.id===r.vehicleId?' selected':'')+'>'+v.plateNo+' | '+v.model+'</option>').join('');
+  const lsIdStr=editId||'';const saveBtn='<button class="bp" style="flex:1" onclick="saveLease(\''+lsIdStr+'\')"><i class="ti ti-check"></i> '+(r?'수정완료':'등록하기')+'</button>';
+  OM(mhdr(r?'리스 계약 수정':'리스 계약 등록')+
+    '<div class="fg"><label class="fl">리스 차량</label><select class="fi" id="ls-vehicle">'+vOpts+'</select></div>'+
+    '<div class="fr">'+fi('ls-lessee','리스이 (사용자)','홍길동',null,r?r.lessee:'')+fi('ls-phone','연락처','010-0000-0000',null,r?r.phone:'')+'</div>'+
+    fi('ls-lessor','리스사','롯데오토리스',null,r?r.lessor:'')+
+    '<div class="fr">'+fi('ls-start','계약 시작일','','date',r?r.startDate:'')+fi('ls-end','계약 만기일','','date',r?r.endDate:'')+'</div>'+
+    '<div class="fr">'+fi('ls-fee','월 리스료 (원)','','number',r?r.monthlyFee:'')+fi('ls-dep','보증금 (원)','','number',r?r.deposit:'')+'</div>'+
+    fi('ls-memo','메모','',null,r?r.memo||'':'')+
+    '<div style="display:flex;gap:8px">'+saveBtn+'<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
+  );
+}
+
+async function saveLease(editId){
+  const vid=document.getElementById('ls-vehicle')?.value;
+  const lessee=document.getElementById('ls-lessee').value;
+  if(!lessee){alert('리스이를 입력하세요.');return;}
+  const v=S.leaseVehicles.find(x=>x.id===vid)||{};
+  const obj={
+    vehicleId:vid,
+    plateNo:v.plateNo||'',
+    model:v.model||'',
+    lessee,
+    phone:document.getElementById('ls-phone').value,
+    lessor:document.getElementById('ls-lessor').value,
+    startDate:document.getElementById('ls-start').value,
+    endDate:document.getElementById('ls-end').value,
+    monthlyFee:parseInt(document.getElementById('ls-fee').value)||0,
+    deposit:parseInt(document.getElementById('ls-dep').value)||0,
+    memo:document.getElementById('ls-memo').value,
+    status:'계약중'
+  };
+  if(editId){
+    const r=S.leases.find(x=>x.id===editId);if(r)Object.assign(r,obj);
+    await dbUpdate('leases',editId,toSnake(obj));
+  }else{
+    const nr={id:newId(S.leases,'LS'),createdAt:new Date().toISOString().slice(0,10),...obj};
+    S.leases.push(nr);
+    await dbInsert('leases',toSnake(nr));
+  }
+  CM();ren();
+}
+
+async function delLease(id){
+  if(!confirm('리스 계약을 삭제하시겠습니까?'))return;
+  await dbDelete('leases',id);
+  S.leases=S.leases.filter(x=>x.id!==id);ren();
+}
+
+// ── 리스 차량 정비 ──
+function pgLMaint(){
+  const sel=S._lmV||'all';
+  const period=S._lmPeriod||'all';
+  const viewDate=S._lmViewDate||new Date().toISOString().slice(0,10);
+  const q=S._lmQ||'';
+  let dateFrom='',dateTo='';
+  if(period==='daily'){dateFrom=viewDate;dateTo=viewDate;}
+  else if(period==='weekly'){
+    const d=new Date(viewDate),day=d.getDay();
+    const mon=new Date(d);mon.setDate(d.getDate()-(day===0?6:day-1));
+    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+    dateFrom=mon.toISOString().slice(0,10);dateTo=sun.toISOString().slice(0,10);
+  }else if(period==='monthly'){
+    const ym=viewDate.slice(0,7);dateFrom=ym+'-01';dateTo=ym+'-31';
+  }
+  let logs=S.leaseMaintLogs;
+  if(sel!=='all') logs=logs.filter(m=>m.vehicleId===sel);
+  if(dateFrom&&dateTo) logs=logs.filter(l=>l.date>=dateFrom&&l.date<=dateTo);
+  if(q) logs=logs.filter(l=>[l.memo,l.mechanic].some(v=>(v||'').includes(q)));
+  logs=logs.sort((a,b)=>b.date.localeCompare(a.date));
+
+  const vOpts='<option value="all">전체 차량</option>'+S.leaseVehicles.map(v=>'<option value="'+v.id+'"'+(sel===v.id?' selected':'')+'>'+v.plateNo+' '+v.model+'</option>').join('');
+  const periodBtns=['all','daily','weekly','monthly'].map(p=>`<button onclick="S._lmPeriod='${p}';ren()" style="flex-shrink:0;padding:6px 14px;border:none;border-right:1px solid var(--bd2);background:${period===p?'#D32F2F':'transparent'};color:${period===p?'#fff':'var(--tx2)'};cursor:pointer;font-size:12px;font-weight:600">${p==='all'?'전체':p==='daily'?'일별':p==='weekly'?'주간별':'월별'}</button>`).join('');
+
+  return`
+  <div class="sh"><span class="st">리스 차량 정비</span>
+    <button class="bp" onclick="openLMaintModal()"><i class="ti ti-plus"></i> 정비 등록</button>
+  </div>
+  <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:14px">
+    <div style="display:flex;overflow-x:auto;scrollbar-width:none">${periodBtns}</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <select class="fi" style="flex:1;height:36px;margin:0" onchange="S._lmV=this.value;ren()">${vOpts}</select>
+    <input class="fi" placeholder="검색..." value="${q}" style="flex:1;height:36px;margin:0" onkeydown="if(event.key==='Enter'){S._lmQ=this.value;ren()}">
+  </div>
+  ${logs.length===0?`<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:12px">🔧</div><div>정비 이력이 없습니다</div></div>`:''}
+  ${logs.map(l=>{
+    const v=S.leaseVehicles.find(x=>x.id===l.vehicleId)||{};
+    return`<div class="irow">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span class="plate-sm">${v.plateNo||'-'}</span>
+          <span style="font-size:13px;font-weight:600">${v.model||'-'}</span>
+          <span style="font-size:12px;color:var(--tx3)">${l.date}</span>
+        </div>
+        <div style="font-size:12px;color:var(--tx2)">${(l.items||[]).map(i=>i.name).join(' · ')||'-'}</div>
+        ${l.cost?`<div style="font-size:13px;font-weight:700;color:#D32F2F">${fmtMoney(l.cost)}</div>`:''}
+        ${l.memo?`<div style="font-size:11px;color:var(--tx3)">${l.memo}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+        <span style="font-size:12px;color:var(--tx2)">${l.mechanic||''}</span>
+        <button class="bsm" onclick="openLMaintModal('${v.id}','${l.id}')">수정</button>
+        <button class="bsm" style="color:#c62828" onclick="delLMaint('${l.id}')">삭제</button>
+      </div>
+    </div>`;
+  }).join('')}`;
+}
+
+function openLMaintModal(preVehicleId,editLogId){
+  const log=editLogId?S.leaseMaintLogs.find(x=>x.id===editLogId):null;
+  window._lItems=log&&log.items?JSON.parse(JSON.stringify(log.items)):[];
+  const vOpts=S.leaseVehicles.map(v=>'<option value="'+v.id+'"'+((preVehicleId||log?.vehicleId)===v.id?' selected':'')+'>'+v.plateNo+' | '+v.model+'</option>').join('');
+  const lmIdStr=editLogId||'';const saveBtn='<button class="bp" style="flex:1" onclick="saveLMaint(\''+lmIdStr+'\')"><i class="ti ti-check"></i> '+(log?'수정완료':'정비 등록')+'</button>';
+  OM(mhdr(log?'리스 정비 수정':'리스 차량 정비 등록')+
+    '<div class="fg"><label class="fl">차량 선택 ★</label><select class="fi" id="lm-v">'+vOpts+'</select></div>'+
+    '<div class="fr">'+fi('lm-date','정비일','','date',log?log.date:new Date().toISOString().slice(0,10),true)+fi('lm-km','정비 시 키로수','','number',log?log.mileage:'')+'</div>'+
+    '<div class="fg"><label class="fl">정비 항목</label>'+mcHTML('lmaint')+'</div>'+
+    '<div class="fr">'+fi('lm-cost','정비 비용 (원)','','number',log?log.cost:'')+getMechanicField('lm-mec',log?log.mechanic:'')+'</div>'+
+    fi('lm-memo','메모','',null,log?log.memo||'':'')+
+    '<div style="display:flex;gap:8px">'+saveBtn+'<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
+  );
+  setTimeout(()=>{if(window._lItems&&window._lItems.length)rendMD('lmaint',window._lItems);},50);
+}
+
+async function saveLMaint(editLogId){
+  const vid=document.getElementById('lm-v')?.value;
+  const date=document.getElementById('lm-date').value;
+  if(!vid||!date){alert('차량과 날짜를 입력하세요.');return;}
+  const fItems=(window._lItems||[]).filter(x=>x.name);
+  const v=S.leaseVehicles.find(x=>x.id===vid)||{};
+  const obj={
+    vehicleId:vid,plateNo:v.plateNo||'',model:v.model||'',
+    date,
+    mileage:parseInt(document.getElementById('lm-km').value)||0,
+    items:fItems,
+    cost:parseInt(document.getElementById('lm-cost').value)||0,
+    mechanic:getMechanicValue('lm-mec'),
+    memo:document.getElementById('lm-memo').value
+  };
+  if(editLogId){
+    const l=S.leaseMaintLogs.find(x=>x.id===editLogId);if(l)Object.assign(l,obj);
+    await dbUpdate('lease_maint',editLogId,toSnake(obj));
+  }else{
+    const nl={id:newId(S.leaseMaintLogs,'LM'),...obj};
+    S.leaseMaintLogs.push(nl);
+    await dbInsert('lease_maint',toSnake(nl));
+  }
+  CM();ren();
+}
+
+async function delLMaint(id){
+  if(!confirm('정비 기록을 삭제하시겠습니까?'))return;
+  await dbDelete('lease_maint',id);
+  S.leaseMaintLogs=S.leaseMaintLogs.filter(x=>x.id!==id);ren();
+}
+
+
+// ══════════════════════════════════════════════
+// ── 리스 관리 ──
+// ══════════════════════════════════════════════
+
+// ── 리스 관리 페이지 ──
+function pgLease(){
+  let data=[...S.leases];
+  const q=S._leaseQ||'';
+  if(q) data=data.filter(r=>[r.customer,r.phone,r.plateNo,r.model,r.id].some(v=>(v||'').includes(q)));
+  data=data.sort((a,b)=>(b.startDate||'').localeCompare(a.startDate||''));
+
+  const total_active=data.filter(r=>r.status==='리스중').length;
+  const total_end=data.filter(r=>r.status==='만료').length;
+  const today=new Date().toISOString().slice(0,10);
+
+  return`
+  <div class="sh"><span class="st">리스 관리</span>
+    <button class="bp" onclick="openLeaseModal()"><i class="ti ti-plus"></i> 리스 접수</button>
+  </div>
+  ${searchBar('고객명, 차량번호, 연락처 검색...','_leaseQ','','','')}
+  <div class="sgrid" style="margin-bottom:16px">
+    <div class="sc"><div class="sl">리스중</div><div class="sv" style="color:#1565c0">${total_active}</div></div>
+    <div class="sc"><div class="sl">만료</div><div class="sv" style="color:var(--tx3)">${total_end}</div></div>
+    <div class="sc"><div class="sl">전체</div><div class="sv">${data.length}</div></div>
+  </div>
+  ${data.length===0?`<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:12px">📋</div><div>등록된 리스 계약이 없습니다</div></div>`:''}
+  ${data.map(r=>{
+    const v=S.leaseVehicles.find(x=>x.id===r.vehicleId)||{};
+    const endDate=r.endDate||'';
+    let daysLeft='';
+    if(endDate&&endDate!=='미정'&&r.status==='리스중'){
+      const diff=Math.ceil((new Date(endDate)-new Date(today))/(1000*60*60*24));
+      if(diff<0) daysLeft=`<span style="background:#c62828;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">⚠ 만기 ${Math.abs(diff)}일 초과</span>`;
+      else if(diff<=30) daysLeft=`<span style="background:#e65100;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">⚡ 만기 D-${diff}</span>`;
+    }
+    return`<div class="irow">
+      <div style="width:44px;height:44px;background:var(--pl);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🚗</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <span class="plate">${r.plateNo||v.plateNo||'-'}</span>
+          <span style="font-size:13px;font-weight:600;color:var(--tx2)">${r.model||v.model||'-'}</span>
+          ${statusBadge(r.status||'리스중')}
+          ${r.leaseType?badge('bpu',r.leaseType):''}
+          ${daysLeft}
+        </div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:3px">${r.customer||'-'} <span style="font-size:12px;font-weight:400;color:var(--tx2)">${r.phone||''}</span></div>
+        <div style="font-size:12px;color:var(--tx2)">계약: ${r.startDate||'?'} ~ ${r.endDate||'미정'}</div>
+        <div style="font-size:12px;color:var(--tx2)">월 리스료: <strong>${r.monthlyFee?fmtMoney(r.monthlyFee):'미정'}</strong>${r.deposit?` | 보증금: ${fmtMoney(r.deposit)}`:''}</div>
+        ${r.memo?`<div style="font-size:11px;color:var(--tx3);margin-top:2px">📝 ${r.memo}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+        <button class="bsm" onclick="event.stopPropagation();openLeaseModal('${r.id}')">수정</button>
+        <button class="bsm" style="color:#c62828" onclick="event.stopPropagation();delLease('${r.id}')">삭제</button>
+      </div>
+    </div>`;
+  }).join('')}`;
+}
+
+function openLeaseModal(editId){
+  const r=editId?S.leases.find(x=>x.id===editId):null;
+  const vOpts=S.leaseVehicles.map(v=>'<option value="'+v.id+'"'+(r&&v.id===r.vehicleId?' selected':'')+'>'+v.plateNo+' | '+v.model+'</option>').join('');
+  const noV=!S.leaseVehicles.length?'<option value="">— 리스 차량 없음 (먼저 등록) —</option>':'';
+  const typeOpts=['운용리스','금융리스','장기렌탈','기타'].map(t=>'<option value="'+t+'"'+(r&&r.leaseType===t?' selected':'')+'>'+t+'</option>').join('');
+  const statusOpts=['리스중','만료','해지'].map(s=>'<option value="'+s+'"'+(r&&r.status===s?' selected':'')+'>'+s+'</option>').join('');
+  const saveBtn='<button class="bp" style="flex:1" onclick="saveLease(\''+( editId||'')+'\')"><i class="ti ti-check"></i> '+(r?'수정완료':'접수하기')+'</button>';
+  OM(mhdr(r?'리스 수정':'리스 접수')+
+    '<div class="fr">'+fi('ls-customer','고객명 ★','',null,r?r.customer||'':'')+fi('ls-phone','연락처','010-0000-0000',null,r?r.phone||'':'')+'</div>'+
+    '<div class="fg"><label class="fl">리스 차량</label><select class="fi" id="ls-vehicle">'+noV+vOpts+'</select></div>'+
+    '<div class="fg"><label class="fl">리스 유형</label><select class="fi" id="ls-type">'+typeOpts+'</select></div>'+
+    '<div class="fr">'+fi('ls-start','계약 시작일','','date',r?r.startDate||'':'')+fi('ls-end','계약 종료일','','date',r?r.endDate||'':'')+'</div>'+
+    '<div class="fr">'+fi('ls-fee','월 리스료 (원)','','number',r?r.monthlyFee||'':'')+fi('ls-dep','보증금 (원)','','number',r?r.deposit||'':'')+'</div>'+
+    '<div class="fg"><label class="fl">계약 상태</label><select class="fi" id="ls-status">'+statusOpts+'</select></div>'+
+    fi('ls-memo','메모','',null,r?r.memo||'':'')+
+    '<div style="display:flex;gap:8px">'+saveBtn+'<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
+  );
+}
+
+async function saveLease(editId){
+  const customer=document.getElementById('ls-customer').value.trim();
+  if(!customer){alert('고객명을 입력하세요.');return;}
+  const vid=document.getElementById('ls-vehicle')?.value||'';
+  const v=S.leaseVehicles.find(x=>x.id===vid)||{};
+  const obj={
+    customer,
+    phone:document.getElementById('ls-phone').value,
+    vehicleId:vid,
+    plateNo:v.plateNo||'',
+    model:v.model||'',
+    leaseType:document.getElementById('ls-type').value,
+    startDate:document.getElementById('ls-start').value,
+    endDate:document.getElementById('ls-end').value||'미정',
+    monthlyFee:parseInt(document.getElementById('ls-fee').value)||0,
+    deposit:parseInt(document.getElementById('ls-dep').value)||0,
+    status:document.getElementById('ls-status').value,
+    memo:document.getElementById('ls-memo').value
+  };
+  if(editId){
+    const r=S.leases.find(x=>x.id===editId);if(r)Object.assign(r,obj);
+    await dbUpdate('leases',editId,toSnake(obj));
+  }else{
+    const newR={id:newId(S.leases,'LS'),createdAt:new Date().toISOString().slice(0,10),...obj};
+    S.leases.unshift(newR);
+    await dbInsert('leases',toSnake(newR));
+  }
+  CM();ren();
+}
+
+async function delLease(id){
+  if(!confirm('리스 계약을 삭제하시겠습니까?'))return;
+  await dbDelete('leases',id);
+  S.leases=S.leases.filter(x=>x.id!==id);
+  ren();
+}
+
+// ── 리스 차량 페이지 ──
+function pgLVehicles(){
+  let data=[...S.leaseVehicles];
+  const q=S._lvQ||'';
+  if(q) data=data.filter(v=>[v.plateNo,v.model,v.color,v.owner].some(x=>(x||'').includes(q)));
+
+  return`
+  <div class="sh"><span class="st">리스 차량 <span style="font-size:13px;font-weight:400;color:var(--tx3)">${data.length}대</span></span>
+    <button class="bp" onclick="openLVehicleModal()"><i class="ti ti-plus"></i> 차량 추가</button>
+  </div>
+  ${searchBar('차량번호, 모델명 검색...','_lvQ','','','')}
+  ${data.length===0?`<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:12px">🚗</div><div>등록된 리스 차량이 없습니다</div></div>`:''}
+  ${data.map(v=>{
+    const activeLease=S.leases.find(l=>l.vehicleId===v.id&&l.status==='리스중');
+    return`<div class="irow">
+      <div style="width:44px;height:44px;background:var(--pl);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🚗</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <span class="plate">${v.plateNo}</span>
+          <span style="font-size:13px;font-weight:600;color:var(--tx2)">${v.model}</span>
+          ${activeLease?badge('bb','리스중'):badge('bgr','가용')}
+        </div>
+        <div style="font-size:12px;color:var(--tx2)">${v.year||''}년 · ${v.color||''} · ${v.mileage?v.mileage.toLocaleString()+'km':'-'}</div>
+        ${activeLease?`<div style="font-size:12px;color:#1565c0">👤 ${activeLease.customer} (${activeLease.startDate}~${activeLease.endDate})</div>`:''}
+        ${v.insurer?`<div style="font-size:11px;color:var(--tx2)">🛡 ${v.insurer} · ${v.insuranceType||''}</div>`:''}
+        ${v.insuranceEnd?insBadge(v.insuranceEnd):''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+        <button class="bsm" onclick="event.stopPropagation();openLVehicleModal('${v.id}')">수정</button>
+        <button class="bsm" style="color:#c62828" onclick="event.stopPropagation();delLVehicle('${v.id}')">삭제</button>
+      </div>
+    </div>`;
+  }).join('')}`;
+}
+
+function openLVehicleModal(editId){
+  const v=editId?S.leaseVehicles.find(x=>x.id===editId):null;
+  const insComp=(!v||v.insuranceType==='종합보험')?' on':'';
+  const insLiab=(v&&v.insuranceType==='책임보험')?' on':'';
+  window._lvInsType=v?v.insuranceType||'종합보험':'종합보험';
+  const saveBtn='<button class="bp" style="flex:1" onclick="saveLVehicle(\''+( editId||'')+'\')"><i class="ti ti-check"></i> '+(v?'수정완료':'추가하기')+'</button>';
+  OM(mhdr(v?'리스 차량 수정':'리스 차량 추가')+
+    '<div class="fr">'+fi('lv-model','차량 모델 ★','현대 아반떼',null,v?v.model||'':'')+fi('lv-plate','차량번호 ★','12가3456',null,v?v.plateNo||'':'')+'</div>'+
+    '<div class="fr">'+fi('lv-year','연식','2024','number',v?v.year||'':'')+fi('lv-color','색상','화이트',null,v?v.color||'':'')+'</div>'+
+    '<div class="fr">'+fi('lv-owner','소유자/법인','',null,v?v.owner||'':'')+fi('lv-km','현재 키로수','','number',v?v.mileage||'':'')+'</div>'+
+    '<div class="fg"><label class="fl">보험 종류</label><div class="tg">'+
+    '<div class="tgb'+insComp+'" id="lv-ins-comp" onclick="selLvIns(1)">🛡 종합보험</div>'+
+    '<div class="tgb'+insLiab+'" id="lv-ins-liab" onclick="selLvIns(0)">📋 책임보험</div>'+
+    '</div></div>'+
+    '<div class="fr">'+fi('lv-insurer','보험사','',null,v?v.insurer||'':'')+fi('lv-insured','피보험자','',null,v?v.insured||'':'')+'</div>'+
+    '<div class="fr">'+fi('lv-ins-start','보험 시작일','','date',v?v.insuranceStart||'':'')+fi('lv-ins-end','보험 만기일','','date',v?v.insuranceEnd||'':'')+'</div>'+
+    '<div style="display:flex;gap:8px">'+saveBtn+'<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
+  );
+}
+function selLvIns(isComp){
+  window._lvInsType=isComp?'종합보험':'책임보험';
+  document.getElementById('lv-ins-comp').className='tgb'+(isComp?' on':'');
+  document.getElementById('lv-ins-liab').className='tgb'+(isComp?'':' on');
+}
+
+async function saveLVehicle(editId){
+  const model=document.getElementById('lv-model').value.trim();
+  const plate=document.getElementById('lv-plate').value.trim();
+  if(!model||!plate){alert('차량 모델과 차량번호를 입력하세요.');return;}
+  const obj={model,plateNo:plate,
+    year:parseInt(document.getElementById('lv-year').value)||0,
+    color:document.getElementById('lv-color').value,
+    owner:document.getElementById('lv-owner').value,
+    mileage:parseInt(document.getElementById('lv-km').value)||0,
+    insuranceType:window._lvInsType||'종합보험',
+    insurer:document.getElementById('lv-insurer').value,
+    insured:document.getElementById('lv-insured').value,
+    insuranceStart:document.getElementById('lv-ins-start').value,
+    insuranceEnd:document.getElementById('lv-ins-end').value,
+  };
+  if(editId){
+    const v=S.leaseVehicles.find(x=>x.id===editId);if(v)Object.assign(v,obj);
+    await dbUpdate('lease_vehicles',editId,toSnake(obj));
+  }else{
+    const newV={id:newId(S.leaseVehicles,'LV'),...obj};
+    S.leaseVehicles.push(newV);
+    await dbInsert('lease_vehicles',toSnake(newV));
+  }
+  CM();ren();
+}
+
+async function delLVehicle(id){
+  if(!confirm('리스 차량을 삭제하시겠습니까?'))return;
+  await dbDelete('lease_vehicles',id);
+  S.leaseVehicles=S.leaseVehicles.filter(x=>x.id!==id);
+  ren();
+}
+
+// ── 리스 차량 정비 페이지 ──
+function pgLMaint(){
+  const sel=S._lmV||'all';
+  const period=S._lmPeriod||'all';
+  const viewDate=S._lmViewDate||new Date().toISOString().slice(0,10);
+  const q=S._lmQ||'';
+  let dateFrom='',dateTo='';
+  if(period==='daily'){dateFrom=viewDate;dateTo=viewDate;}
+  else if(period==='weekly'){
+    const d=new Date(viewDate);const day=d.getDay();
+    const mon=new Date(d);mon.setDate(d.getDate()-(day===0?6:day-1));
+    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+    dateFrom=mon.toISOString().slice(0,10);dateTo=sun.toISOString().slice(0,10);
+  }else if(period==='monthly'){
+    const ym=viewDate.slice(0,7);dateFrom=ym+'-01';dateTo=ym+'-31';
+  }
+  let logs=[...S.leaseMaintLogs];
+  if(sel!=='all') logs=logs.filter(m=>m.vehicleId===sel);
+  if(dateFrom&&dateTo) logs=logs.filter(l=>l.date>=dateFrom&&l.date<=dateTo);
+  if(q) logs=logs.filter(l=>[l.customer,l.phone].some(v=>(v||'').includes(q))||(S.leaseVehicles.find(v=>v.id===l.vehicleId)||{}).plateNo?.includes(q));
+  logs=logs.sort((a,b)=>b.date.localeCompare(a.date));
+
+  const vOpts='<option value="all">전체 차량</option>'+S.leaseVehicles.map(v=>`<option value="${v.id}" ${sel===v.id?'selected':''}>${v.plateNo} | ${v.model}</option>`).join('');
+  const periodBtns=['all','daily','weekly','monthly'].map(p=>`<button onclick="S._lmPeriod='${p}';ren()" style="flex-shrink:0;padding:6px 14px;border:none;border-right:1px solid var(--bd2);background:${period===p?'#D32F2F':'transparent'};color:${period===p?'#fff':'var(--tx2)'};cursor:pointer;font-size:12px;font-weight:600">${p==='all'?'전체':p==='daily'?'일별':p==='weekly'?'주간별':'월별'}</button>`).join('');
+
+  return`
+  <div class="sh"><span class="st">리스 차량 정비 <span style="font-size:13px;font-weight:400;color:var(--tx3)">${logs.length}건</span></span>
+    <button class="bp" onclick="openLMaintModal()"><i class="ti ti-plus"></i> 정비 등록</button>
+  </div>
+  <div class="card" style="padding:10px;margin-bottom:12px">
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+      <select class="fi" style="height:36px;margin-bottom:0;flex:1;min-width:120px" onchange="S._lmV=this.value;ren()">${vOpts}</select>
+      <input class="fi" placeholder="고객명/차량번호 검색" value="${q}" onkeydown="if(event.key==='Enter'){S._lmQ=this.value;ren()}" style="height:36px;margin-bottom:0;flex:1;min-width:120px">
+    </div>
+    <div style="display:flex;border:1px solid var(--bd2);border-radius:8px;overflow:hidden">${periodBtns}</div>
+  </div>
+  ${logs.length===0?`<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:12px">🔧</div><div>정비 이력이 없습니다</div></div>`:''}
+  ${logs.map(log=>{
+    const v=S.leaseVehicles.find(x=>x.id===log.vehicleId)||{};
+    const lease=S.leases.find(l=>l.vehicleId===log.vehicleId&&l.status==='리스중')||{};
+    return`<div class="irow">
+      <div style="width:44px;height:44px;background:var(--pl);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔧</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+          <span class="plate">${v.plateNo||'-'}</span>
+          <span style="font-size:13px;font-weight:600;color:var(--tx2)">${v.model||'-'}</span>
+          <span style="font-size:12px;color:var(--tx3)">${log.date}</span>
+        </div>
+        ${lease.customer?`<div style="font-size:12px;color:var(--tx2)">👤 ${lease.customer}</div>`:''}
+        <div style="font-size:12px;color:var(--tx2)">${(log.items||[]).map(i=>i.name).join(', ')||'정비 항목 없음'}</div>
+        ${log.cost?`<div style="font-size:12px;color:var(--tx2)">💰 ${fmtMoney(log.cost)}</div>`:''}
+        ${log.mechanic?`<div style="font-size:11px;color:var(--tx3)">담당: ${log.mechanic}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+        <button class="bsm" onclick="event.stopPropagation();openLMaintModal('${log.id}')">수정</button>
+        <button class="bsm" style="color:#c62828" onclick="event.stopPropagation();delLMaint('${log.id}')">삭제</button>
+      </div>
+    </div>`;
+  }).join('')}`;
+}
+
+function openLMaintModal(editId){
+  const log=editId?S.leaseMaintLogs.find(x=>x.id===editId):null;
+  window._lmItems=log&&log.items?JSON.parse(JSON.stringify(log.items)):[];
+  const vOpts=S.leaseVehicles.map(v=>`<option value="${v.id}" ${log&&v.id===log.vehicleId?'selected':''}>${v.plateNo} | ${v.model}</option>`).join('');
+  OM(mhdr(log?'리스 정비 수정':'리스 차량 정비 등록')+
+    `<div class="fg"><label class="fl">차량 선택 ★</label><select class="fi" id="lm-v">${vOpts}</select></div>`+
+    fi('lm-date','정비일','','date',log?log.date:new Date().toISOString().slice(0,10),true)+
+    fi('lm-km','정비 시 키로수','','number',log?log.mileage||'':'')+
+    mcHTML('lm')+
+    getMechanicField('lm-mec', log?log.mechanic:'')+
+    fi('lm-cost','정비 비용','','number',log?log.cost||'':'')+
+    fi('lm-memo','메모','',null,log?log.memo||'':'')+
+    '<div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveLMaint(\''+( editId||'')+'\')"><i class="ti ti-check"></i> '+(log?'수정완료':'등록하기')+'</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
+  );
+  setTimeout(()=>{
+    if(window._lmItems&&window._lmItems.length) rendMD('lm',window._lmItems);
+    selDT('personal');
+  },50);
+}
+
+async function saveLMaint(editId){
+  const vid=document.getElementById('lm-v')?.value;
+  const date=document.getElementById('lm-date')?.value;
+  if(!vid||!date){alert('차량과 날짜를 선택하세요.');return;}
+  const fItems=window._lmItems||[];
+  const obj={vehicleId:vid,date,
+    mileage:parseInt(document.getElementById('lm-km')?.value)||0,
+    items:fItems,
+    mechanic:getMechanicValue('lm-mec'),
+    cost:parseInt(document.getElementById('lm-cost')?.value)||0,
+    memo:document.getElementById('lm-memo')?.value||''
+  };
+  if(editId){
+    const m=S.leaseMaintLogs.find(x=>x.id===editId);if(m)Object.assign(m,obj);
+    await dbUpdate('lease_maint_logs',editId,toSnake(obj));
+  }else{
+    const newM={id:newId(S.leaseMaintLogs,'LM'),createdAt:new Date().toISOString().slice(0,10),...obj};
+    S.leaseMaintLogs.unshift(newM);
+    await dbInsert('lease_maint_logs',toSnake(newM));
+  }
+  CM();ren();
+}
+
+async function delLMaint(id){
+  if(!confirm('정비 기록을 삭제하시겠습니까?'))return;
+  await dbDelete('lease_maint_logs',id);
+  S.leaseMaintLogs=S.leaseMaintLogs.filter(x=>x.id!==id);
+  ren();
+}
+
 function topAction(){
   const m={
     dashboard:openRentModal,worklog:openAddWorkModal,
@@ -3207,7 +3883,7 @@ function pgSettings(){
     {id:'rbilling',label:'요금/결제'},{id:'rmaint',label:'렌트 차량 정비'},
     {id:'repair',label:'일반 수리'},{id:'accident',label:'사고 수리'},{id:'unpaid',label:'미수금'},
     {id:'ivehicle',label:'차량 재고'},{id:'iparts',label:'부품 재고'},{id:'purchase',label:'발주/입고'},
-    {id:'worklog',label:'작업일보'},{id:'idcards',label:'신분증 관리'},{id:'auditlog',label:'작업 로그'},{id:'finance',label:'매출 분석'},{id:'ai',label:'AI 어시스턴트'}
+    {id:'worklog',label:'작업일보'},{id:'lease',label:'리스 관리'},{id:'lvehicles',label:'리스 차량'},{id:'lmaint',label:'리스 차량 정비'},{id:'idcards',label:'신분증 관리'},{id:'auditlog',label:'작업 로그'},{id:'lease',label:'리스 관리'},{id:'lvehicles',label:'리스 차량'},{id:'lmaint',label:'리스 차량 정비'},{id:'finance',label:'매출 분석'},{id:'ai',label:'AI 어시스턴트'}
   ];
   return`
   <div class="sgrid" style="margin-bottom:20px">
@@ -3269,7 +3945,7 @@ function openAddUserModal(editId){
     {id:'rbilling',label:'요금/결제'},{id:'rmaint',label:'렌트 차량 정비'},
     {id:'repair',label:'일반 수리'},{id:'accident',label:'사고 수리'},{id:'unpaid',label:'미수금'},
     {id:'ivehicle',label:'차량 재고'},{id:'iparts',label:'부품 재고'},{id:'purchase',label:'발주/입고'},
-    {id:'worklog',label:'작업일보'},{id:'idcards',label:'신분증 관리'},{id:'auditlog',label:'작업 로그'},{id:'finance',label:'매출 분석'},{id:'ai',label:'AI 어시스턴트'}
+    {id:'worklog',label:'작업일보'},{id:'lease',label:'리스 관리'},{id:'lvehicles',label:'리스 차량'},{id:'lmaint',label:'리스 차량 정비'},{id:'idcards',label:'신분증 관리'},{id:'auditlog',label:'작업 로그'},{id:'lease',label:'리스 관리'},{id:'lvehicles',label:'리스 차량'},{id:'lmaint',label:'리스 차량 정비'},{id:'finance',label:'매출 분석'},{id:'ai',label:'AI 어시스턴트'}
   ];
   const perms=['can_add','can_edit','can_delete'];
   const permLabels={can_add:'추가',can_edit:'수정',can_delete:'삭제'};
