@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS 통합 ERP v2</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -3731,44 +3731,139 @@ function pgLBilling(){
 function openLVehicleDetail(id){
   const v=S.leaseVehicles.find(x=>x.id===id);if(!v)return;
   const activeLease=S.leases.find(l=>l.vehicleId===id&&l.status==='리스중');
+  const allLeases=S.leases.filter(l=>l.vehicleId===id).sort((a,b)=>(b.startDate||'').localeCompare(a.startDate||''));
   const logs=S.leaseMaintLogs.filter(m=>m.vehicleId===id).sort((a,b)=>b.date.localeCompare(a.date));
-  OM(`${mhdr(v.plateNo+' 상세')}
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-    <div style="background:var(--bg3);border-radius:8px;padding:10px">
-      <div style="font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:700">차량 정보</div>
-      <div style="font-weight:700">${v.model}</div>
-      <div style="font-size:12px;color:var(--tx2)">${v.year||''}년 · ${v.color||''}</div>
-      <div style="font-size:12px;color:var(--tx2)">${v.mileage?v.mileage.toLocaleString()+'km':'-'}</div>
-      ${v.owner?`<div style="font-size:12px;color:var(--tx2)">소유: ${v.owner}</div>`:''}
-      ${v.minAge?badge('bt',v.minAge):''}
+  const totalMaintCost=logs.reduce((a,b)=>a+(b.cost||0),0);
+
+  // 보험 만기 D-day 계산
+  let insStatus='';
+  if(v.insuranceEnd){
+    const diff=Math.ceil((new Date(v.insuranceEnd)-new Date())/86400000);
+    if(diff<0) insStatus=`<span style="font-size:11px;color:#c62828;font-weight:700">⚠ 만기 ${Math.abs(diff)}일 경과</span>`;
+    else if(diff<=30) insStatus=`<span style="font-size:11px;color:#e65100;font-weight:700">⏰ 만기 D-${diff}</span>`;
+    else insStatus=`<span style="font-size:11px;color:#2e7d32;font-weight:700">✅ 유효 (D-${diff})</span>`;
+  }
+
+  OM(`${mhdr(v.plateNo+' · '+v.model+' 상세')}
+
+  <!-- 차량 기본 정보 -->
+  <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:12px">
+    <div style="font-size:11px;color:var(--tx2);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px">🚗 차량 정보</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+      <div><span style="color:var(--tx3);font-size:11px">차량번호</span><div style="font-weight:800;font-size:15px;letter-spacing:1px;margin-top:2px">${v.plateNo}</div></div>
+      <div><span style="color:var(--tx3);font-size:11px">모델</span><div style="font-weight:700;margin-top:2px">${v.model}</div></div>
+      <div><span style="color:var(--tx3);font-size:11px">연식</span><div style="font-weight:600;margin-top:2px">${v.year||'-'}년</div></div>
+      <div><span style="color:var(--tx3);font-size:11px">색상</span><div style="font-weight:600;margin-top:2px">${v.color||'-'}</div></div>
+      <div><span style="color:var(--tx3);font-size:11px">현재 키로수</span><div style="font-weight:600;margin-top:2px">${v.mileage?v.mileage.toLocaleString()+'km':'-'}</div></div>
+      <div><span style="color:var(--tx3);font-size:11px">소유자/법인</span><div style="font-weight:600;margin-top:2px">${v.owner||'-'}</div></div>
     </div>
-    <div style="background:var(--bg3);border-radius:8px;padding:10px">
-      <div style="font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:700">보험 정보</div>
-      <div style="font-weight:700">${v.insurer||'-'}</div>
-      ${v.insured?`<div style="font-size:12px;color:var(--tx2)">피보험자: ${v.insured}</div>`:''}
-      ${badge(v.insuranceType==='종합보험'?'bb':'ba',v.insuranceType||'책임보험')}
-      ${v.insuranceEnd?`<div style="margin-top:4px">${insBadge(v.insuranceEnd)}</div><div style="font-size:11px;color:var(--tx2)">${v.insuranceStart||'?'} ~ ${v.insuranceEnd}</div>`:''}
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+      ${activeLease?badge('bb','리스중'):badge('bgr','가용')}
+      ${badge('bt',v.minAge||'전 연령')}
+      ${v.smartKey?badge('bpu','🔑 스마트키'):''}
     </div>
   </div>
-  ${activeLease?`<div style="background:#e3f2fd;border-radius:8px;padding:10px;margin-bottom:14px">
-    <div style="font-size:11px;color:#1565c0;font-weight:700;margin-bottom:4px">현재 리스 계약</div>
-    <div style="font-size:13px;font-weight:700">${activeLease.customer} <span style="font-size:12px;font-weight:400">${activeLease.phone}</span></div>
-    <div style="font-size:12px;color:var(--tx2)">${activeLease.startDate} ~ ${activeLease.endDate}</div>
-    <div style="font-size:12px;color:var(--tx2)">월 ${activeLease.monthlyFee?fmtMoney(activeLease.monthlyFee):'-'} ${activeLease.includeMaint?badge('bg','정비포함'):badge('ba','정비미포함')}</div>
+
+  <!-- 보험 정보 -->
+  <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:12px">
+    <div style="font-size:11px;color:var(--tx2);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px">🛡 보험 정보</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+      <div><span style="color:var(--tx3);font-size:11px">보험 종류</span><div style="margin-top:4px">${badge(v.insuranceType==='종합보험'?'bb':'ba',v.insuranceType||'책임보험')}</div></div>
+      <div><span style="color:var(--tx3);font-size:11px">보험사</span><div style="font-weight:600;margin-top:2px">${v.insurer||'-'}</div></div>
+      <div><span style="color:var(--tx3);font-size:11px">피보험자</span><div style="font-weight:600;margin-top:2px">${v.insured||'-'}</div></div>
+      <div><span style="color:var(--tx3);font-size:11px">보험 상태</span><div style="margin-top:4px">${insStatus||'-'}</div></div>
+      <div><span style="color:var(--tx3);font-size:11px">보험 시작일</span><div style="font-weight:600;margin-top:2px">${v.insuranceStart||'-'}</div></div>
+      <div><span style="color:var(--tx3);font-size:11px">보험 만기일</span><div style="font-weight:600;margin-top:2px;color:${v.insuranceEnd&&Math.ceil((new Date(v.insuranceEnd)-new Date())/86400000)<=30?'#c62828':'inherit'}">${v.insuranceEnd||'-'}</div></div>
+    </div>
+  </div>
+
+  <!-- 스마트키 정보 -->
+  ${v.smartKey?`<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:12px">
+    <div style="font-size:11px;color:var(--tx2);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px">🔑 스마트키 정보</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+      <div><span style="color:var(--tx3);font-size:11px">PIN 번호</span><div style="font-weight:700;font-size:15px;letter-spacing:2px;margin-top:2px;font-family:monospace">${v.smartKeyPin||'-'}</div></div>
+    </div>
+    ${v.smartKeyPhotos&&v.smartKeyPhotos.length?`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${v.smartKeyPhotos.filter(u=>u).map(u=>`<img src="${u}" onclick="openPhotoViewer('${u}')" style="width:70px;height:70px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--bd)">`).join('')}</div>`:''}
   </div>`:''}
-  <div style="font-size:13px;font-weight:700;margin-bottom:8px">정비 이력 (${logs.length}건)</div>
-  <div style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
-    ${logs.length===0?'<div style="text-align:center;padding:16px;color:var(--tx3)">정비 이력 없음</div>':
-    logs.slice(0,5).map(log=>`<div style="border:1px solid var(--bd);border-radius:8px;padding:8px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:12px;font-weight:700">${log.date}</span>
-        <span style="font-size:12px;color:var(--tx2)">${log.cost?fmtMoney(log.cost):''}</span>
+
+  <!-- 현재 리스 계약 -->
+  ${activeLease?`<div style="background:#e3f2fd;border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid #bbdefb">
+    <div style="font-size:11px;color:#1565c0;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px">📋 현재 리스 계약 (${activeLease.id||''})</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+      <div><span style="color:#5c8eb0;font-size:11px">고객명</span><div style="font-weight:700;margin-top:2px">${activeLease.customer}</div></div>
+      <div><span style="color:#5c8eb0;font-size:11px">연락처</span><div style="font-weight:600;margin-top:2px">${activeLease.phone||'-'}</div></div>
+      <div><span style="color:#5c8eb0;font-size:11px">리스 유형</span><div style="margin-top:4px">${badge('bpu',activeLease.leaseType||'신차리스')}</div></div>
+      <div><span style="color:#5c8eb0;font-size:11px">대행사</span><div style="font-weight:600;margin-top:2px">${activeLease.deliveryAgency||'-'}</div></div>
+      <div><span style="color:#5c8eb0;font-size:11px">계약 시작일</span><div style="font-weight:600;margin-top:2px">${activeLease.startDate||'-'}</div></div>
+      <div><span style="color:#5c8eb0;font-size:11px">계약 종료일</span><div style="font-weight:600;margin-top:2px">${activeLease.endDate||'미정'}</div></div>
+      <div><span style="color:#5c8eb0;font-size:11px">월 요금 (고객청구)</span><div style="font-weight:800;color:#1565c0;margin-top:2px">${activeLease.custBillAmount?fmtMoney(activeLease.custBillAmount):'-'}</div></div>
+      <div><span style="color:#5c8eb0;font-size:11px">월 요금 (리스사 입금)</span><div style="font-weight:700;margin-top:2px">${activeLease.leaseInAmount?fmtMoney(activeLease.leaseInAmount):'-'}</div></div>
+      <div><span style="color:#5c8eb0;font-size:11px">보증금</span><div style="font-weight:600;margin-top:2px">${activeLease.deposit?fmtMoney(activeLease.deposit):'-'}</div></div>
+      <div><span style="color:#5c8eb0;font-size:11px">출고 키로수</span><div style="font-weight:600;margin-top:2px">${activeLease.outMileage?activeLease.outMileage.toLocaleString()+'km':'-'}</div></div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+      ${statusBadge(activeLease.status||'리스중')}
+      ${activeLease.includeMaint?badge('bg','🔧 정비포함'):badge('ba','정비미포함')}
+    </div>
+    ${activeLease.memo?`<div style="margin-top:10px;background:rgba(255,255,255,0.6);border-radius:6px;padding:8px;font-size:12px;color:#1565c0">📝 ${activeLease.memo}</div>`:''}
+    ${activeLease.idCardData&&activeLease.idCardData.name?`<div style="margin-top:10px;border-top:1px solid #bbdefb;padding-top:10px">
+      <div style="font-size:11px;color:#5c8eb0;font-weight:700;margin-bottom:6px">🪪 신분증 정보</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">
+        ${activeLease.idCardData.rrn?`<div><span style="color:#5c8eb0">주민번호</span><div style="font-weight:600">${activeLease.idCardData.rrn}</div></div>`:''}
+        ${activeLease.idCardData.licenseNo?`<div><span style="color:#5c8eb0">면허번호</span><div style="font-weight:600">${activeLease.idCardData.licenseNo}</div></div>`:''}
+        ${activeLease.idCardData.address?`<div style="grid-column:1/-1"><span style="color:#5c8eb0">주소</span><div style="font-weight:600">${activeLease.idCardData.address}</div></div>`:''}
       </div>
-      <div style="font-size:11px;color:var(--tx2)">${(log.items||[]).map(i=>i.name).join(', ')||'-'}</div>
-    </div>`).join('')}
+      ${activeLease.idCardPhoto?`<div style="margin-top:6px"><img src="${activeLease.idCardPhoto}" onclick="openPhotoViewer('${activeLease.idCardPhoto}')" style="height:60px;border-radius:6px;cursor:pointer;border:1px solid var(--bd)"></div>`:''}
+    </div>`:''}
+  </div>`:''}
+
+  <!-- 차량 사진 -->
+  ${v.photos&&v.photos.filter(u=>u).length?`<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:12px">
+    <div style="font-size:11px;color:var(--tx2);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px">📷 차량 사진</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${v.photos.filter(u=>u).map(u=>`<img src="${u}" onclick="openPhotoViewer('${u}')" style="width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--bd)">`).join('')}</div>
+  </div>`:''}
+
+  <!-- 계약 이력 -->
+  ${allLeases.length>1?`<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:12px">
+    <div style="font-size:11px;color:var(--tx2);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px">📁 전체 계약 이력 (${allLeases.length}건)</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${allLeases.map(l=>`<div style="background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-weight:700;font-size:13px">${l.customer}</span>
+            ${statusBadge(l.status||'리스중')}
+            ${badge('bpu',l.leaseType||'신차리스')}
+          </div>
+          <div style="font-size:12px;color:var(--tx2)">${l.startDate||'?'} ~ ${l.endDate||'미정'}</div>
+          <div style="font-size:12px;color:var(--tx2)">월 ${l.custBillAmount?fmtMoney(l.custBillAmount):(l.monthlyFee?fmtMoney(l.monthlyFee):'-')}</div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`:''}
+
+  <!-- 정비 이력 -->
+  <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:11px;color:var(--tx2);font-weight:700;letter-spacing:.5px;text-transform:uppercase">🔧 정비 이력 (${logs.length}건)</div>
+      ${totalMaintCost?`<span style="font-size:12px;font-weight:700;color:#D32F2F">총 ${fmtMoney(totalMaintCost)}</span>`:''}
+    </div>
+    <div style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+      ${logs.length===0?`<div style="text-align:center;padding:20px;color:var(--tx3)">정비 이력 없음</div>`:
+      logs.map(log=>`<div style="background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-weight:700;font-size:13px">${log.date}${log.mileage?' · '+log.mileage.toLocaleString()+'km':''}</span>
+          <span style="font-weight:700;color:#D32F2F">${log.cost?fmtMoney(log.cost):''}</span>
+        </div>
+        ${log.shop?`<div style="font-size:12px;color:var(--tx2);margin-bottom:4px">🏪 ${log.shop}</div>`:''}
+        <div style="display:flex;flex-wrap:wrap;gap:4px">${(log.items||[]).map(i=>badge('bb',i.name||i)).join('')||`<span style="font-size:12px;color:var(--tx3)">-</span>`}</div>
+        ${log.memo?`<div style="font-size:11px;color:var(--tx2);margin-top:4px">📝 ${log.memo}</div>`:''}
+      </div>`).join('')}
+    </div>
   </div>
-  <div style="display:flex;gap:8px;margin-top:14px">
-    <button class="bp" style="flex:1" onclick="CM();openLVehicleModal('${id}')">수정</button>
+
+  <div style="display:flex;gap:8px;margin-top:4px">
+    <button class="bp" style="flex:1" onclick="CM();setTimeout(()=>{openLMaintModal();setTimeout(()=>{const s=document.getElementById('lm-v');if(s)s.value='${id}';},60)},100)"><i class="ti ti-plus"></i> 정비 등록</button>
+    <button class="bs" style="flex:1" onclick="CM();setTimeout(()=>openLVehicleModal('${id}'),100)"><i class="ti ti-edit"></i> 차량 수정</button>
     <button onclick="CM()" class="bs" style="flex:1">닫기</button>
   </div>`);
 }
