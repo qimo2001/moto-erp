@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP V4</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css" onerror="this.href='https://unpkg.com/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css'">
+<title>DS 통합 ERP V5</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--p:#D32F2F;--pd:#B71C1C;--pl:#FFF0F0;--sw:240px;--hh:60px;--nh:72px;--bg:#F0F4F8;--bg2:#FFFFFF;--bg3:#E8ECF0;--tx:#1a1a1a;--tx2:#5a5a5a;--tx3:#9a9a9a;--bd:rgba(0,0,0,0.09);--bd2:rgba(0,0,0,0.18);--sb:#1B2436}
@@ -523,7 +523,9 @@ function rowsFromSnake(rows){ return rows.map(fromSnake); }
 
 // ── 초기 데이터 로드 ──
 let _dbReady=false;
+let _dbLoading=false;
 async function loadAllFromDB(){
+  if(_dbLoading) return; _dbLoading=true;
   showLoading(true);
   try{
     console.log('📡 DB 로드 시작...');
@@ -3340,6 +3342,15 @@ function showDBError(msg){
   </div>`;
 }
 // DB init is triggered by Firebase onAuthStateChanged after login
+</script>
+
+<script>
+// 클릭 디버그 - 배포 후 제거
+document.addEventListener('click', function(e) {
+  const el = e.target;
+  const info = el.tagName + (el.id ? '#'+el.id : '') + (el.className ? '.'+String(el.className).split(' ')[0] : '');
+  console.log('CLICK:', info, '| z-stack:', getComputedStyle(el).zIndex);
+}, true); // capture phase
 </script>
 </body>
 </html>
