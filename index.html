@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP2</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1379,17 +1379,19 @@ function pgAI(){return`<div class="card" style="display:flex;flex-direction:colu
 // ── MODAL HELPERS ──
 function OM(html){
   try{
-    console.log('OM: setting innerHTML, length=',html.length);
-    document.getElementById('mc').innerHTML=html;
-    console.log('OM: innerHTML set, adding open class');
-    document.getElementById('modal').classList.add('open');
-    console.log('OM: modal opened, classes=',document.getElementById('modal').className);
+    const mc=document.getElementById('mc');
+    const modal=document.getElementById('modal');
+    mc.innerHTML=html;
+    modal.classList.add('open');
+    modal.style.display='flex';  // force display
+    modal.style.zIndex='99998';
+    console.log('OM done, modal display=',modal.style.display,'computed=',getComputedStyle(modal).display);
   }catch(e){
     console.error('OM error:',e);
     alert('모달 오류: '+e.message);
   }
 }
-function CM(){document.getElementById('modal').classList.remove('open');}
+function CM(){const m=document.getElementById('modal');m.classList.remove('open');m.style.display='';}
 function handleMO(e){
   // 드래그로 인한 실수 닫힘 방지: mousedown이 modal에서 시작했을 때만 닫기
   if(e.target.id==='modal' && window._modalMousedownTarget===e.target) CM();
