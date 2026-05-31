@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS모터스포츠 통합 ERP</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1011,7 +1011,7 @@ function pgRVehicles(){
     <button class="bp" style="height:38px;padding:0 14px" onclick="S._rvQ=document.getElementById('rvq').value;ren()">검색</button>
     <button class="bs" style="height:38px;padding:0 10px" onclick="S._rvQ='';ren()">초기화</button>
   </div>
-  <div class="sh"><span class="st">렌트 차량 목록</span><button class="bp" onclick="openAddRVehicleModal()"><i class="ti ti-plus"></i> 차량 추가</button></div>
+  <div class="sh"><span class="st">렌트 차량 목록</span><div style="display:flex;gap:6px"><button class="bs" style="height:32px;padding:0 10px;font-size:12px" onclick="syncVehicleStatus()">🔄 상태동기화</button><button class="bp" onclick="openAddRVehicleModal()"><i class="ti ti-plus"></i> 차량 추가</button></div></div>
   <div class="card">
     ${data.filter(v=>!S._rvQ||[v.plateNo,v.model,v.color].some(x=>(x||'').includes(S._rvQ))).map(v=>`
     <div class="irow" onclick="openRVehicleDetail('${v.id}')">
@@ -3068,6 +3068,26 @@ function pgAuditLog(){
   </div>`:''}`;
 }
 
+
+async function syncVehicleStatus(){
+  const activeVehicleIds=new Set(S.rentals.filter(r=>r.status==='대여중').map(r=>r.vehicleId));
+  let fixed=0;
+  for(const v of S.rentVehicles){
+    const shouldRent=activeVehicleIds.has(v.id);
+    if(shouldRent && v.status!=='대여중'){
+      v.status='대여중';
+      await dbUpdate('rent_vehicles',v.id,{status:'대여중'});
+      fixed++;
+    } else if(!shouldRent && v.status==='대여중'){
+      v.status='가용';
+      await dbUpdate('rent_vehicles',v.id,{status:'가용'});
+      fixed++;
+    }
+  }
+  ren();
+  if(fixed>0) alert(fixed+'대 차량 상태가 동기화됐습니다.');
+  else alert('모든 차량 상태가 정상입니다.');
+}
 function topAction(){
   const m={
     dashboard:openRentModal,worklog:openAddWorkModal,
