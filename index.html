@@ -3402,38 +3402,51 @@ function pgLVehicles(){
   if(q) data=data.filter(v=>[v.plateNo,v.model,v.color,v.owner].some(x=>(x||'').includes(q)));
 
   return`
-  <div class="sh"><span class="st">리스 차량</span>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <button onclick="S._lvStatus='all';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._lvStatus||'all')==='all'?'var(--primary)':'var(--bg3)'};color:${(S._lvStatus||'all')==='all'?'#fff':'var(--tx)'}">전체 (${S.leaseVehicles.length})</button>
-      <button onclick="S._lvStatus='가용';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._lvStatus||'all')==='가용'?'#2e7d32':'var(--bg3)'};color:${(S._lvStatus||'all')==='가용'?'#fff':'var(--tx)'}">가용</button>
+  <div style="display:flex;gap:8px;margin-bottom:16px">
+    <div class="sbar" style="flex:1;margin-bottom:0"><i class="ti ti-search"></i><input id="lvq" placeholder="차량번호, 모델명, 색상 검색..." value="${S._lvQ||''}" onkeydown="if(event.key==='Enter'){S._lvQ=this.value;ren();}"></div>
+    <button class="bp" style="height:38px;padding:0 14px" onclick="S._lvQ=document.getElementById('lvq').value;ren()">검색</button>
+    <button class="bs" style="height:38px;padding:0 10px" onclick="S._lvQ='';ren()">초기화</button>
+  </div>
+  <div class="sh"><span class="st">리스 차량 목록</span>
+    <div style="display:flex;gap:6px">
+      <button onclick="S._lvStatus='all';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._lvStatus||'all')==='all'?'var(--primary)':'var(--bg3)'};color:${(S._lvStatus||'all')==='all'?'#fff':'var(--tx)'}">가용</button>
       <button onclick="S._lvStatus='리스중';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._lvStatus||'all')==='리스중'?'#1565c0':'var(--bg3)'};color:${(S._lvStatus||'all')==='리스중'?'#fff':'var(--tx)'}">리스중</button>
       <button class="bp" onclick="openLVehicleModal()"><i class="ti ti-plus"></i> 차량 추가</button>
     </div>
   </div>
-  ${searchBar('차량번호, 모델명 검색...','_lvQ','','','')}
-  ${data.length===0?`<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:12px">🚗</div><div>등록된 리스 차량이 없습니다</div></div>`:''}
-  ${data.map(v=>{
-    const activeLease=S.leases.find(l=>l.vehicleId===v.id&&l.status==='리스중');
-    return`<div class="irow" onclick="if(!event.target.closest('button'))openLVehicleDetail('${v.id}')">
-      <div style="width:44px;height:44px;background:var(--pl);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🚗</div>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-          <span class="plate">${v.plateNo}</span>
-          <span style="font-size:13px;font-weight:600;color:var(--tx2)">${v.model}</span>
-          ${activeLease?badge('bb','리스중'):badge('bgr','가용')}
-          ${v.smartKey?badge('bpu','🔑 스마트키'):''}
-          ${v.insuranceEnd?insBadge(v.insuranceEnd):''}
+  <div class="card">
+    ${data.length===0?`<div style="text-align:center;padding:40px;color:var(--tx3)"><div style="font-size:36px;margin-bottom:12px">🚗</div><div>등록된 리스 차량이 없습니다</div></div>`:''}
+    ${data.map(v=>{
+      const activeLease=S.leases.find(l=>l.vehicleId===v.id&&l.status==='리스중');
+      return`<div class="irow" onclick="if(!event.target.closest('button'))openLVehicleDetail('${v.id}')">
+        <div style="width:44px;height:44px;background:var(--pl);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🚗</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="plate">${v.plateNo}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--tx2)">${v.model}</span>
+            ${activeLease?badge('bb','리스중'):badge('bgr','가용')}
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap">
+            ${badge(v.insuranceType==='종합보험'?'bb':'ba',v.insuranceType||'책임보험')}
+            ${badge('bt',v.minAge||'전 연령')}
+            ${v.smartKey?badge('bpu','🔑 스마트키'):''}
+            ${v.insuranceEnd?insBadge(v.insuranceEnd):''}
+            <span style="font-size:11px;color:var(--tx3)">${v.year||''}년 • ${v.color||''} • ${v.mileage?v.mileage.toLocaleString()+'km':'-'}</span>
+          </div>
+          ${v.insured?`<div style="font-size:11px;color:var(--tx2);margin-top:3px">🛡 피보험자: <strong>${v.insured}</strong></div>`:''}
+          ${activeLease?`<div style="font-size:11px;color:#1565c0;margin-top:3px">👤 리스고객: <strong>${activeLease.customer}</strong>${activeLease.startDate?' ('+activeLease.startDate+'~'+(activeLease.endDate||'미정')+')':''}</div>`:''}
+          ${v.owner?`<div style="font-size:11px;color:var(--tx2);margin-top:2px">🏢 소유: ${v.owner}</div>`:''}
         </div>
-        <div style="font-size:12px;color:var(--tx2)">${v.year||''}년 · ${v.color||''} · ${v.mileage?v.mileage.toLocaleString()+'km':'-'}</div>
-        ${activeLease?`<div style="font-size:12px;color:#1565c0">👤 ${activeLease.customer} (${activeLease.startDate||'?'}~${activeLease.endDate||'미정'})</div>`:''}
-        ${v.insurer?`<div style="font-size:11px;color:var(--tx2)">🛡 ${v.insurer}</div>`:''}
-      </div>
-      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-        <button class="bsm" onclick="event.stopPropagation();openLVehicleModal('${v.id}')">수정</button>
-        <button class="bsm" style="color:#c62828" onclick="event.stopPropagation();delLVehicle('${v.id}')">삭제</button>
-      </div>
-    </div>`;
-  }).join('')}`;
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-weight:700;color:#D32F2F">${activeLease&&activeLease.monthlyFee?fmtMoney(activeLease.monthlyFee)+'/월':'-'}</div>
+          <div style="display:flex;gap:4px;margin-top:6px">
+            <button class="bsm" onclick="event.stopPropagation();openLVehicleModal('${v.id}')">수정</button>
+            <button class="bsm" style="color:#c62828" onclick="event.stopPropagation();delLVehicle('${v.id}')">삭제</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 
 function openLVehicleModal(editId){
