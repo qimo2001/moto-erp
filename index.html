@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP V2</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1814,14 +1814,30 @@ async function saveRentEdit(id){
   const newVehicleId=document.getElementById('re-vehicle')?.value||r.vehicleId;
   const newOutPhotos=collectPhotoUrls('re-out-p',5);
   const outPhotos=newOutPhotos.length>0?newOutPhotos:(r.outPhotos||[]);
+  const newEndDate=openEnd?'미정':document.getElementById('re-end').value;
+  const newDailyRate=(()=>{const v2=document.getElementById('re-rate')?.value;return v2!==undefined&&v2!==''?parseInt(v2)||0:r.dailyRate;})();
+  const newStartDate=document.getElementById('re-start')?.value||r.startDate;
+  // 일수 및 총 요금 계산
+  let newDays=r.days||0;
+  let newTotalFee=r.totalFee||0;
+  if(newEndDate!=='미정'&&newStartDate){
+    const s=new Date(newStartDate);const e=new Date(newEndDate);
+    const diff=Math.ceil((e-s)/(1000*60*60*24));
+    newDays=diff>0?diff:0;
+    newTotalFee=newDays*newDailyRate;
+  }else if(newEndDate==='미정'){
+    newTotalFee=0; newDays=0;
+  }
   const updates={
     customer:document.getElementById('re-customer').value,
     phone:document.getElementById('re-phone').value,
     delivery_agency:document.getElementById('re-agency').value||'개인',
     vehicle_id:newVehicleId,
-    start_date:document.getElementById('re-start')?.value||r.startDate,
-    end_date:openEnd?'미정':document.getElementById('re-end').value,
-    daily_rate:(()=>{const v2=document.getElementById('re-rate')?.value;return v2!==undefined&&v2!==''?parseInt(v2)||0:r.dailyRate;})(),
+    start_date:newStartDate,
+    end_date:newEndDate,
+    daily_rate:newDailyRate,
+    days:newDays,
+    total_fee:newTotalFee,
     deposit:(()=>{const v=document.getElementById('re-dep')?.value;return v!==undefined&&v!==''?parseInt(v)||0:r.deposit;})(),
     out_mileage:parseInt(document.getElementById('re-outkm')?.value)||r.outMileage,
     out_photos:outPhotos
