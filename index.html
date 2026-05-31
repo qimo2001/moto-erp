@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP V2</title>
+<title>DS 통합 ERP</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -489,7 +489,7 @@ function toSnake(obj){
     customerEstimate:'customer_estimate',totalAmount:'total_amount',approvedAt:'approved_at',
     receivedAt:'received_at',workDate:'work_date',dueDate:'due_date',
     createdAt:'created_at_time',lastVisit:'last_visit',minStock:'min_stock',
-    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',insuranceStart:'insurance_start',insuranceEnd:'insurance_end',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo',leaseInAmount:'lease_in_amount',custBillAmount:'cust_bill_amount',includeMaint:'include_maint',licenseNo:'license_no',birthDate:'birth_date',rentCount:'rent_count',createdAt:'created_at',updatedAt:'updated_at',photo:'photo'
+    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',insuranceStart:'insurance_start',insuranceEnd:'insurance_end',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo',leaseInAmount:'lease_in_amount',custBillAmount:'cust_bill_amount',includeMaint:'include_maint',leaseType:'lease_type',deliveryAgency:'delivery_agency',outMileage:'out_mileage',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',plateNo:'plate_no',vehicleId:'vehicle_id',licenseNo:'license_no',birthDate:'birth_date',rentCount:'rent_count',createdAt:'created_at',updatedAt:'updated_at',photo:'photo'
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -568,7 +568,7 @@ async function loadAllFromDB(){
     if(lvData!==null){ S.leaseVehicles=rowsFromSnake(lvData||[]); console.log('리스차량',(lvData||[]).length); }
     const ls=await dbLoad('leases');
     if(ls!==null){ S.leases=rowsFromSnake(ls||[]); console.log('리스',(ls||[]).length); }
-    const lm=await dbLoad('lease_maint');
+    const lm=await dbLoad('lease_maint_logs');
     if(lm!==null){ S.leaseMaintLogs=rowsFromSnake(lm||[]); console.log('리스정비',(lm||[]).length); }
 
     const alogs=await dbLoad('audit_logs');
