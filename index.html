@@ -47,7 +47,7 @@ body{font-family:-apple-system,'Noto Sans KR',BlinkMacSystemFont,sans-serif;back
 #mobnav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--nh);background:#131B2E;border-top:2px solid #D32F2F;z-index:200;box-shadow:0 -4px 24px rgba(0,0,0,0.6)}
 .mni{display:flex;height:100%;width:100%;align-items:stretch}
 .mn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:rgba(255,255,255,0.72);transition:color .15s;padding:8px 2px;-webkit-tap-highlight-color:transparent;user-select:none;min-width:0}
-.mn-ico{font-size:22px;line-height:1;display:block;text-align:center}
+.mn-ico{font-size:22px;line-height:1;display:block;text-align:center}.mn-ico.ti{font-size:24px}
 .mn span{font-size:11px;line-height:1.2;display:block;text-align:center;font-weight:700;white-space:nowrap}
 .mn.on{color:#D32F2F}
 .mn:active{opacity:.6;transform:scale(.95)}
@@ -265,19 +265,19 @@ tr:hover td{background:var(--bg3)}
 <nav id="mobnav">
   <div class="mni">
     <div class="mn on" id="mob-dashboard" onclick="go('dashboard')">
-      <span class="mn-ico">🏠</span><span>홈</span>
+      <i class="ti ti-home-2 mn-ico"></i><span>홈</span>
     </div>
-    <div class="mn" id="mob-sales" onclick="go('sales')">
-      <span class="mn-ico">🧾</span><span>판매</span>
+    <div class="mn" id="mob-lvehicles" onclick="go('lvehicles')">
+      <i class="ti ti-car mn-ico"></i><span>리스차량</span>
     </div>
     <div class="mn" id="mob-rvehicles" onclick="go('rvehicles')">
-      <span class="mn-ico">🛵</span><span>렌트차량</span>
+      <i class="ti ti-motorbike mn-ico"></i><span>렌트차량</span>
     </div>
     <div class="mn" id="mob-repair" onclick="go('repair')">
-      <span class="mn-ico">🔧</span><span>수리</span>
+      <i class="ti ti-tools mn-ico"></i><span>수리</span>
     </div>
     <div class="mn" onclick="toggleMobMenu()" id="mob-more">
-      <span class="mn-ico">☰</span><span>더보기</span>
+      <i class="ti ti-grid-dots mn-ico"></i><span>더보기</span>
     </div>
   </div>
 </nav>
