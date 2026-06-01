@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>DS 통합 ERP</title>
+<title>DS 통합 ERP v2</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/tabler-icons.min.css">
 <style>
 /* ── RESET & BASE ── */
@@ -706,7 +706,7 @@ function toSnake(obj){
     customerEstimate:'customer_estimate',totalAmount:'total_amount',approvedAt:'approved_at',
     receivedAt:'received_at',workDate:'work_date',dueDate:'due_date',
     createdAt:'created_at_time',lastVisit:'last_visit',minStock:'min_stock',
-    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',insuranceStart:'insurance_start',insuranceEnd:'insurance_end',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo',leaseInAmount:'lease_in_amount',smartKey:'smart_key',smartKeyPin:'smart_key_pin',smartKeyPhotos:'smart_key_photos',custBillAmount:'cust_bill_amount',includeMaint:'include_maint',leaseType:'lease_type',deliveryAgency:'delivery_agency',outMileage:'out_mileage',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',plateNo:'plate_no',vehicleId:'vehicle_id',licenseNo:'license_no',birthDate:'birth_date',rentCount:'rent_count',createdAt:'created_at',updatedAt:'updated_at',photo:'photo'
+    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',insuranceStart:'insurance_start',insuranceEnd:'insurance_end',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo',leaseInAmount:'lease_in_amount',smartKey:'smart_key',smartKeyPin:'smart_key_pin',smartKeyPhotos:'smart_key_photos',includeMaint:'include_maint',custBillAmount:'cust_bill_amount',includeMaint:'include_maint',leaseType:'lease_type',deliveryAgency:'delivery_agency',outMileage:'out_mileage',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',plateNo:'plate_no',vehicleId:'vehicle_id',licenseNo:'license_no',birthDate:'birth_date',rentCount:'rent_count',createdAt:'created_at',updatedAt:'updated_at',photo:'photo'
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -727,7 +727,7 @@ function fromSnake(obj){
     insurance_paid:'insurancePaid',manager_phone:'managerPhone',insurance_paid_amount:'insurancePaidAmount',
     customer_estimate:'customerEstimate',total_amount:'totalAmount',approved_at:'approvedAt',
     received_at:'receivedAt',work_date:'workDate',due_date:'dueDate',
-    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',id_card_photo:'idCardPhoto',lease_in_amount:'leaseInAmount',smart_key:'smartKey',smart_key_pin:'smartKeyPin',smart_key_photos:'smartKeyPhotos',cust_bill_amount:'custBillAmount',include_maint:'includeMaint',insurance_start:'insuranceStart',insurance_end:'insuranceEnd',lease_start:'leaseStart',lease_end:'leaseEnd',monthly_fee:'monthlyFee',vehicle_id:'vehicleId',plate_no:'plateNo',daily_rate:'dailyRate',lease_type:'leaseType',license_no:'licenseNo',birth_date:'birthDate',rent_count:'rentCount',
+    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',id_card_photo:'idCardPhoto',lease_in_amount:'leaseInAmount',smart_key:'smartKey',smart_key_pin:'smartKeyPin',smart_key_photos:'smartKeyPhotos',include_maint:'includeMaint',cust_bill_amount:'custBillAmount',include_maint:'includeMaint',insurance_start:'insuranceStart',insurance_end:'insuranceEnd',lease_start:'leaseStart',lease_end:'leaseEnd',monthly_fee:'monthlyFee',vehicle_id:'vehicleId',plate_no:'plateNo',daily_rate:'dailyRate',lease_type:'leaseType',license_no:'licenseNo',birth_date:'birthDate',rent_count:'rentCount',
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -2052,6 +2052,10 @@ function openRentEditModal(id){
     fi('re-id-addr','주소','',null,icd.address||'')+
     photoDiv+
     '</div>'+
+    '<div class="fg"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;border:1.5px solid var(--bd2);border-radius:10px;background:var(--bg3)">'+
+    '<input type="checkbox" id="lv-maint"'+(v&&v.includeMaint?' checked':'')+' style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer">'+
+    '<div><div style="font-size:13px;font-weight:700">정비 포함 상품</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">정비 포함 리스 차량으로 등록합니다</div></div>'+
+    '</label></div>'+
     '<div style="display:flex;gap:8px">'+saveBtn+'<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
   );
   }catch(e){console.error("openRentEditModal error:",e);alert("수정 창 오류: "+e.message);}
@@ -2410,7 +2414,7 @@ function openAccidentModal(editId){
   <div class="fg">
     <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;border:1px solid ${a&&a.uninsured?'#D32F2F':'var(--bd2)'};border-radius:8px;background:${a&&a.uninsured?'var(--pl)':'transparent'}" id="uninsured-wrap">
       <input type="checkbox" id="ac-uninsured" ${a&&a.uninsured?'checked':''} onchange="window._uninsured=this.checked;document.getElementById('uninsured-wrap').style.borderColor=this.checked?'#D32F2F':'var(--bd2)';document.getElementById('uninsured-wrap').style.background=this.checked?'var(--pl)':'transparent'" style="width:18px;height:18px;accent-color:#D32F2F;cursor:pointer">
-      <div><div style="font-weight:700;font-size:13px">미수선 처리</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">수리 없이 수리 비용을 지급받는 경우 체크</div></div>
+      <div><div style="font-weight:700;font-size:13px">미수선 처리</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">수리 없이 수리비용을 지급받는 경우 체크</div></div>
     </label>
   </div>
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveAccident('${editId||''}')"><i class="ti ti-check"></i> ${a?'수정완료':'접수하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
@@ -3641,7 +3645,7 @@ function pgLVehicles(){
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span class="plate">${v.plateNo}</span>
             <span style="font-size:13px;font-weight:600;color:var(--tx2)">${v.model}</span>
-            ${activeLease?badge('bb','리스중'):badge('bgr','가용')}
+            ${activeLease?badge('bb','리스중'):badge('bgr','가용')}\n          ${v.includeMaint?badge('bg','정비포함'):badge('ba','정비미포함')}
           </div>
           <div style="display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap">
             ${badge(v.insuranceType==='종합보험'?'bb':'ba',v.insuranceType||'책임보험')}
@@ -3694,6 +3698,10 @@ function openLVehicleModal(editId){
     fi('lv-sk-pin','스마트키 PIN','',null,v?v.smartKeyPin||'':'')+
     '<div class="fg"><label class="fl">PIN 사진</label>'+pPhoto('lv-sk-ph',['PIN 사진'],'lv-smartkey',v?v.smartKeyPhotos||[]:[])+'</div>'+
     '</div>'+
+    '<div class="fg"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;border:1.5px solid var(--bd2);border-radius:10px;background:var(--bg3)">'+
+    '<input type="checkbox" id="lv-maint"'+(v&&v.includeMaint?' checked':'')+' style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer">'+
+    '<div><div style="font-size:13px;font-weight:700">정비 포함 상품</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">정비 포함 리스 차량으로 등록합니다</div></div>'+
+    '</label></div>'+
     '<div style="display:flex;gap:8px">'+saveBtn+'<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
   );
 }
@@ -3729,7 +3737,8 @@ async function saveLVehicle(editId){
     photos:collectPhotoUrls('lv-ph',4),
     smartKey:window._lvSmartKey||false,
     smartKeyPin:document.getElementById('lv-sk-pin')?.value||'',
-    smartKeyPhotos:collectPhotoUrls('lv-sk-ph',1)
+    smartKeyPhotos:collectPhotoUrls('lv-sk-ph',1),
+    includeMaint:document.getElementById('lv-maint')?.checked||false
   };
   if(editId){
     const v=S.leaseVehicles.find(x=>x.id===editId);if(v)Object.assign(v,obj);
@@ -3977,6 +3986,7 @@ function openLVehicleDetail(id){
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
       ${activeLease?badge('bb','리스중'):badge('bgr','가용')}
       ${badge('bt',v.minAge||'전 연령')}
+      ${v.includeMaint?badge('bg','정비포함'):badge('ba','정비미포함')}
       ${v.smartKey?badge('bpu','🔑 스마트키'):''}
     </div>
   </div>
