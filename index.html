@@ -702,7 +702,7 @@ function toSnake(obj){
     driverName:'driver_name',driverType:'driver_type',agencyName:'agency_name',
     driverPhone:'driver_phone',accidentDate:'accident_date',opponentInsurance:'opponent_insurance',
     faultRatio:'fault_ratio',receiptNo:'receipt_no',estimatedCost:'estimated_cost',
-    insurancePaid:'insurance_paid',insurancePaidAmount:'insurance_paid_amount',
+    insurancePaid:'insurance_paid',managerPhone:'manager_phone',uninsured:'uninsured',insurancePaidAmount:'insurance_paid_amount',
     customerEstimate:'customer_estimate',totalAmount:'total_amount',approvedAt:'approved_at',
     receivedAt:'received_at',workDate:'work_date',dueDate:'due_date',
     createdAt:'created_at_time',lastVisit:'last_visit',minStock:'min_stock',
@@ -724,7 +724,7 @@ function fromSnake(obj){
     driver_name:'driverName',driver_type:'driverType',agency_name:'agencyName',
     driver_phone:'driverPhone',accident_date:'accidentDate',opponent_insurance:'opponentInsurance',
     fault_ratio:'faultRatio',receipt_no:'receiptNo',estimated_cost:'estimatedCost',
-    insurance_paid:'insurancePaid',insurance_paid_amount:'insurancePaidAmount',
+    insurance_paid:'insurancePaid',manager_phone:'managerPhone',insurance_paid_amount:'insurancePaidAmount',
     customer_estimate:'customerEstimate',total_amount:'totalAmount',approved_at:'approvedAt',
     received_at:'receivedAt',work_date:'workDate',due_date:'dueDate',
     created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',id_card_photo:'idCardPhoto',lease_in_amount:'leaseInAmount',smart_key:'smartKey',smart_key_pin:'smartKeyPin',smart_key_photos:'smartKeyPhotos',cust_bill_amount:'custBillAmount',include_maint:'includeMaint',insurance_start:'insuranceStart',insurance_end:'insuranceEnd',lease_start:'leaseStart',lease_end:'leaseEnd',monthly_fee:'monthlyFee',vehicle_id:'vehicleId',plate_no:'plateNo',daily_rate:'dailyRate',lease_type:'leaseType',license_no:'licenseNo',birth_date:'birthDate',rent_count:'rentCount',
@@ -1484,7 +1484,7 @@ function pgAccident(){
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
         <span class="plate">${a.plateNo}</span>
         <span style="font-weight:600">${a.driverName}</span>
-        ${statusBadge(a.status)}
+        ${statusBadge(a.status)}${a.uninsured?badge('br','미수선'):''}
         <span style="margin-left:auto;font-weight:700;color:#D32F2F">${fmtMoney(a.estimatedCost)}</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;margin-bottom:10px">
@@ -2400,7 +2400,7 @@ function openAccidentModal(editId){
   <div class="fr">${fi('ac-model','차량 모델 <span class="req">★</span>','혼다 CB500F',null,a?a.model:'')}${fi('ac-driver','운전자 이름 <span class="req">★</span>','',null,a?a.driverName:'')}</div>
   <div class="fr">${fi('ac-phone','운전자 연락처 <span class="req">★</span>','',null,a?a.driverPhone:'')}${fi('ac-ins','상대 보험사 <span class="req">★</span>','삼성화재',null,a?a.opponentInsurance:'')}</div>
   <div class="fr">${fi('ac-fault','과실 비율','30:70',null,a?a.faultRatio:'')}${fi('ac-rec','보험 접수번호','2025-INS-00123',null,a?a.receiptNo:'')}</div>
-  <div class="fr">${fi('ac-mgr','담당자','',null,a?a.manager:'')}${fi('ac-cost','예상 수리비 (원)','','number',a?a.estimatedCost:'')}</div>
+  <div class="fr">${fi('ac-mgr','담당자','',null,a?a.manager:'')}${fi('ac-mgr-phone','담당자 연락처','010-0000-0000',null,a?a.managerPhone||'':'')}</div><div class="fr">${fi('ac-cost','예상 수리비 (원)','','number',a?a.estimatedCost:'')}</div>
   <div class="fg"><label class="fl">입고 상태</label>
     <div class="tg">
       ${['입고','수리중','출고완료'].map(s=>`<div class="tgb ${(a?a.status:'')==s?'on':''}" id="acst-${s}" onclick="selAccSt('${s}')">${s==='입고'?'🔴 입고':s==='수리중'?'🔵 수리중':'🟢 출고완료'}</div>`).join('')}
@@ -2410,7 +2410,7 @@ function openAccidentModal(editId){
   <div class="fg">
     <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;border:1px solid ${a&&a.uninsured?'#D32F2F':'var(--bd2)'};border-radius:8px;background:${a&&a.uninsured?'var(--pl)':'transparent'}" id="uninsured-wrap">
       <input type="checkbox" id="ac-uninsured" ${a&&a.uninsured?'checked':''} onchange="window._uninsured=this.checked;document.getElementById('uninsured-wrap').style.borderColor=this.checked?'#D32F2F':'var(--bd2)';document.getElementById('uninsured-wrap').style.background=this.checked?'var(--pl)':'transparent'" style="width:18px;height:18px;accent-color:#D32F2F;cursor:pointer">
-      <div><div style="font-weight:700;font-size:13px">미수선 처리</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">보험 처리 없이 고객 비용으로 출고하는 경우 체크</div></div>
+      <div><div style="font-weight:700;font-size:13px">미수선 처리</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">수리 없이 수리 비용을 지급받는 경우 체크</div></div>
     </label>
   </div>
   <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveAccident('${editId||''}')"><i class="ti ti-check"></i> ${a?'수정완료':'접수하기'}</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>`);
@@ -2420,7 +2420,7 @@ async function saveAccident(editId){
   const plateNo=document.getElementById('ac-plate').value;const model=document.getElementById('ac-model').value;
   const driverName=document.getElementById('ac-driver').value;const driverPhone=document.getElementById('ac-phone').value;const opponentInsurance=document.getElementById('ac-ins').value;
   if(!plateNo||!model||!driverName||!driverPhone||!opponentInsurance){alert('필수 항목을 모두 입력해주세요.');return;}
-  const obj={accidentDate:document.getElementById('ac-date').value,plateNo,model,driverName,driverPhone,opponentInsurance,faultRatio:document.getElementById('ac-fault').value,receiptNo:document.getElementById('ac-rec').value,manager:document.getElementById('ac-mgr').value,estimatedCost:parseInt(document.getElementById('ac-cost').value)||0,status:window._accStatus||'입고',memo:document.getElementById('ac-memo').value,insurancePaid:editId?S.accidents.find(x=>x.id===editId)?.insurancePaid||false:false,insurancePaidAmount:editId?S.accidents.find(x=>x.id===editId)?.insurancePaidAmount||0:0};
+  const obj={accidentDate:document.getElementById('ac-date').value,plateNo,model,driverName,driverPhone,opponentInsurance,faultRatio:document.getElementById('ac-fault').value,receiptNo:document.getElementById('ac-rec').value,manager:document.getElementById('ac-mgr').value,estimatedCost:parseInt(document.getElementById('ac-cost').value)||0,status:window._accStatus||'입고',memo:document.getElementById('ac-memo').value,insurancePaid:editId?S.accidents.find(x=>x.id===editId)?.insurancePaid||false:false,insurancePaidAmount:editId?S.accidents.find(x=>x.id===editId)?.insurancePaidAmount||0:0,uninsured:window._uninsured||false,managerPhone:document.getElementById('ac-mgr-phone')?.value||''};
   if(editId){
     const a=S.accidents.find(x=>x.id===editId);if(a)Object.assign(a,obj);
     await dbUpdate('accidents',editId,toSnake(obj));
@@ -4278,8 +4278,8 @@ async function sendAI(){
   el.innerHTML=`<div class="aav">DS</div><div class="ab"><div class="typing"><span></span><span></span><span></span></div></div>`;
   msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;
   const sys=`당신은 DS MOTORSPORT 통합 ERP AI입니다. 현재: 수리 ${S.repairs.length}건(외상 ${S.repairs.filter(r=>r.payType==='외상').length}건), 사고수리 ${S.accidents.filter(a=>a.status!=='출고완료').length}건, 렌트 대여중 ${S.rentals.filter(r=>r.status==='대여중').length}대, 고객 ${S.customers.length}명(업체 ${S.customers.filter(c=>c.type==='업체').length}개), 발주 결재대기 ${S.purchaseOrders.filter(p=>p.status==='결재대기').length}건. 한국어로 전문적이고 친절하게 답변하세요.`;
-  try{const res=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:S.aiMessages.map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text}))})});const data=await res.json();const reply=data.content?.[0]?.text||'오류';S.aiMessages.push({role:'ai',text:reply});el.querySelector('.ab').innerHTML=reply.replace(/\n/g,'<br>');}
-  catch(e){el.querySelector('.ab').innerHTML='네트워크 오류';}
+  try{const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:S.aiMessages.map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text}))})});const data=await res.json();const reply=data.content?.[0]?.text||'오류';S.aiMessages.push({role:'ai',text:reply});el.querySelector('.ab').innerHTML=reply.replace(/\n/g,'<br>');}
+  catch(e){el.querySelector('.ab').innerHTML='⚠ 오류: '+((e&&e.message)||'연결 실패');}
   msgs.scrollTop=msgs.scrollHeight;
 }
 
