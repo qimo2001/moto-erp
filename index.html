@@ -3824,23 +3824,38 @@ function pgLMaint(){
   logs.map(log=>{
     const v=S.leaseVehicles.find(x=>x.id===log.vehicleId);
     const lease=S.leases.find(l=>l.vehicleId===log.vehicleId&&l.status==='리스중')||{};
-    return`<div class="tl"><div class="td"></div><div style="flex:1">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
-      <span style="font-weight:700">${log.date}</span>
-      <span class="plate-sm">${v?v.plateNo:''}</span>
-      <span style="font-size:12px;color:var(--tx2)">${v?v.model:''}</span>
-      ${lease.customer?`<span style="font-size:11px;color:var(--tx2)">👤 ${lease.customer}</span>`:''}
-      <span style="font-size:12px;color:var(--tx2)">${log.mileage?log.mileage.toLocaleString()+'km':''}</span>
+    const anyLease=S.leases.find(l=>l.vehicleId===log.vehicleId)||{};
+    const leaseInfo=Object.keys(lease).length?lease:anyLease;
+    return`<div class="tl"><div class="td" style="background:${log.cost>0?'var(--primary)':'var(--tx3)'}"></div><div style="flex:1">
+    <!-- 상단: 날짜 + 차량명 크게 + 상태 뱃지 -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">
+      <span style="font-size:11px;color:var(--tx3);font-weight:600">${log.date}</span>
+      <span class="plate" style="font-size:15px">${v?v.plateNo:'(차량없음)'}</span>
+      ${v?`<span style="font-size:13px;font-weight:700;color:var(--tx)">${v.model}</span>`:''}
+      ${v&&v.year?`<span style="font-size:11px;color:var(--tx3)">${v.year}년식</span>`:''}
+      ${v&&v.color?`<span style="font-size:11px;color:var(--tx3)">· ${v.color}</span>`:''}
+      ${Object.keys(lease).length?`<span class="b bb" style="font-size:10px">리스중</span>`:Object.keys(anyLease).length?`<span class="b bgr" style="font-size:10px">리스종료</span>`:''}
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">
-      ${(log.items||[]).map(item=>`<span style="display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600;background:var(--pl);color:var(--primary)">${item.name}${item.type==='agency'?'<i class="ti ti-motorbike" style="font-size:11px"></i>':item.type==='dealer'?'<i class="ti ti-building-store" style="font-size:11px"></i>':''}</span>`).join('')}
+    <!-- 고객 + 주행거리 행 -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+      ${leaseInfo.customer?`<span style="font-size:12px;font-weight:600;color:var(--tx2)"><i class="ti ti-user" style="font-size:11px"></i> ${leaseInfo.customer}</span>`:''}
+      ${leaseInfo.phone?`<span style="font-size:11px;color:var(--tx3)">${leaseInfo.phone}</span>`:''}
+      ${log.mileage?`<span style="font-size:12px;color:var(--tx2);display:flex;align-items:center;gap:3px"><i class="ti ti-dashboard" style="font-size:11px"></i> ${log.mileage.toLocaleString()} km</span>`:''}
+      ${log.mechanic?`<span style="font-size:11px;color:var(--tx3)">담당: <strong style="color:var(--tx2)">${log.mechanic}</strong></span>`:''}
     </div>
-    ${log.mechanic?`<span style="font-size:12px;color:var(--tx2)">담당: ${log.mechanic}</span>`:''}
-    ${log.photos&&log.photos.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${log.photos.map(url=>`<div onclick="openPhotoViewer('${url}')" style="width:56px;height:42px;border-radius:6px;overflow:hidden;cursor:pointer;flex-shrink:0"><img src="${url}" style="width:100%;height:100%;object-fit:cover"></div>`).join('')}</div>`:''}
+    <!-- 정비 항목 태그 -->
+    ${(log.items||[]).length?`<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">
+      ${(log.items||[]).map(item=>`<span style="display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:12px;font-weight:600;background:var(--pl);color:var(--primary)">${item.name}${item.type==='agency'?'<i class="ti ti-motorbike" style="font-size:11px"></i>':item.type==='dealer'?'<i class="ti ti-building-store" style="font-size:11px"></i>':''}</span>`).join('')}
+    </div>`:'<div style="font-size:12px;color:var(--tx3);margin-bottom:6px">정비 항목 없음</div>'}
+    <!-- 메모 -->
+    ${log.memo?`<div style="font-size:12px;color:var(--tx2);background:var(--bg3);padding:5px 10px;border-radius:7px;border-left:3px solid var(--bd2);margin-bottom:6px">📝 ${log.memo}</div>`:''}
+    <!-- 사진 -->
+    ${log.photos&&log.photos.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${log.photos.map(url=>`<div onclick="openPhotoViewer('${url}')" style="width:60px;height:46px;border-radius:7px;overflow:hidden;cursor:pointer;flex-shrink:0;border:1px solid var(--bd)"><img src="${url}" style="width:100%;height:100%;object-fit:cover"></div>`).join('')}</div>`:''}
   </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:60px">
-      <span style="font-size:13px;font-weight:700;color:${log.cost?'var(--primary)':'var(--tx3)'}">${log.cost?fmtMoney(log.cost):'0원'}</span>
-      <div style="display:flex;gap:4px;margin-top:4px">
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;min-width:72px;padding-left:8px">
+      <span style="font-size:14px;font-weight:800;color:${log.cost?'var(--primary)':'var(--tx3)'};white-space:nowrap">${log.cost?fmtMoney(log.cost):'0원'}</span>
+      ${leaseInfo.monthlyFee?`<span style="font-size:10px;color:var(--tx3);white-space:nowrap">월 ${fmtMoney(leaseInfo.monthlyFee)}</span>`:''}
+      <div style="display:flex;gap:4px;margin-top:2px">
         <button class="bsm" onclick="openLMaintModal('${log.id}')">수정</button>
         <button class="bsm" style="color:#c62828" onclick="delLMaint('${log.id}')">삭제</button>
       </div>
