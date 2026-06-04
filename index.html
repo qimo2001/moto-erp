@@ -1446,13 +1446,12 @@ function pgRepair(){
   <div class="sgrid"><div class="sc"><div class="sl">대기</div><div class="sv">${S.repairs.filter(r=>r.status==='대기').length}</div></div><div class="sc"><div class="sl">작업중</div><div class="sv" style="color:#D32F2F">${S.repairs.filter(r=>r.status==='작업중').length}</div></div><div class="sc"><div class="sl">완료</div><div class="sv" style="color:#2e7d32">${S.repairs.filter(r=>r.status==='완료').length}</div></div><div class="sc"><div class="sl">외상</div><div class="sv" style="color:#c62828">${S.repairs.filter(r=>r.payType==='외상').length}</div></div></div>
   <div class="card"><div class="sh"><span class="st">수리 접수 현황</span><button class="bp" onclick="openRepairModal()"><i class="ti ti-plus"></i> 수리 접수</button></div>
   <div style="display:flex;flex-direction:column;gap:10px">
-    ${data.map(r=>`<div style="border:1px solid var(--bd);border-radius:10px;padding:14px;${r.status==='작업중'?'border-left:4px solid #CC0000':r.status==='완료'?'border-left:4px solid #2e7d32':'border-left:4px solid var(--bd2)'}">
+    ${data.map(r=>`<div style="border:1px solid var(--bd);border-radius:10px;padding:14px;${r.status==='작업중'?'border-left:4px solid #CC0000':''}">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
         <span class="plate">${r.plateNo}</span>
         <span style="font-weight:600">${r.customer}</span>
         <span style="font-size:12px;color:var(--tx2)">${r.phone}</span>
         ${statusBadge(r.status)}${payBadge(r.payType)}
-        <span style="margin-left:auto;font-size:11px;color:var(--tx3)">${r.date||''}</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;margin-bottom:8px">
         <div><span style="color:var(--tx2)">차량: </span>${r.model}</div>
@@ -1460,16 +1459,12 @@ function pgRepair(){
         <div><span style="color:var(--tx2)">담당: </span>${r.mechanic}</div>
         <div><span style="color:var(--tx2)">비용: </span><strong style="color:#D32F2F">${fmtMoney(r.cost)}</strong></div>
         <div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px">${r.items.map(i=>badge(i.src==='매장재고'?'bb':'ba',i.name+' '+(i.src==='매장재고'?'🏪':'👤'))).join('')}</div>
-        ${r.memo?`<div style="grid-column:1/-1;background:var(--bg3);border-radius:7px;padding:7px 10px;font-size:12px;color:var(--tx2);border-left:3px solid var(--bd2);margin-top:2px">📝 ${r.memo}</div>`:''}
         ${r.photos&&r.photos.length?`<div style="grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${r.photos.map(url=>`<div onclick="openPhotoViewer('${url}')" style="width:56px;height:42px;border-radius:6px;overflow:hidden;cursor:pointer;border:1px solid var(--bd);flex-shrink:0"><img src="${url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='📷'"></div>`).join('')}</div>`:''}
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-        ${r.status==='대기'?`<button class="bpm" style="height:28px;padding:0 10px;font-size:12px" onclick="updRepairStatus('${r.id}','작업중')">🔧 작업 시작</button>`:''}
-        ${r.status==='작업중'?`<button class="bp" style="height:28px;padding:0 10px;font-size:12px;background:linear-gradient(135deg,#2e7d32,#43a047)" onclick="updRepairStatus('${r.id}','완료')">✅ 작업 완료</button>`:''}
-        ${r.status==='완료'?`<button class="bsm" onclick="updRepairStatus('${r.id}','작업중')">↩ 작업중으로</button>`:''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
         ${r.payType==='외상'?`<button class="bs" style="height:28px;font-size:12px;padding:0 10px" onclick="markRepairPaid('${r.id}')">💰 외상 결제</button>`:''}
         <button class="bsm" onclick="openRepairModal('${r.id}')">수정</button>
-        <button class="bsm" style="color:#c62828" onclick="delRepair('${r.id}')">삭제</button>
+          <button class="bsm" style="color:#c62828" onclick="delRepair('${r.id}')">삭제</button>
       </div>
     </div>`).join('')}
     ${data.length===0?`<div style="text-align:center;padding:30px;color:var(--tx3)">검색 결과 없음</div>`:''}
@@ -2600,9 +2595,14 @@ async function saveWorkTask(editId){
     const t=S.workTasks.find(x=>x.id===editId);if(t)Object.assign(t,obj);
     await dbUpdate('work_tasks',editId,toSnake(obj));
   }else{
+    // createdAt(timeStr)은 로컬 표시용으로만 사용하고 DB에는 보내지 않음
+    // DB의 created_at 컬럼은 timestamp 타입이므로 자동값(DB default) 사용
     const newT={id:newId(S.workTasks,'WT'),progress:0,createdAt:timeStr,...obj};
     S.workTasks.unshift(newT);
-    await dbInsert('work_tasks',toSnake(newT));
+    const dbObj=toSnake(obj); // createdAt 제외한 obj만 변환
+    dbObj.id=newT.id;
+    dbObj.progress=0;
+    await dbInsert('work_tasks',dbObj);
   }
   CM();ren();
 }
@@ -4130,7 +4130,6 @@ function topAction(){
 }
 
 function markRepairPaid(id){const r=S.repairs.find(x=>x.id===id);if(r){r.payType='현금';dbUpdate('repairs',id,{pay_type:'현금'});ren();updBadges();}}
-async function updRepairStatus(id,status){const r=S.repairs.find(x=>x.id===id);if(r){r.status=status;await dbUpdate('repairs',id,{status});ren();updBadges();}}
 async function markRentPaid(id){const r=S.rentals.find(x=>x.id===id);if(r){r.paid=true;await dbUpdate('rentals',id,{paid:true});ren();updBadges();}}
 async function updAccStatus(id,status){const a=S.accidents.find(x=>x.id===id);if(a){a.status=status;await dbUpdate('accidents',id,{status});}ren();}
 
