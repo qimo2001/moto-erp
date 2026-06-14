@@ -2052,10 +2052,6 @@ function openRentEditModal(id){
     fi('re-id-addr','주소','',null,icd.address||'')+
     photoDiv+
     '</div>'+
-    '<div class="fg"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;border:1.5px solid var(--bd2);border-radius:10px;background:var(--bg3)">'+
-    '<input type="checkbox" id="lv-maint"'+(v&&v.includeMaint?' checked':'')+' style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer">'+
-    '<div><div style="font-size:13px;font-weight:700">정비 포함 상품</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">정비 포함 리스 차량으로 등록합니다</div></div>'+
-    '</label></div>'+
     '<div style="display:flex;gap:8px">'+saveBtn+'<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
   );
   }catch(e){console.error("openRentEditModal error:",e);alert("수정 창 오류: "+e.message);}
@@ -2926,113 +2922,41 @@ async function saveMechanicsToDB(){
 // ── 신분증 OCR 섹션 ──
 function idCardSection(){
   return `<div style="border:2px dashed #1565c0;border-radius:12px;padding:14px;margin-bottom:14px;background:#e3f2fd">
-    <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#1565c0">🪪 신분증 / 운전면허증</div>
-    <!-- 탭 선택 -->
-    <div style="display:flex;gap:0;margin-bottom:12px;border:1px solid #90caf9;border-radius:8px;overflow:hidden">
-      <button id="idtab-search" onclick="switchIdTab('search')" style="flex:1;padding:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:#1565c0;color:#fff;transition:all .2s">🔍 기존 검색</button>
-      <button id="idtab-scan" onclick="switchIdTab('scan')" style="flex:1;padding:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#1565c0;transition:all .2s">📷 새로 스캔</button>
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#1565c0">🪪 신분증 / 운전면허증 스캔 (자동 입력)</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1px solid #90caf9;border-radius:10px;cursor:pointer;background:#fff;font-size:13px;font-weight:700;color:#1565c0;-webkit-tap-highlight-color:transparent">
+        <span style="font-size:22px">📷</span> 카메라 촬영
+        <input type="file" accept="image/*" capture="environment" style="display:none" onchange="scanIdCard(this)">
+      </label>
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1px solid #90caf9;border-radius:10px;cursor:pointer;background:#fff;font-size:13px;font-weight:700;color:#1565c0;-webkit-tap-highlight-color:transparent">
+        <span style="font-size:22px">🖼️</span> 갤러리 선택
+        <input type="file" accept="image/*" style="display:none" onchange="scanIdCard(this)">
+      </label>
     </div>
-    <!-- 기존 검색 패널 -->
-    <div id="idpanel-search">
-      <div style="display:flex;gap:6px;margin-bottom:8px">
-        <input class="fi" id="idc-search-q" placeholder="이름 또는 연락처로 검색..." style="font-size:13px;margin-bottom:0;flex:1" oninput="renderIdCardSearch()">
-      </div>
-      <div id="idc-search-results" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
-        <div style="text-align:center;color:var(--tx3);font-size:12px;padding:12px">이름 또는 연락처를 입력하세요</div>
-      </div>
-      <div id="idc-search-applied" style="display:none;margin-top:8px;padding:8px 10px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;font-size:12px;font-weight:600;color:#2e7d32">
-        ✅ 신분증 정보가 적용되었습니다
-      </div>
+    <div id="id-scan-status" style="display:none;padding:10px;border-radius:8px;font-size:13px;text-align:center;margin-bottom:8px"></div>
+    <div id="id-scan-preview" style="display:none;margin-bottom:10px">
+      <img id="id-scan-img" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;border:1px solid #90caf9">
     </div>
-    <!-- 스캔 패널 -->
-    <div id="idpanel-scan" style="display:none">
-      <div style="display:flex;gap:8px;margin-bottom:12px">
-        <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1px solid #90caf9;border-radius:10px;cursor:pointer;background:#fff;font-size:13px;font-weight:700;color:#1565c0;-webkit-tap-highlight-color:transparent">
-          <span style="font-size:22px">📷</span> 카메라 촬영
-          <input type="file" accept="image/*" capture="environment" style="display:none" onchange="scanIdCard(this)">
-        </label>
-        <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1px solid #90caf9;border-radius:10px;cursor:pointer;background:#fff;font-size:13px;font-weight:700;color:#1565c0;-webkit-tap-highlight-color:transparent">
-          <span style="font-size:22px">🖼️</span> 갤러리 선택
-          <input type="file" accept="image/*" style="display:none" onchange="scanIdCard(this)">
-        </label>
+    <div id="id-scan-result" style="display:none">
+      <div style="font-size:12px;font-weight:700;color:#1565c0;margin-bottom:8px">✅ 인식 완료 — 아래 정보를 확인 후 수정하세요</div>
+      <div class="fr" style="margin-bottom:8px">
+        <div class="fg" style="margin-bottom:0"><label class="fl">이름</label><input class="fi" id="id-name" placeholder="이름" style="font-size:13px"></div>
+        <div class="fg" style="margin-bottom:0"><label class="fl">생년월일</label><input class="fi" id="id-birth" placeholder="YYYY-MM-DD" style="font-size:13px"></div>
       </div>
-      <div id="id-scan-status" style="display:none;padding:10px;border-radius:8px;font-size:13px;text-align:center;margin-bottom:8px"></div>
-      <div id="id-scan-preview" style="display:none;margin-bottom:10px">
-        <img id="id-scan-img" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;border:1px solid #90caf9">
+      <div class="fg" style="margin-bottom:8px"><label class="fl">주민등록번호</label>
+        <input class="fi" id="id-rrn" placeholder="000000-0000000" style="font-size:13px;font-family:monospace">
       </div>
-      <div id="id-scan-result" style="display:none">
-        <div style="font-size:12px;font-weight:700;color:#1565c0;margin-bottom:8px">✅ 인식 완료 — 아래 정보를 확인 후 수정하세요</div>
-        <div class="fr" style="margin-bottom:8px">
-          <div class="fg" style="margin-bottom:0"><label class="fl">이름</label><input class="fi" id="id-name" placeholder="이름" style="font-size:13px"></div>
-          <div class="fg" style="margin-bottom:0"><label class="fl">생년월일</label><input class="fi" id="id-birth" placeholder="YYYY-MM-DD" style="font-size:13px"></div>
-        </div>
-        <div class="fg" style="margin-bottom:8px"><label class="fl">주민등록번호</label>
-          <input class="fi" id="id-rrn" placeholder="000000-0000000" style="font-size:13px;font-family:monospace">
-        </div>
-        <div class="fg" style="margin-bottom:8px"><label class="fl">주소</label>
-          <input class="fi" id="id-addr" placeholder="주소" style="font-size:13px">
-        </div>
-        <div class="fg" style="margin-bottom:0"><label class="fl">면허번호 (면허증인 경우)</label>
-          <input class="fi" id="id-license" placeholder="00-00-000000-00" style="font-size:13px;font-family:monospace">
-        </div>
-        <button onclick="applyIdCardToForm()" style="margin-top:10px;width:100%;padding:10px;background:#1565c0;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
-          ✅ 위 정보를 대여 접수에 적용
-        </button>
+      <div class="fg" style="margin-bottom:8px"><label class="fl">주소</label>
+        <input class="fi" id="id-addr" placeholder="주소" style="font-size:13px">
       </div>
+      <div class="fg" style="margin-bottom:0"><label class="fl">면허번호 (면허증인 경우)</label>
+        <input class="fi" id="id-license" placeholder="00-00-000000-00" style="font-size:13px;font-family:monospace">
+      </div>
+      <button onclick="applyIdCardToForm()" style="margin-top:10px;width:100%;padding:10px;background:#1565c0;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
+        ✅ 위 정보를 대여 접수에 적용
+      </button>
     </div>
   </div>`;
-}
-
-function switchIdTab(tab){
-  const isSearch=(tab==='search');
-  const sBtn=document.getElementById('idtab-search');
-  const cBtn=document.getElementById('idtab-scan');
-  const sPanel=document.getElementById('idpanel-search');
-  const cPanel=document.getElementById('idpanel-scan');
-  if(sBtn){sBtn.style.background=isSearch?'#1565c0':'#fff';sBtn.style.color=isSearch?'#fff':'#1565c0';}
-  if(cBtn){cBtn.style.background=isSearch?'#fff':'#1565c0';cBtn.style.color=isSearch?'#1565c0':'#fff';}
-  if(sPanel) sPanel.style.display=isSearch?'block':'none';
-  if(cPanel) cPanel.style.display=isSearch?'none':'block';
-}
-
-function renderIdCardSearch(){
-  const q=(document.getElementById('idc-search-q')?.value||'').trim();
-  const box=document.getElementById('idc-search-results');
-  if(!box) return;
-  if(!q){box.innerHTML='<div style="text-align:center;color:var(--tx3);font-size:12px;padding:12px">이름 또는 연락처를 입력하세요</div>';return;}
-  const results=S.idCards.filter(c=>[c.name,c.phone,c.licenseNo].some(v=>(v||'').includes(q)));
-  if(!results.length){box.innerHTML='<div style="text-align:center;color:var(--tx3);font-size:12px;padding:12px">검색 결과 없음</div>';return;}
-  box.innerHTML=results.slice(0,10).map(c=>`
-    <div onclick="applyIdCardFromSearch('${c.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid #90caf9;border-radius:8px;background:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='#fff'">
-      ${c.photo?`<div style="width:40px;height:40px;border-radius:6px;overflow:hidden;flex-shrink:0;border:1px solid #90caf9"><img src="${c.photo}" style="width:100%;height:100%;object-fit:cover"></div>`:`<div style="width:40px;height:40px;border-radius:6px;background:#bbdefb;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">🪪</div>`}
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:700;color:#1565c0">${c.name||'-'} <span style="font-size:11px;color:var(--tx3);font-weight:400">${c.phone||''}</span></div>
-        ${c.licenseNo?`<div style="font-size:11px;color:var(--tx2)">면허: ${c.licenseNo}</div>`:''}
-        ${c.rrn?`<div style="font-size:11px;color:var(--tx2);font-family:monospace">${c.rrn.slice(0,6)}-*******</div>`:''}
-      </div>
-      <span style="font-size:11px;color:#1565c0;font-weight:700;flex-shrink:0">선택 →</span>
-    </div>`).join('');
-}
-
-function applyIdCardFromSearch(id){
-  const c=S.idCards.find(x=>x.id===id);
-  if(!c) return;
-  // 고객명, 연락처 자동 입력
-  if(document.getElementById('rn-name')) document.getElementById('rn-name').value=c.name||'';
-  if(document.getElementById('rn-phone')) document.getElementById('rn-phone').value=c.phone||'';
-  // idCardData 세팅
-  window._idCardData={name:c.name||'',rrn:c.rrn||'',address:c.address||'',licenseNo:c.licenseNo||'',birthDate:c.birthDate||''};
-  window._idCardPhotoUrl=c.photo||'';
-  // 피드백 표시
-  const applied=document.getElementById('idc-search-applied');
-  const box=document.getElementById('idc-search-results');
-  if(applied){
-    applied.innerHTML=`✅ <strong>${c.name}</strong> 신분증 정보 적용 완료${c.licenseNo?' | 면허: '+c.licenseNo:''}`;
-    applied.style.display='block';
-  }
-  if(box) box.innerHTML='';
-  const qEl=document.getElementById('idc-search-q');
-  if(qEl) qEl.value=c.name||'';
 }
 
 function applyIdCardToForm(){
