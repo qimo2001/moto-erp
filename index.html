@@ -1736,8 +1736,8 @@ function openPhotoChoice(slotId,folder){
       </label>
       <label style="display:flex;align-items:center;gap:14px;padding:15px 16px;border:1px solid var(--bd);border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent">
         <div style="width:44px;height:44px;border-radius:10px;background:#e3f2fd;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🖼️</div>
-        <div><div style="font-size:14px;font-weight:700;color:var(--tx)">갤러리에서 선택</div><div style="font-size:12px;color:var(--tx2);margin-top:2px">저장된 사진 불러오기</div></div>
-        <input type="file" accept="image/*" style="display:none" onchange="handlePhotoSelect(this,'${slotId}','${folder}')">
+        <div><div style="font-size:14px;font-weight:700;color:var(--tx)">갤러리에서 선택</div><div style="font-size:12px;color:var(--tx2);margin-top:2px">여러 장 한번에 선택 가능</div></div>
+        <input type="file" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(this,'${slotId}','${folder}')">
       </label>
     </div>
     <button onclick="document.getElementById('photo-choice-wrap').remove()" style="width:100%;padding:14px;border:1px solid var(--bd2);border-radius:12px;background:transparent;font-size:14px;font-weight:600;cursor:pointer;color:var(--tx2)">취소</button>
@@ -1748,8 +1748,95 @@ function openPhotoChoice(slotId,folder){
 
 async function handlePhotoSelect(input,slotId,folder){
   const wrap=document.getElementById('photo-choice-wrap');if(wrap)wrap.remove();
-  if(!input.files||!input.files[0])return;
-  await prevPhoto(input,slotId,folder);
+  if(!input.files||!input.files.length)return;
+  const files=Array.from(input.files);
+  // 단일 파일이면 기존 방식 그대로
+  if(files.length===1){
+    await prevPhoto(input,slotId,folder);
+    return;
+  }
+  // 다중 파일: slotId에서 pfx와 시작 인덱스 분리 (마지막 '-' 기준)
+  const li=slotId.lastIndexOf('-');
+  const pfx=slotId.slice(0,li);
+  let idx=parseInt(slotId.slice(li+1))||0;
+  for(let fi=0;fi<files.length;fi++){
+    // 현재 인덱스 슬롯이 없으면 새로 생성
+    let slot=document.getElementById(pfx+'-'+idx);
+    if(!slot){
+      addPhotoSlotAt(pfx,idx,folder);
+      slot=document.getElementById(pfx+'-'+idx);
+    }
+    // 이미 사진이 있는 슬롯이면 다음 빈 슬롯 찾기
+    while(slot&&slot.dataset.url){
+      idx++;
+      slot=document.getElementById(pfx+'-'+idx);
+      if(!slot){addPhotoSlotAt(pfx,idx,folder);slot=document.getElementById(pfx+'-'+idx);}
+    }
+    await prevPhotoFile(files[fi],pfx+'-'+idx,folder);
+    idx++;
+  }
+}
+// 특정 인덱스에 슬롯 생성
+function addPhotoSlotAt(pfx,idx,folder){
+  const grid=document.getElementById(pfx+'-grid');
+  if(!grid||document.getElementById(pfx+'-'+idx)) return;
+  const div=document.createElement('div');
+  div.className='pslot req-slot';
+  div.id=pfx+'-'+idx;
+  div.style.position='relative';
+  div.innerHTML=`<i class="ti ti-camera"></i><span>사진 ${idx+1}</span>
+    <button onclick="event.stopPropagation();delPhotoSlot('${pfx}',${idx},'${folder}')" style="position:absolute;top:4px;left:4px;background:rgba(100,100,100,0.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3;line-height:1">×</button>`;
+  div.onclick=()=>openPhotoChoice(pfx+'-'+idx, folder);
+  grid.appendChild(div);
+}
+// File 객체를 직접 받아 업로드 (input 없이)
+async function prevPhotoFile(file,id,folder){
+  if(!file)return;
+  const slot=document.getElementById(id);
+  if(!slot)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    let img=slot.querySelector('img');
+    if(!img){img=document.createElement('img');img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:6px';slot.appendChild(img);}
+    img.src=e.target.result;
+    const ic=slot.querySelector('i');const sp2=slot.querySelector('span');
+    if(ic)ic.style.display='none';if(sp2)sp2.style.display='none';
+  };
+  r.readAsDataURL(file);
+  const sp=slot.querySelector('span');
+  if(sp){sp.style.display='block';sp.textContent='업로드중...';}
+  slot.style.borderColor='#1565c0';slot.style.opacity='0.8';
+  const folderName=folder||'general';
+  const url=await uploadPhoto(file,folderName);
+  slot.style.opacity='1';
+  if(url){
+    slot.dataset.url=url;slot.style.borderColor='#2e7d32';
+    if(sp)sp.style.display='none';
+    const oc=slot.querySelector('.uc');if(oc)oc.remove();
+    const chk=document.createElement('div');chk.className='uc';
+    chk.style.cssText='position:absolute;top:4px;right:4px;background:#2e7d32;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;z-index:2';
+    chk.textContent='✓';slot.appendChild(chk);
+    const existDelBtn=slot.querySelector('.slot-del-btn');
+    if(!existDelBtn){
+      const delBtn=document.createElement('button');
+      delBtn.className='slot-del-btn';
+      delBtn.style.cssText='position:absolute;top:4px;left:4px;background:rgba(200,0,0,0.85);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3;line-height:1';
+      delBtn.textContent='×';
+      delBtn.onclick=(e)=>{
+        e.stopPropagation();
+        slot.dataset.url='';
+        slot.style.borderColor='var(--bd)';
+        slot.innerHTML='<i class="ti ti-camera" style="font-size:24px;color:var(--tx3)"></i><span style="font-size:11px;color:var(--tx3)">사진</span>';
+        slot.className='pslot req-slot';
+        slot.onclick=()=>openPhotoChoice(slot.id, folderName);
+      };
+      slot.appendChild(delBtn);
+    }
+    slot.onclick=()=>openPhotoViewer(url);
+  }else{
+    slot.style.borderColor='#c62828';
+    if(sp){sp.style.display='block';sp.textContent='⚠ 실패';}
+  }
 }
 async function prevPhoto(input,id,folder){
   if(!input.files||!input.files[0])return;
@@ -2052,6 +2139,10 @@ function openRentEditModal(id){
     fi('re-id-addr','주소','',null,icd.address||'')+
     photoDiv+
     '</div>'+
+    '<div class="fg"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;border:1.5px solid var(--bd2);border-radius:10px;background:var(--bg3)">'+
+    '<input type="checkbox" id="lv-maint"'+(v&&v.includeMaint?' checked':'')+' style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer">'+
+    '<div><div style="font-size:13px;font-weight:700">정비 포함 상품</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">정비 포함 리스 차량으로 등록합니다</div></div>'+
+    '</label></div>'+
     '<div style="display:flex;gap:8px">'+saveBtn+'<button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
   );
   }catch(e){console.error("openRentEditModal error:",e);alert("수정 창 오류: "+e.message);}
