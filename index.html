@@ -706,7 +706,7 @@ function toSnake(obj){
     customerEstimate:'customer_estimate',totalAmount:'total_amount',approvedAt:'approved_at',
     receivedAt:'received_at',workDate:'work_date',dueDate:'due_date',
     createdAt:'created_at_time',lastVisit:'last_visit',minStock:'min_stock',
-    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',insuranceStart:'insurance_start',insuranceEnd:'insurance_end',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo',leaseInAmount:'lease_in_amount',smartKey:'smart_key',smartKeyPin:'smart_key_pin',smartKeyPhotos:'smart_key_photos',includeMaint:'include_maint',custBillAmount:'cust_bill_amount',includeMaint:'include_maint',leaseType:'lease_type',deliveryAgency:'delivery_agency',outMileage:'out_mileage',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',plateNo:'plate_no',vehicleId:'vehicle_id',licenseNo:'license_no',birthDate:'birth_date',rentCount:'rent_count',createdAt:'created_at',updatedAt:'updated_at',photo:'photo',prevPlates:'prev_plates'
+    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',insuranceStart:'insurance_start',insuranceEnd:'insurance_end',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo',leaseInAmount:'lease_in_amount',smartKey:'smart_key',smartKeyPin:'smart_key_pin',smartKeyPhotos:'smart_key_photos',includeMaint:'include_maint',custBillAmount:'cust_bill_amount',includeMaint:'include_maint',leaseType:'lease_type',deliveryAgency:'delivery_agency',outMileage:'out_mileage',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',plateNo:'plate_no',vehicleId:'vehicle_id',licenseNo:'license_no',birthDate:'birth_date',rentCount:'rent_count',createdAt:'created_at',updatedAt:'updated_at',photo:'photo',prevPlates:'prev_plates',partPrice:'part_price',laborPrice:'labor_price'
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -727,7 +727,7 @@ function fromSnake(obj){
     insurance_paid:'insurancePaid',manager_phone:'managerPhone',insurance_paid_amount:'insurancePaidAmount',
     customer_estimate:'customerEstimate',total_amount:'totalAmount',approved_at:'approvedAt',
     received_at:'receivedAt',work_date:'workDate',due_date:'dueDate',
-    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',id_card_photo:'idCardPhoto',lease_in_amount:'leaseInAmount',smart_key:'smartKey',smart_key_pin:'smartKeyPin',smart_key_photos:'smartKeyPhotos',include_maint:'includeMaint',cust_bill_amount:'custBillAmount',include_maint:'includeMaint',insurance_start:'insuranceStart',insurance_end:'insuranceEnd',lease_start:'leaseStart',lease_end:'leaseEnd',monthly_fee:'monthlyFee',vehicle_id:'vehicleId',plate_no:'plateNo',daily_rate:'dailyRate',lease_type:'leaseType',license_no:'licenseNo',birth_date:'birthDate',rent_count:'rentCount',prev_plates:'prevPlates',
+    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',id_card_photo:'idCardPhoto',lease_in_amount:'leaseInAmount',smart_key:'smartKey',smart_key_pin:'smartKeyPin',smart_key_photos:'smartKeyPhotos',include_maint:'includeMaint',cust_bill_amount:'custBillAmount',include_maint:'includeMaint',insurance_start:'insuranceStart',insurance_end:'insuranceEnd',lease_start:'leaseStart',lease_end:'leaseEnd',monthly_fee:'monthlyFee',vehicle_id:'vehicleId',plate_no:'plateNo',daily_rate:'dailyRate',lease_type:'leaseType',license_no:'licenseNo',birth_date:'birthDate',rent_count:'rentCount',prev_plates:'prevPlates',part_price:'partPrice',labor_price:'laborPrice',
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -792,6 +792,8 @@ async function loadAllFromDB(){
     if(ls!==null){ S.leases=rowsFromSnake(ls||[]); console.log('리스',(ls||[]).length); }
     const lm=await dbLoad('lease_maint_logs');
     if(lm!==null){ S.leaseMaintLogs=rowsFromSnake(lm||[]); console.log('리스정비',(lm||[]).length); }
+    const sp=await dbLoad('service_prices');
+    if(sp!==null){ S.servicePrices=rowsFromSnake(sp||[]); console.log('표준단가',(sp||[]).length); }
 
     const alogs=await dbLoad('audit_logs');
     if(alogs!==null){ S.auditLogs=alogs||[]; console.log('로그',(alogs||[]).length); }
@@ -927,6 +929,7 @@ const S={
   // 기타
   _erpUsers:[],
   mechanics:['이기술','박수리'],
+  servicePrices:[],
   idCards:[],
   _idCardQ:'',
   _idCardPage:1,
@@ -2910,6 +2913,50 @@ function delMechanic(i){
   saveMechanicsToDB();
   ren();
 }
+
+// ── 표준 정비 단가 ──
+function openServicePriceModal(editId){
+  const sp=editId?S.servicePrices.find(x=>x.id===editId):null;
+  // 추천 항목 datalist
+  const sugg=MITEMS.filter(m=>m!=='기타(직접입력)').map(m=>`<option value="${m}">`).join('');
+  OM(mhdr(sp?'표준 단가 수정':'표준 정비 단가 추가')+
+    `<div class="fg"><label class="fl">정비 항목명 ★</label>
+      <input class="fi" id="sp-name" list="sp-name-list" placeholder="예: 엔진오일 교환" value="${sp?sp.name:''}">
+      <datalist id="sp-name-list">${sugg}</datalist>
+    </div>`+
+    '<div class="fr">'+
+      fi('sp-part','부품비 (원)','','number',sp?sp.partPrice||'':'')+
+      fi('sp-labor','공임 (원)','','number',sp?sp.laborPrice||'':'')+
+    '</div>'+
+    fi('sp-note','비고 (고객에게 표시)','예: 순정 기준, 차종별 상이',null,sp?sp.note||'':'')+
+    '<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--tx2);margin-bottom:12px">💡 부품비 + 공임 = 고객 예상 비용으로 표시됩니다</div>'+
+    '<div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="saveServicePrice(\''+(editId||'')+'\')"><i class="ti ti-check"></i> '+(sp?'수정완료':'추가하기')+'</button><button onclick="CM()" class="bs" style="flex:1">취소</button></div>'
+  );
+}
+async function saveServicePrice(editId){
+  const name=document.getElementById('sp-name').value.trim();
+  if(!name){alert('정비 항목명을 입력하세요.');return;}
+  const obj={name,
+    partPrice:parseInt(document.getElementById('sp-part').value)||0,
+    laborPrice:parseInt(document.getElementById('sp-labor').value)||0,
+    note:document.getElementById('sp-note').value||''
+  };
+  if(editId){
+    const s=S.servicePrices.find(x=>x.id===editId);if(s)Object.assign(s,obj);
+    await dbUpdate('service_prices',editId,toSnake(obj));
+  }else{
+    const newS={id:newId(S.servicePrices,'SP'),...obj};
+    S.servicePrices.push(newS);
+    await dbInsert('service_prices',toSnake(newS));
+  }
+  CM();ren();
+}
+async function delServicePrice(id){
+  if(!confirm('이 표준 단가를 삭제하시겠습니까?'))return;
+  await dbDelete('service_prices',id);
+  S.servicePrices=S.servicePrices.filter(x=>x.id!==id);
+  ren();
+}
 async function saveMechanicsToDB(){
   try{
     const check=await fetch(`${_SB_URL}/rest/v1/erp_users?id=eq.system-mechanics&select=id`,{
@@ -4224,6 +4271,27 @@ function pgSettings(){
           <button class="bsm" style="color:#c62828" onclick="delMechanic(${i})">삭제</button>
         </div>`).join('')}
       ${!S.mechanics?.length?'<div style="color:var(--tx3);font-size:13px;padding:10px">등록된 담당자 없음</div>':''}
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="sh"><span class="st">💰 표준 정비 단가 (고객앱 예상비용용)</span>
+      <button class="bp" onclick="openServicePriceModal()"><i class="ti ti-plus"></i> 단가 추가</button>
+    </div>
+    <div style="font-size:12px;color:var(--tx2);margin-bottom:12px">고객 조회앱에서 "예상 비용"으로 표시됩니다. 공임 + 부품비를 등록하세요.</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${(S.servicePrices||[]).length?(S.servicePrices||[]).map(sp=>`
+        <div style="display:flex;align-items:center;gap:10px;border:1px solid var(--bd);border-radius:10px;padding:11px 14px;flex-wrap:wrap">
+          <span style="font-size:14px;font-weight:700;flex:1;min-width:120px">${sp.name}</span>
+          <span style="font-size:12px;color:var(--tx2)">부품 ${fmtMoney(sp.partPrice||0)}</span>
+          <span style="font-size:12px;color:var(--tx2)">공임 ${fmtMoney(sp.laborPrice||0)}</span>
+          <span style="font-size:14px;font-weight:800;color:var(--primary)">= ${fmtMoney((sp.partPrice||0)+(sp.laborPrice||0))}</span>
+          ${sp.note?`<span style="font-size:11px;color:var(--tx3);width:100%">📝 ${sp.note}</span>`:''}
+          <div style="display:flex;gap:4px">
+            <button class="bsm" onclick="openServicePriceModal('${sp.id}')">수정</button>
+            <button class="bsm" style="color:#c62828" onclick="delServicePrice('${sp.id}')">삭제</button>
+          </div>
+        </div>`).join(''):'<div style="color:var(--tx3);font-size:13px;padding:14px;text-align:center">등록된 표준 단가 없음 — 엔진오일, 타이어 등을 추가하세요</div>'}
     </div>
   </div>
 
