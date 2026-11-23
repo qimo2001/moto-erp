@@ -706,7 +706,7 @@ function toSnake(obj){
     customerEstimate:'customer_estimate',totalAmount:'total_amount',approvedAt:'approved_at',
     receivedAt:'received_at',workDate:'work_date',dueDate:'due_date',
     createdAt:'created_at_time',lastVisit:'last_visit',minStock:'min_stock',
-    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',insuranceStart:'insurance_start',insuranceEnd:'insurance_end',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo',leaseInAmount:'lease_in_amount',smartKey:'smart_key',smartKeyPin:'smart_key_pin',smartKeyPhotos:'smart_key_photos',includeMaint:'include_maint',custBillAmount:'cust_bill_amount',includeMaint:'include_maint',leaseType:'lease_type',deliveryAgency:'delivery_agency',outMileage:'out_mileage',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',plateNo:'plate_no',vehicleId:'vehicle_id',licenseNo:'license_no',birthDate:'birth_date',rentCount:'rent_count',createdAt:'created_at',updatedAt:'updated_at',photo:'photo'
+    compatible:'compatible',company:'company',vtype:'vtype',mileage:'mileage',insured:'insured',insuranceStart:'insurance_start',insuranceEnd:'insurance_end',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',driverScope:'driver_scope',designatedDrivers:'designated_drivers',idCardData:'id_card_data',idCardPhoto:'id_card_photo',leaseInAmount:'lease_in_amount',smartKey:'smart_key',smartKeyPin:'smart_key_pin',smartKeyPhotos:'smart_key_photos',includeMaint:'include_maint',custBillAmount:'cust_bill_amount',includeMaint:'include_maint',leaseType:'lease_type',deliveryAgency:'delivery_agency',outMileage:'out_mileage',leaseStart:'lease_start',leaseEnd:'lease_end',monthlyFee:'monthly_fee',plateNo:'plate_no',vehicleId:'vehicle_id',licenseNo:'license_no',birthDate:'birth_date',rentCount:'rent_count',createdAt:'created_at',updatedAt:'updated_at',photo:'photo',prevPlates:'prev_plates'
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
@@ -727,13 +727,13 @@ function fromSnake(obj){
     insurance_paid:'insurancePaid',manager_phone:'managerPhone',insurance_paid_amount:'insurancePaidAmount',
     customer_estimate:'customerEstimate',total_amount:'totalAmount',approved_at:'approvedAt',
     received_at:'receivedAt',work_date:'workDate',due_date:'dueDate',
-    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',id_card_photo:'idCardPhoto',lease_in_amount:'leaseInAmount',smart_key:'smartKey',smart_key_pin:'smartKeyPin',smart_key_photos:'smartKeyPhotos',include_maint:'includeMaint',cust_bill_amount:'custBillAmount',include_maint:'includeMaint',insurance_start:'insuranceStart',insurance_end:'insuranceEnd',lease_start:'leaseStart',lease_end:'leaseEnd',monthly_fee:'monthlyFee',vehicle_id:'vehicleId',plate_no:'plateNo',daily_rate:'dailyRate',lease_type:'leaseType',license_no:'licenseNo',birth_date:'birthDate',rent_count:'rentCount',
+    created_at_time:'createdAt',last_visit:'lastVisit',min_stock:'minStock',driver_scope:'driverScope',designated_drivers:'designatedDrivers',insured:'insured',id_card_data:'idCardData',id_card_photo:'idCardPhoto',lease_in_amount:'leaseInAmount',smart_key:'smartKey',smart_key_pin:'smartKeyPin',smart_key_photos:'smartKeyPhotos',include_maint:'includeMaint',cust_bill_amount:'custBillAmount',include_maint:'includeMaint',insurance_start:'insuranceStart',insurance_end:'insuranceEnd',lease_start:'leaseStart',lease_end:'leaseEnd',monthly_fee:'monthlyFee',vehicle_id:'vehicleId',plate_no:'plateNo',daily_rate:'dailyRate',lease_type:'leaseType',license_no:'licenseNo',birth_date:'birthDate',rent_count:'rentCount',prev_plates:'prevPlates',
   };
   const r={};
   for(const[k,v]of Object.entries(obj)){
     const ck=map[k]||k;
     // JSONB 필드 파싱
-    if((ck==='items'||ck==='photos'||ck==='outPhotos'||ck==='inPhotos'||ck==='designatedDrivers'||ck==='idCardData'||ck==='allowed_menus'||ck==='can_add'||ck==='can_edit'||ck==='can_delete')&&typeof v==='string'){
+    if((ck==='items'||ck==='photos'||ck==='outPhotos'||ck==='inPhotos'||ck==='designatedDrivers'||ck==='idCardData'||ck==='prevPlates'||ck==='allowed_menus'||ck==='can_add'||ck==='can_edit'||ck==='can_delete')&&typeof v==='string'){
       try{ r[ck]=JSON.parse(v); }catch{ r[ck]=v||[]; }
     } else {
       r[ck]= (v===null||v===undefined) ? (
@@ -745,6 +745,11 @@ function fromSnake(obj){
   return r;
 }
 function rowsFromSnake(rows){ return rows.map(fromSnake); }
+// 과거 번호판 표시 (이전 번호 이력)
+function prevPlatesHtml(v){
+  if(!v||!v.prevPlates||!v.prevPlates.length) return '';
+  return `<span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">${v.prevPlates.map(p=>`<span style="font-size:10px;color:var(--tx3);text-decoration:line-through;background:var(--bg3);padding:1px 5px;border-radius:4px" title="이전 번호판">${p}</span>`).join('')}</span>`;
+}
 
 // ── 초기 데이터 로드 ──
 let _dbReady=false;
@@ -1259,7 +1264,7 @@ function pgRVehicles(){
   const rvSt=S._rvStatus||'all';
   if(rvSt!=='all') data=data.filter(v=>v.status===rvSt);
   const q=S._rvQ||'';
-  if(q) data=data.filter(v=>[v.plateNo,v.model,v.color,v.insurer].some(x=>(x||'').includes(q)));
+  if(q) data=data.filter(v=>[v.plateNo,v.model,v.color,v.insurer,...(v.prevPlates||[])].some(x=>(x||'').includes(q)));
   return`
   <div style="display:flex;gap:8px;margin-bottom:16px">
     <div class="sbar" style="flex:1;margin-bottom:0"><i class="ti ti-search"></i><input id="rvq" placeholder="차량번호, 모델명, 색상 검색..." value="${S._rvQ||''}" onkeydown="if(event.key==='Enter'){S._rvQ=this.value;ren();}"></div>
@@ -1268,7 +1273,7 @@ function pgRVehicles(){
   </div>
   <div class="sh"><span class="st">렌트 차량 목록</span><div style="display:flex;gap:6px"><button onclick="S._rvStatus='all';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._rvStatus||'all')==='all'?'var(--primary)':' var(--bg3)'};color:${(S._rvStatus||'all')==='all'?'#fff':'var(--tx)'}" >전체</button><button onclick="S._rvStatus='가용';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._rvStatus||'all')==='가용'?'#2e7d32':'var(--bg3)'};color:${(S._rvStatus||'all')==='가용'?'#fff':'var(--tx)'}" >가용</button><button onclick="S._rvStatus='대여중';ren()" style="height:32px;padding:0 10px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;background:${(S._rvStatus||'all')==='대여중'?'#1565c0':'var(--bg3)'};color:${(S._rvStatus||'all')==='대여중'?'#fff':'var(--tx)'}" >대여중</button><button class="bs" style="height:32px;padding:0 10px;font-size:12px" onclick="syncVehicleStatus()">🔄 상태동기화</button><button class="bp" onclick="openAddRVehicleModal()"><i class="ti ti-plus"></i> 차량 추가</button></div></div>
   <div class="card">
-    ${data.filter(v=>!S._rvQ||[v.plateNo,v.model,v.color].some(x=>(x||'').includes(S._rvQ))).map(v=>`
+    ${data.filter(v=>!S._rvQ||[v.plateNo,v.model,v.color,...(v.prevPlates||[])].some(x=>(x||'').includes(S._rvQ))).map(v=>`
     <div class="irow" onclick="openRVehicleDetail('${v.id}')">
       <div style="width:44px;height:44px;background:var(--pl);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🛵</div>
       <div style="flex:1;min-width:0">
@@ -1276,6 +1281,7 @@ function pgRVehicles(){
           <span class="plate">${v.plateNo}</span>
           <span style="font-size:13px;font-weight:600;color:var(--tx2)">${v.model}</span>
           ${statusBadge(v.status)}
+          ${prevPlatesHtml(v)}
         </div>
         <div style="display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap">
           ${badge(v.insuranceType==='종합보험'?'bb':'ba',v.insuranceType||'책임보험')}
@@ -1387,12 +1393,17 @@ function pgRMaint(){
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
       <span style="font-weight:700">${log.date}</span>
       <span class="plate-sm">${v?v.plateNo:''}</span>
+      ${prevPlatesHtml(v)}
       <span style="font-size:12px;color:var(--tx2)">${v?v.model:''} • ${(log.mileage||0).toLocaleString()}km</span>
       ${badge(log.driverType==='배달대행'?'bdk':'bgr',log.driverType==='배달대행'?log.agencyName||'배달대행':'개인')}
       <span style="color:#D32F2F;font-weight:700;margin-left:auto">${(log.cost||0).toLocaleString()}원</span>
     </div>
     <div style="font-size:12px;color:var(--tx2);margin-bottom:6px">운전자: <strong>${log.driverName||''}</strong> ${log.driverPhone||''}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${(log.items||[]).map(i=>badge(i.src==='매장재고'?'bb':'ba',i.name+' '+(i.src==='매장재고'?'🏪':'👤'))).join('')}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${(log.items||[]).map(i=>{
+      const isEtc=i.name==='기타(직접입력)'||(i.name||'').endsWith('(기타)');
+      const disp=isEtc?(i.customName?i.customName+' (기타)':(i.name||'').replace('(직접입력)','')):i.name;
+      return badge(i.src==='매장재고'?'bb':'ba',disp+' '+(i.src==='매장재고'?'🏪':'👤'));
+    }).join('')}</div>
     ${log.photos&&log.photos.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${log.photos.map(url=>`<div onclick="openPhotoViewer('${url}')" style="width:56px;height:42px;border-radius:6px;overflow:hidden;cursor:pointer;border:1px solid var(--bd);flex-shrink:0;background:var(--bg3)"><img src="${url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='📷'"></div>`).join('')}</div>`:''}
     ${log.memo?`<div style="font-size:12px;color:var(--tx2);margin-top:4px">${log.memo}</div>`:''}
     <div style="font-size:11px;color:var(--tx3)">담당: ${log.mechanic||''}</div>
@@ -1736,8 +1747,8 @@ function openPhotoChoice(slotId,folder){
       </label>
       <label style="display:flex;align-items:center;gap:14px;padding:15px 16px;border:1px solid var(--bd);border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent">
         <div style="width:44px;height:44px;border-radius:10px;background:#e3f2fd;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🖼️</div>
-        <div><div style="font-size:14px;font-weight:700;color:var(--tx)">갤러리에서 선택</div><div style="font-size:12px;color:var(--tx2);margin-top:2px">여러 장 한번에 선택 가능</div></div>
-        <input type="file" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(this,'${slotId}','${folder}')">
+        <div><div style="font-size:14px;font-weight:700;color:var(--tx)">갤러리에서 선택</div><div style="font-size:12px;color:var(--tx2);margin-top:2px">저장된 사진 불러오기</div></div>
+        <input type="file" accept="image/*" style="display:none" onchange="handlePhotoSelect(this,'${slotId}','${folder}')">
       </label>
     </div>
     <button onclick="document.getElementById('photo-choice-wrap').remove()" style="width:100%;padding:14px;border:1px solid var(--bd2);border-radius:12px;background:transparent;font-size:14px;font-weight:600;cursor:pointer;color:var(--tx2)">취소</button>
@@ -1748,95 +1759,8 @@ function openPhotoChoice(slotId,folder){
 
 async function handlePhotoSelect(input,slotId,folder){
   const wrap=document.getElementById('photo-choice-wrap');if(wrap)wrap.remove();
-  if(!input.files||!input.files.length)return;
-  const files=Array.from(input.files);
-  // 단일 파일이면 기존 방식 그대로
-  if(files.length===1){
-    await prevPhoto(input,slotId,folder);
-    return;
-  }
-  // 다중 파일: slotId에서 pfx와 시작 인덱스 분리 (마지막 '-' 기준)
-  const li=slotId.lastIndexOf('-');
-  const pfx=slotId.slice(0,li);
-  let idx=parseInt(slotId.slice(li+1))||0;
-  for(let fi=0;fi<files.length;fi++){
-    // 현재 인덱스 슬롯이 없으면 새로 생성
-    let slot=document.getElementById(pfx+'-'+idx);
-    if(!slot){
-      addPhotoSlotAt(pfx,idx,folder);
-      slot=document.getElementById(pfx+'-'+idx);
-    }
-    // 이미 사진이 있는 슬롯이면 다음 빈 슬롯 찾기
-    while(slot&&slot.dataset.url){
-      idx++;
-      slot=document.getElementById(pfx+'-'+idx);
-      if(!slot){addPhotoSlotAt(pfx,idx,folder);slot=document.getElementById(pfx+'-'+idx);}
-    }
-    await prevPhotoFile(files[fi],pfx+'-'+idx,folder);
-    idx++;
-  }
-}
-// 특정 인덱스에 슬롯 생성
-function addPhotoSlotAt(pfx,idx,folder){
-  const grid=document.getElementById(pfx+'-grid');
-  if(!grid||document.getElementById(pfx+'-'+idx)) return;
-  const div=document.createElement('div');
-  div.className='pslot req-slot';
-  div.id=pfx+'-'+idx;
-  div.style.position='relative';
-  div.innerHTML=`<i class="ti ti-camera"></i><span>사진 ${idx+1}</span>
-    <button onclick="event.stopPropagation();delPhotoSlot('${pfx}',${idx},'${folder}')" style="position:absolute;top:4px;left:4px;background:rgba(100,100,100,0.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3;line-height:1">×</button>`;
-  div.onclick=()=>openPhotoChoice(pfx+'-'+idx, folder);
-  grid.appendChild(div);
-}
-// File 객체를 직접 받아 업로드 (input 없이)
-async function prevPhotoFile(file,id,folder){
-  if(!file)return;
-  const slot=document.getElementById(id);
-  if(!slot)return;
-  const r=new FileReader();
-  r.onload=e=>{
-    let img=slot.querySelector('img');
-    if(!img){img=document.createElement('img');img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:6px';slot.appendChild(img);}
-    img.src=e.target.result;
-    const ic=slot.querySelector('i');const sp2=slot.querySelector('span');
-    if(ic)ic.style.display='none';if(sp2)sp2.style.display='none';
-  };
-  r.readAsDataURL(file);
-  const sp=slot.querySelector('span');
-  if(sp){sp.style.display='block';sp.textContent='업로드중...';}
-  slot.style.borderColor='#1565c0';slot.style.opacity='0.8';
-  const folderName=folder||'general';
-  const url=await uploadPhoto(file,folderName);
-  slot.style.opacity='1';
-  if(url){
-    slot.dataset.url=url;slot.style.borderColor='#2e7d32';
-    if(sp)sp.style.display='none';
-    const oc=slot.querySelector('.uc');if(oc)oc.remove();
-    const chk=document.createElement('div');chk.className='uc';
-    chk.style.cssText='position:absolute;top:4px;right:4px;background:#2e7d32;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;z-index:2';
-    chk.textContent='✓';slot.appendChild(chk);
-    const existDelBtn=slot.querySelector('.slot-del-btn');
-    if(!existDelBtn){
-      const delBtn=document.createElement('button');
-      delBtn.className='slot-del-btn';
-      delBtn.style.cssText='position:absolute;top:4px;left:4px;background:rgba(200,0,0,0.85);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3;line-height:1';
-      delBtn.textContent='×';
-      delBtn.onclick=(e)=>{
-        e.stopPropagation();
-        slot.dataset.url='';
-        slot.style.borderColor='var(--bd)';
-        slot.innerHTML='<i class="ti ti-camera" style="font-size:24px;color:var(--tx3)"></i><span style="font-size:11px;color:var(--tx3)">사진</span>';
-        slot.className='pslot req-slot';
-        slot.onclick=()=>openPhotoChoice(slot.id, folderName);
-      };
-      slot.appendChild(delBtn);
-    }
-    slot.onclick=()=>openPhotoViewer(url);
-  }else{
-    slot.style.borderColor='#c62828';
-    if(sp){sp.style.display='block';sp.textContent='⚠ 실패';}
-  }
+  if(!input.files||!input.files[0])return;
+  await prevPhoto(input,slotId,folder);
 }
 async function prevPhoto(input,id,folder){
   if(!input.files||!input.files[0])return;
@@ -2295,6 +2219,7 @@ function openAddRVehicleModal(editId){
   const parts=[
     mhdr(v?'렌트 차량 수정':'렌트 차량 추가'),
     '<div class="fr">',fi('rv-model','차량 모델 ★','혼다 PCX125',null,v?v.model:''),fi('rv-plate','차량번호 ★','12가3456',null,v?v.plateNo:''),'</div>',
+    fi('rv-prevplates','과거 번호판 (번호 변경 이력, 쉼표로 구분)','예: 광주12가3456, 서울34나5678',null,v&&v.prevPlates?v.prevPlates.join(', '):''),
     '<div class="fr">',fi('rv-year','연식','2025','number',v?v.year:''),fi('rv-color','색상','화이트',null,v?v.color:''),'</div>',
     '<div class="fg"><label class="fl">보험 종류</label><div class="tg">',
       '<div class="'+insComp+'" id="ins-comp" onclick="selRvIns(1)">🛡 종합보험</div>',
@@ -2352,7 +2277,8 @@ async function saveRVehicle(editId){
     if(d1.name)designatedDrivers.push(d1);
     if(d2.name)designatedDrivers.push(d2);
   }
-  const obj={model,plateNo:plate,
+  const prevPlates=(document.getElementById('rv-prevplates')?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const obj={model,plateNo:plate,prevPlates,
     minAge:document.getElementById('lv-age')?.value||'전 연령',
     year:parseInt(document.getElementById('rv-year').value)||2025,
     color:document.getElementById('rv-color').value,
@@ -3707,7 +3633,7 @@ function pgLVehicles(){
   if(lvSt==='가용') data=data.filter(v=>!S.leases.some(l=>l.vehicleId===v.id&&l.status==='리스중'));
   else if(lvSt==='리스중') data=data.filter(v=>S.leases.some(l=>l.vehicleId===v.id&&l.status==='리스중'));
   const q=S._lvQ||'';
-  if(q) data=data.filter(v=>[v.plateNo,v.model,v.color,v.owner].some(x=>(x||'').includes(q)));
+  if(q) data=data.filter(v=>[v.plateNo,v.model,v.color,v.owner,...(v.prevPlates||[])].some(x=>(x||'').includes(q)));
 
   return`
   <div style="display:flex;gap:8px;margin-bottom:16px">
@@ -3733,6 +3659,7 @@ function pgLVehicles(){
             <span class="plate">${v.plateNo}</span>
             <span style="font-size:13px;font-weight:600;color:var(--tx2)">${v.model}</span>
             ${activeLease?badge('bb','리스중'):badge('bgr','가용')}\n          ${v.includeMaint?badge('bg','정비포함'):badge('ba','정비미포함')}
+            ${prevPlatesHtml(v)}
           </div>
           <div style="display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap">
             ${badge(v.insuranceType==='종합보험'?'bb':'ba',v.insuranceType||'책임보험')}
@@ -3767,6 +3694,7 @@ function openLVehicleModal(editId){
   const saveBtn='<button class="bp" style="flex:1" onclick="saveLVehicle(\''+( editId||'')+'\')"><i class="ti ti-check"></i> '+(v?'수정완료':'추가하기')+'</button>';
   OM(mhdr(v?'리스 차량 수정':'리스 차량 추가')+
     '<div class="fr">'+fi('lv-model','차량 모델 ★','현대 아반떼',null,v?v.model||'':'')+fi('lv-plate','차량번호 ★','12가3456',null,v?v.plateNo||'':'')+'</div>'+
+    fi('lv-prevplates','과거 번호판 (번호 변경 이력, 쉼표로 구분)','예: 광주12가3456, 서울34나5678',null,v&&v.prevPlates?v.prevPlates.join(', '):'')+
     '<div class="fr">'+fi('lv-year','연식','2024','number',v?v.year||'':'')+fi('lv-color','색상','화이트',null,v?v.color||'':'')+'</div>'+
     '<div class="fr">'+fi('lv-owner','소유자/법인','',null,v?v.owner||'':'')+fi('lv-km','현재 키로수','','number',v?v.mileage||'':'')+'</div>'+
     '<div class="fg"><label class="fl">보험 종류</label><div class="tg">'+
@@ -3809,8 +3737,9 @@ async function saveLVehicle(editId){
   const model=document.getElementById('lv-model').value.trim();
   const plate=document.getElementById('lv-plate').value.trim();
   if(!model||!plate){alert('차량 모델과 차량번호를 입력하세요.');return;}
+  const prevPlates=(document.getElementById('lv-prevplates')?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
   const obj={
-    model,plateNo:plate,
+    model,plateNo:plate,prevPlates,
     minAge:document.getElementById('lv-age')?.value||'전 연령',
     year:parseInt(document.getElementById('lv-year').value)||0,
     color:document.getElementById('lv-color').value,
@@ -3865,8 +3794,15 @@ function pgLMaint(){
   let logs=[...S.leaseMaintLogs];
   if(sel!=='all') logs=logs.filter(m=>m.vehicleId===sel);
   if(dateFrom&&dateTo) logs=logs.filter(l=>l.date>=dateFrom&&l.date<=dateTo);
-  if(searchQ) logs=logs.filter(l=>(S.leaseVehicles.find(v=>v.id===l.vehicleId)||{}).plateNo?.includes(searchQ)||
-    (l.mechanic||'').includes(searchQ));
+  if(searchQ){
+    logs=logs.filter(l=>{
+      const lv=S.leaseVehicles.find(v=>v.id===l.vehicleId)||{};
+      return (lv.plateNo||'').includes(searchQ)||
+        (lv.prevPlates||[]).some(p=>(p||'').includes(searchQ))||
+        (l.mechanic||'').includes(searchQ)||
+        (l.driverName||'').includes(searchQ);
+    });
+  }
   logs=logs.sort((a,b)=>b.date.localeCompare(a.date));
 
   const totalCost=logs.reduce((a,b)=>a+(b.cost||0),0);
@@ -3921,18 +3857,24 @@ function pgLMaint(){
       ${v?`<span style="font-size:13px;font-weight:700;color:var(--tx)">${v.model}</span>`:''}
       ${v&&v.year?`<span style="font-size:11px;color:var(--tx3)">${v.year}년식</span>`:''}
       ${v&&v.color?`<span style="font-size:11px;color:var(--tx3)">· ${v.color}</span>`:''}
+      ${prevPlatesHtml(v)}
       ${Object.keys(lease).length?`<span class="b bb" style="font-size:10px">리스중</span>`:Object.keys(anyLease).length?`<span class="b bgr" style="font-size:10px">리스종료</span>`:''}
     </div>
-    <!-- 고객 + 주행거리 행 -->
+    <!-- 운전자 + 고객 + 주행거리 행 -->
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
-      ${leaseInfo.customer?`<span style="font-size:12px;font-weight:600;color:var(--tx2)"><i class="ti ti-user" style="font-size:11px"></i> ${leaseInfo.customer}</span>`:''}
+      ${log.driverName?`<span style="font-size:12px;font-weight:700;color:var(--primary)"><i class="ti ti-steering-wheel" style="font-size:11px"></i> 운전자: ${log.driverName}</span>`:''}
+      ${leaseInfo.customer&&leaseInfo.customer!==log.driverName?`<span style="font-size:12px;font-weight:600;color:var(--tx2)"><i class="ti ti-user" style="font-size:11px"></i> ${leaseInfo.customer}</span>`:''}
       ${leaseInfo.phone?`<span style="font-size:11px;color:var(--tx3)">${leaseInfo.phone}</span>`:''}
       ${log.mileage?`<span style="font-size:12px;color:var(--tx2);display:flex;align-items:center;gap:3px"><i class="ti ti-dashboard" style="font-size:11px"></i> ${log.mileage.toLocaleString()} km</span>`:''}
       ${log.mechanic?`<span style="font-size:11px;color:var(--tx3)">담당: <strong style="color:var(--tx2)">${log.mechanic}</strong></span>`:''}
     </div>
     <!-- 정비 항목 태그 -->
     ${(log.items||[]).length?`<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">
-      ${(log.items||[]).map(item=>`<span style="display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:12px;font-weight:600;background:var(--pl);color:var(--primary)">${item.name}${item.type==='agency'?'<i class="ti ti-motorbike" style="font-size:11px"></i>':item.type==='dealer'?'<i class="ti ti-building-store" style="font-size:11px"></i>':''}</span>`).join('')}
+      ${(log.items||[]).map(item=>{
+        const isEtc=item.name==='기타(직접입력)'||(item.name||'').endsWith('(기타)');
+        const disp=isEtc?(item.customName?item.customName+' (기타)':(item.name||'').replace('(직접입력)','')):item.name;
+        return`<span style="display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:12px;font-weight:600;background:${isEtc?'var(--bg3)':'var(--pl)'};color:${isEtc?'var(--tx2)':'var(--primary)'}">${disp}${item.src==='고객지참'?' 👤':item.src==='매장재고'?' 🏪':''}</span>`;
+      }).join('')}
     </div>`:'<div style="font-size:12px;color:var(--tx3);margin-bottom:6px">정비 항목 없음</div>'}
     <!-- 메모 -->
     ${log.memo?`<div style="font-size:12px;color:var(--tx2);background:var(--bg3);padding:5px 10px;border-radius:7px;border-left:3px solid var(--bd2);margin-bottom:6px">📝 ${log.memo}</div>`:''}
@@ -3954,9 +3896,14 @@ function openLMaintModal(editId){
   const log=editId?S.leaseMaintLogs.find(x=>x.id===editId):null;
   window._lmItems=log&&log.items?JSON.parse(JSON.stringify(log.items)):[];
   const vOpts=S.leaseVehicles.map(v=>`<option value="${v.id}" ${log&&v.id===log.vehicleId?'selected':''}>${v.plateNo} | ${v.model}</option>`).join('');
+  // 운전자 기본값: 기존 로그 값 > 현재 리스 고객명
+  const firstVid=log?log.vehicleId:(S.leaseVehicles[0]?S.leaseVehicles[0].id:'');
+  const curLease=S.leases.find(l=>l.vehicleId===firstVid&&l.status==='리스중');
+  const defDriver=log?(log.driverName||''):(curLease?curLease.customer:'');
   OM(mhdr(log?'리스 정비 수정':'리스 차량 정비 등록')+
-    `<div class="fg"><label class="fl">차량 선택 ★</label><select class="fi" id="lm-v">${vOpts}</select></div>`+
+    `<div class="fg"><label class="fl">차량 선택 ★</label><select class="fi" id="lm-v" onchange="lmFillDriver()">${vOpts}</select></div>`+
     fi('lm-date','정비일','','date',log?log.date:new Date().toISOString().slice(0,10),true)+
+    fi('lm-driver','운전자 이름','운전자 성명',null,defDriver)+
     fi('lm-km','정비 시 키로수','','number',log?log.mileage||'':'')+
     mcHTML('lm')+
     getMechanicField('lm-mec', log?log.mechanic:'')+
@@ -3970,15 +3917,35 @@ function openLMaintModal(editId){
   setTimeout(()=>{
     if(window._lmItems&&window._lmItems.length) rendMD('lm',window._lmItems);
     selDT('personal');
+    // 운전자 입력칸: 신규+자동채움값이면 auto 플래그 ON(차량변경 시 갱신), 그 외 OFF
+    const dEl=document.getElementById('lm-driver');
+    if(dEl){
+      dEl.dataset.auto=(!editId&&defDriver)?'1':'0';
+      dEl.oninput=()=>{dEl.dataset.auto='0';};
+    }
   },50);
 }
 
+// 차량 선택 변경 시, 비어있으면 현재 리스 고객명으로 운전자 자동 채움
+function lmFillDriver(){
+  const vid=document.getElementById('lm-v')?.value;
+  const dEl=document.getElementById('lm-driver');
+  if(!dEl) return;
+  const curLease=S.leases.find(l=>l.vehicleId===vid&&l.status==='리스중');
+  // 사용자가 직접 입력한 값이 없을 때만 자동 채움
+  if(!dEl.value||dEl.dataset.auto==='1'){
+    dEl.value=curLease?curLease.customer:'';
+    dEl.dataset.auto='1';
+  }
+  dEl.oninput=()=>{dEl.dataset.auto='0';};
+}
 async function saveLMaint(editId){
   const vid=document.getElementById('lm-v')?.value;
   const date=document.getElementById('lm-date')?.value;
   if(!vid||!date){alert('차량과 날짜를 선택하세요.');return;}
   const fItems=window._lmItems||[];
   const obj={vehicleId:vid,date,
+    driverName:document.getElementById('lm-driver')?.value||'',
     mileage:parseInt(document.getElementById('lm-km')?.value)||0,
     items:fItems,
     mechanic:getMechanicValue('lm-mec'),
